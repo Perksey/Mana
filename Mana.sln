@@ -10,6 +10,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mana.Engine", "Source\Mana.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mana.Potion", "Source\Mana.Potion\Mana.Potion.csproj", "{19F4783B-DF9D-49A8-A226-DF46D0756FBE}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{D5579807-E295-4BC4-9357-5BB918D50484}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mana.Samples.Basic", "Samples\Mana.Samples.Basic\Mana.Samples.Basic.csproj", "{C9F35941-E088-4B86-908A-93C1B26CF803}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +24,7 @@ Global
 		{670552E4-FABD-4031-84C5-B62CBC85EE5C} = {A43022AD-B7C8-4B78-A26D-83B0CC31B34F}
 		{4D8AFDBE-E497-43AE-9382-A8EFA0E2DE2D} = {A43022AD-B7C8-4B78-A26D-83B0CC31B34F}
 		{19F4783B-DF9D-49A8-A226-DF46D0756FBE} = {A43022AD-B7C8-4B78-A26D-83B0CC31B34F}
+		{C9F35941-E088-4B86-908A-93C1B26CF803} = {D5579807-E295-4BC4-9357-5BB918D50484}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{F7A3D1B3-D330-42D4-A42F-1BFA288277F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -38,5 +43,9 @@ Global
 		{19F4783B-DF9D-49A8-A226-DF46D0756FBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{19F4783B-DF9D-49A8-A226-DF46D0756FBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{19F4783B-DF9D-49A8-A226-DF46D0756FBE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9F35941-E088-4B86-908A-93C1B26CF803}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9F35941-E088-4B86-908A-93C1B26CF803}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9F35941-E088-4B86-908A-93C1B26CF803}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9F35941-E088-4B86-908A-93C1B26CF803}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

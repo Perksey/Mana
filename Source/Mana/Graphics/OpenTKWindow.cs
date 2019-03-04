@@ -11,30 +11,61 @@ namespace Mana.Graphics
         
         public OpenTKWindow()
         {
-            // Create GraphicsDevice
             GraphicsDevice = new GraphicsDevice();
         }
         
         public Game Game { get; private set; }
 
         public GraphicsDevice GraphicsDevice { get; }
-        
-        public int Width { get; set; }
-        
-        public int Height { get; set; }
+
+        public int Width
+        {
+            get => _windowWrapper.Width;
+            set => _windowWrapper.Width = value;
+        }
+
+        public int Height
+        {
+            get => _windowWrapper.Height;
+            set => _windowWrapper.Height = value;
+        }
 
         public float AspectRatio => Width / (float)Height;
-        
-        public bool Fullscreen { get; set; }
-        
-        public bool VSync { get; set; }
+
+        public bool Fullscreen
+        {
+            get => _windowWrapper.WindowState == WindowState.Fullscreen;
+            set
+            {
+                WindowState valueState = value ? WindowState.Fullscreen : WindowState.Normal;
+
+                if (_windowWrapper.WindowState != valueState)
+                    _windowWrapper.WindowState = valueState;
+            }
+        }
+
+        public bool VSync
+        {
+            // TODO: Replace VSync value from bool to a proxy enum that exposes adaptive option
+            get => _windowWrapper.VSync == VSyncMode.On;
+            set
+            {
+                VSyncMode valueMode = value ? VSyncMode.On : VSyncMode.Off;
+
+                if (_windowWrapper.VSync != valueMode)
+                    _windowWrapper.VSync = valueMode;
+            }
+        }
 
         public void Run(Game game)
         {
             _windowWrapper = new GameWindowWrapper(this, game);
+
             Game = game;
 
             Game.InitializeBase();
+            
+            Console.WriteLine($"Vsync Mode: {VSync.ToString()}");
             
             _windowWrapper.Run();
         }

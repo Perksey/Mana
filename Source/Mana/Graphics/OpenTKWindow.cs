@@ -63,9 +63,7 @@ namespace Mana.Graphics
 
             Game = game;
 
-            Game.InitializeBase();
-            
-            Console.WriteLine($"Vsync Mode: {VSync.ToString()}");
+            Game.InitializeBase(this);
             
             _windowWrapper.Run();
         }

@@ -1,4 +1,5 @@
 using System;
+using Mana.Graphics;
 
 namespace Mana
 {
@@ -8,6 +9,10 @@ namespace Mana
         {
         }
 
+        public IGameWindow Window { get; private set; }
+        
+        public GraphicsDevice GraphicsDevice { get; private set; }
+
         public void Dispose()
         {
         }
@@ -15,8 +20,11 @@ namespace Mana
         /// <summary>
         /// The base function that calls the Game's main Initialize function.
         /// </summary>
-        public void InitializeBase()
+        public void InitializeBase(IGameWindow window)
         {
+            Window = window;
+            GraphicsDevice = window.GraphicsDevice;
+            
             Initialize();
         }
 

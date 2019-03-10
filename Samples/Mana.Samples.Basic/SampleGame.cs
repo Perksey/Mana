@@ -1,3 +1,5 @@
+using Mana.Graphics;
+
 namespace Mana.Samples.Basic
 {
     public class SampleGame : Game
@@ -12,6 +14,7 @@ namespace Mana.Samples.Basic
 
         protected override void Render(float time, float deltaTime)
         {
+            GraphicsDevice.Clear(Color.Black);
         }
     }
 }

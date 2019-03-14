@@ -6,6 +6,7 @@ namespace Mana.Samples.Basic
     {
         protected override void Initialize()
         {
+            this.Window.Title = "Hello";
         }
 
         protected override void Update(float time, float deltaTime)
@@ -14,7 +15,7 @@ namespace Mana.Samples.Basic
 
         protected override void Render(float time, float deltaTime)
         {
-            GraphicsDevice.Clear(Color.Black);
+            GraphicsDevice.Clear(Color.Cyan);
         }
     }
 }

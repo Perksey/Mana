@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Input;
@@ -11,12 +12,14 @@ namespace Mana.Graphics
         
         public OpenTKWindow()
         {
-            GraphicsDevice = new GraphicsDevice();
+            
         }
+        
+        #region IGameWindow Implementation
         
         public Game Game { get; private set; }
 
-        public GraphicsDevice GraphicsDevice { get; }
+        public GraphicsDevice GraphicsDevice { get; private set; }
 
         public int Width
         {
@@ -57,10 +60,20 @@ namespace Mana.Graphics
             }
         }
 
+        public string Title
+        {
+            get => _windowWrapper.Title;
+            set => _windowWrapper.Title = value;
+        }
+
+        #endregion
+        
         public void Run(Game game)
         {
             _windowWrapper = new GameWindowWrapper(this, game);
 
+            GraphicsDevice = new GraphicsDevice();
+            
             Game = game;
 
             Game.InitializeBase(this);

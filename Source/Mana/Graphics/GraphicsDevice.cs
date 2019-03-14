@@ -10,6 +10,7 @@ namespace Mana.Graphics
         private static GraphicsDevice _instance;
 
         internal readonly GLExtensions Extensions;
+        internal readonly GraphicsResourceCollection Resources;
         internal GraphicsDeviceBindings Bindings;
 
         private Color _clearColor;
@@ -31,6 +32,7 @@ namespace Mana.Graphics
             _instance = this;
 
             Extensions = new GLExtensions();
+            Resources = new GraphicsResourceCollection();
             Bindings = new GraphicsDeviceBindings();
 
             DepthTest = true;
@@ -172,7 +174,10 @@ namespace Mana.Graphics
         {
             if (_clearColor != color)
             {
-                GL.ClearColor(color.R / (float)byte.MaxValue, color.G / (float)byte.MaxValue, color.B / (float)byte.MaxValue, color.A / (float)byte.MaxValue);
+                GL.ClearColor(color.R / (float)byte.MaxValue, 
+                              color.G / (float)byte.MaxValue, 
+                              color.B / (float)byte.MaxValue, 
+                              color.A / (float)byte.MaxValue);
                 GLHelper.CheckLastError();
 
                 _clearColor = color;

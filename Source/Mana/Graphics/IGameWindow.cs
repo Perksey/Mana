@@ -9,5 +9,6 @@ namespace Mana.Graphics
         float AspectRatio { get; }
         bool Fullscreen { get; set; }
         bool VSync { get; set; }
+        string Title { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Mana.Graphics;
+﻿using System.Threading.Tasks;
+using Mana.Graphics;
 
 namespace Mana.Samples.Basic
 {

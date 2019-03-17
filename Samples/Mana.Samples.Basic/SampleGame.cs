@@ -1,3 +1,5 @@
+using System.Reflection;
+using System.Runtime.Remoting.Messaging;
 using Mana.Graphics;
 
 namespace Mana.Samples.Basic

@@ -41,6 +41,15 @@ namespace Mana.Graphics
             Blend = false;
             DepthTest = true;
             ScissorTest = true;
+            
+            //Logger.Info("OpenGL Context Information:");
+            //Logger.InfoFormat("Vendor: {0}", GL.GetString(StringName.Vendor));
+            //Logger.InfoFormat("Renderer: {0}", GL.GetString(StringName.Renderer));
+            //Logger.InfoFormat("Version: {0}", GL.GetString(StringName.Version));
+            //Logger.InfoFormat("ShadingLanguageVersion: {0}", GL.GetString(StringName.ShadingLanguageVersion));
+
+            GL.GetInteger(GetPName.NumExtensions, out int extensionCount);
+            //Logger.DebugFormat("Number of Available Extensions: {0}", extensionCount.ToString());
         }
 
         

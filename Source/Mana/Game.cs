@@ -1,5 +1,6 @@
 using System;
 using Mana.Graphics;
+using Mana.Graphics.Vertex;
 
 namespace Mana
 {
@@ -7,6 +8,7 @@ namespace Mana
     {
         protected Game()
         {
+            VertexTypeInfo.Initialize();
         }
 
         public IGameWindow Window { get; private set; }

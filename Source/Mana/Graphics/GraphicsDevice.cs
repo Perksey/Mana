@@ -1,6 +1,10 @@
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using Mana.Graphics.Shaders;
+using Mana.Graphics.Vertex;
 using Mana.Logging;
 using OpenTK.Graphics.OpenGL4;
 
@@ -9,8 +13,8 @@ namespace Mana.Graphics
     public class GraphicsDevice
     {
         private static Logger _log = Logger.Create();
-        
         private static GraphicsDevice _instance;
+        private static int _maxTextureImageUnits;
 
         internal readonly GLExtensions Extensions;
         internal readonly GraphicsResourceCollection Resources;
@@ -45,17 +49,18 @@ namespace Mana.Graphics
             ScissorTest = true;
             
             _log.Info("--------- OpenGL Context Information ---------");
-            _log.Info($"Vendor: {GL.GetString(StringName.Vendor)}");
-            _log.Info($"Renderer: {GL.GetString(StringName.Renderer)}");
-            _log.Info($"Version: {GL.GetString(StringName.Version)}");
-            _log.Info($"ShadingLanguageVersion: {GL.GetString(StringName.ShadingLanguageVersion)}");
-
-            GL.GetInteger(GetPName.NumExtensions, out int extensionCount);
-            _log.Debug($"Number of Available Extensions: {extensionCount.ToString()}");
-
+            _log.Info($"Vendor: {GLHelper.GetString(StringName.Vendor)}");
+            _log.Info($"Renderer: {GLHelper.GetString(StringName.Renderer)}");
+            _log.Info($"Version: {GLHelper.GetString(StringName.Version)}");
+            _log.Info($"ShadingLanguageVersion: {GLHelper.GetString(StringName.ShadingLanguageVersion)}");
+            
+            _log.Debug($"Number of Available Extensions: {GLHelper.GetInteger(GetPName.NumExtensions).ToString()}");
+            
             _log.Warn("Some random warning.");
             _log.Error("An error occured.");
             _log.Fatal("Fatal error occured.");
+
+            _maxTextureImageUnits = GLHelper.GetInteger(GetPName.MaxTextureImageUnits);
         }
 
         
@@ -181,6 +186,107 @@ namespace Mana.Graphics
         #endregion
         
         
+        #region Bindings
+
+        /// <summary>
+        /// Binds the given <see cref="ShaderProgram"/> object to the GraphicsDevice.
+        /// </summary>
+        /// <param name="program">The <see cref="ShaderProgram"/> object to bind.</param>
+        public void BindShaderProgram(ShaderProgram program)
+        {
+            if (program == null)
+            {
+                GL.UseProgram(0);
+                GLHelper.CheckLastError();
+
+                Bindings.ShaderProgram = GLHandle.Zero;
+                return;
+            }
+
+            Debug.Assert(!program.Disposed && program.Linked);
+
+            if (Bindings.ShaderProgram == program.Handle)
+                return;
+
+            GL.UseProgram(program.Handle);
+            GLHelper.CheckLastError();
+            Bindings.ShaderProgram = program.Handle;
+        }
+
+        /// <summary>
+        /// Ensures that the given <see cref="ShaderProgram"/> object is unbound.
+        /// </summary>
+        /// <param name="program">The <see cref="ShaderProgram"/> object to ensure is unbound.</param>
+        public void UnbindShaderProgram(ShaderProgram program)
+        {
+            if (program == null)
+                throw new ArgumentNullException(nameof(program));
+
+            if (Bindings.ShaderProgram != program.Handle)
+                return;
+
+            GL.UseProgram(0);
+            GLHelper.CheckLastError();
+
+            Bindings.ShaderProgram = GLHandle.Zero;
+        }
+
+        /// <summary>
+        /// Binds the given <see cref="Texture2D"/> to the GraphicsDevice at the given texture unit location.
+        /// </summary>
+        /// <param name="textureUnit">The texture unit that the texture will be bound to.</param>
+        /// <param name="texture">The <see cref="Texture2D"/> to bind.</param>
+        public void BindTexture(int textureUnit, Texture2D texture)
+        {
+            if (textureUnit < 0 || textureUnit >= _maxTextureImageUnits)
+                throw new ArgumentOutOfRangeException();
+
+            SetActiveTexture(textureUnit);
+
+            if (texture == null)
+            {
+                GL.BindTexture(TextureTarget.Texture2D, 0);
+                GLHelper.CheckLastError();
+
+                Bindings.Texture = GLHandle.Zero;
+                return;
+            }
+            
+            Debug.Assert(!texture.Disposed);
+
+            if (Bindings.Texture == texture.Handle)
+                return;
+
+            GL.BindTexture(TextureTarget.Texture2D, texture.Handle);
+            GLHelper.CheckLastError();
+            Bindings.Texture = texture.Handle;
+        }
+
+        /// <summary>
+        /// Ensures that the given <see cref="Texture2D"/> object is unbound.
+        /// </summary>
+        /// <param name="texture">The <see cref="Texture2D"/> object to ensure is unbound.</param>
+        public void UnbindTexture(Texture2D texture)
+        {
+            for (int i = 0; i < _maxTextureImageUnits; i++)
+            {
+                if (Bindings.TextureUnits[i] == texture.Handle)
+                {
+                    SetActiveTexture(i);
+
+                    GL.BindTexture(TextureTarget.Texture2D, 0);
+                    GLHelper.CheckLastError();
+
+                    Bindings.Texture = GLHandle.Zero;
+                }
+            }
+        }
+        
+        #endregion
+        
+        
+        #region Clear
+        
         /// <summary>
         /// Clears the color buffer to the given color.
         /// </summary>
@@ -221,6 +327,35 @@ namespace Mana.Graphics
             }
         }
         
+        #endregion
+        
+        
+        #region Render
+
+        public void Render<T>(T[] vertexData, 
+                              ShaderProgram shaderProgram, 
+                              PrimitiveType primitiveType = PrimitiveType.Triangles)
+            where T : unmanaged
+        {
+            BindShaderProgram(shaderProgram);
+
+            GCHandle pinned = GCHandle.Alloc(vertexData, GCHandleType.Pinned);
+            VertexTypeInfo.Get<T>().Apply(shaderProgram, pinned.AddrOfPinnedObject());
+            
+            GL.DrawArrays(primitiveType, 0, vertexData.Length);
+            GLHelper.CheckLastError();
+
+            pinned.Free();
+
+            unchecked
+            {
+                GraphicsMetrics._primitiveCount += vertexData.Length;
+                GraphicsMetrics._drawCalls++;
+            }
+        }
+        
+        #endregion
+        
         
         #region Private Helpers
         
@@ -237,6 +372,25 @@ namespace Mana.Graphics
             }
 
             GLHelper.CheckLastError();
+        }
+        
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void BindBuffer(BufferTarget buffer, GLHandle handle)
+        {
+            GL.BindBuffer(buffer, handle);
+            GLHelper.CheckLastError();
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void SetActiveTexture(int activeTexture)
+        {
+            if (Bindings.ActiveTexture != activeTexture)
+            {
+                Bindings.ActiveTexture = activeTexture;
+                GL.ActiveTexture((TextureUnit)(activeTexture + (int)TextureUnit.Texture0));
+                GLHelper.CheckLastError();
+            }
         }
         
         #endregion

@@ -40,7 +40,7 @@ namespace Mana.Graphics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetInt(GetPName name)
+        public static int GetInteger(GetPName name)
         {
             int result = GL.GetInteger(name);
             CheckLastError();

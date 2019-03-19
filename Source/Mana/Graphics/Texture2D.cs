@@ -1,45 +1,45 @@
 using System;
 using Mana.Asset;
+using Mana.Logging;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics
 {
-    public class Texture2D : GraphicsAsset
+    public class Texture2D : ManaAsset, IGraphicsResource
     {
+        private static Logger _log = Logger.Create();
+        
         public readonly GLHandle Handle;
         
-        private bool _disposed = false;
+        internal bool Disposed = false;
         
         public Texture2D(GraphicsDevice graphicsDevice)
-            : base(graphicsDevice)
         {
+            GraphicsDevice = graphicsDevice;
+            GraphicsDevice.Resources.Add(this);
+            
             Handle = (GLHandle)GL.GenTexture();
             GLHelper.CheckLastError();
         }
 
         ~Texture2D()
         {
-            Console.WriteLine("WARNING: Texture2D Leaked");
-            Dispose(false);
+            _log.Error("Texture2D Leaked");
 #if DEBUG
             throw new InvalidOperationException("Texture2D Leaked");
 #endif
         }
 
-        protected override void Dispose(bool disposing)
+        public GraphicsDevice GraphicsDevice { get; }
+
+        public override void Dispose()
         {
-            if (_disposed)
-                return;
-
-            if (disposing)
-            {
-                GL.DeleteTexture((int)Handle);
-                GLHelper.CheckLastError();
-            }
-
-            _disposed = true;
+            GraphicsDevice.Resources.Remove(this);
             
-            base.Dispose(disposing);
+            GL.DeleteTexture(Handle);
+            GLHelper.CheckLastError();
+            
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Mana.Graphics.Shaders;
 using Mana.Utilities.Reflection;
 using OpenTK.Graphics.OpenGL4;
 
@@ -52,6 +53,65 @@ namespace Mana.Graphics.Vertex
             }
 
             throw new ArgumentOutOfRangeException(typeof(T).FullName, "Type not found in VertexTypeInfo cache. Was the type generated at runtime?");
+        }
+
+        internal void Apply(ShaderProgram program)
+        {
+            int location = 0;
+            for (uint i = 0; i < Attributes.Length; i++)
+            {
+                VertexAttributeInfo attribute = Attributes[i];
+                
+                GL.VertexAttribPointer(i,
+                                       attribute.ComponentCount,
+                                       attribute.Type,
+                                       attribute.Normalize,
+                                       VertexStride,
+                                       location);
+                GLHelper.CheckLastError();
+
+                EnableDisableAttributes(program, i);
+
+                location += attribute.Size * attribute.ComponentCount;
+            }
+        }
+
+        internal void Apply(ShaderProgram program, IntPtr offset)
+        {
+            int location = 0;
+            for (uint i = 0; i < Attributes.Length; i++)
+            {
+                EnableDisableAttributes(program, i);
+
+                program.AttributesByLocation.TryGetValue(i, out ShaderAttributeInfo info);
+
+                VertexAttributeInfo attribute = Attributes[i];
+                
+                GL.VertexAttribPointer(i,
+                                       attribute.ComponentCount,
+                                       attribute.Type,
+                                       attribute.Normalize,
+                                       VertexStride,
+                                       offset + location);
+                GLHelper.CheckLastError();
+
+                location += attribute.Size * attribute.ComponentCount;
+            }
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void EnableDisableAttributes(ShaderProgram program, uint i)
+        {
+            if (program.AttributesByLocation.TryGetValue(i, out _))
+            {
+                GL.EnableVertexAttribArray(i);
+                GLHelper.CheckLastError();
+            }
+            else
+            {
+                GL.DisableVertexAttribArray(i);
+                GLHelper.CheckLastError();
+            }
         }
     }
 }

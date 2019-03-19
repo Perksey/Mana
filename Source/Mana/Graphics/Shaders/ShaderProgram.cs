@@ -48,7 +48,7 @@ namespace Mana.Graphics.Shaders
             Debug.Assert(!Disposed);
             
             GraphicsDevice.Resources.Remove(this);
-            // TODO: Unbind shader program here.
+            GraphicsDevice.UnbindShaderProgram(this);
             
             GL.DeleteProgram(Handle);
             GLHelper.CheckLastError();

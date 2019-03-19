@@ -1,5 +1,7 @@
 using System;
+using System.Drawing;
 using System.Runtime.CompilerServices;
+using Mana.Logging;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Input;
@@ -89,6 +91,8 @@ namespace Mana.Graphics
 
         private sealed class GameWindowWrapper : GameWindow
         {
+            private static Logger _log = Logger.Create();
+            
             private Game _game;
             private OpenTKWindow _openTKWindow;
             private float _elapsedUpdateTime;
@@ -130,6 +134,17 @@ namespace Mana.Graphics
                 _elapsedRenderTime += deltaTime;
                 _game.RenderBase(_elapsedRenderTime, deltaTime);
                 
+                SwapBuffers();
+            }
+
+            protected override void OnResize(EventArgs e)
+            {
+                base.OnResize(e);
+                
+                _openTKWindow.GraphicsDevice.ViewportRectangle = new Rectangle(0, 0, Width, Height);
+                _openTKWindow.GraphicsDevice.ScissorRectangle = new Rectangle(0, 0, Width, Height);
+                
+                _game.RenderBase(_elapsedRenderTime, 0f);
                 SwapBuffers();
             }
 

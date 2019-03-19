@@ -11,11 +11,11 @@ namespace Mana.Graphics
         
         public GLExtensions()
         {
-            int major = GLHelper.GetInt(GetPName.MajorVersion);
-            int minor = GLHelper.GetInt(GetPName.MinorVersion);
+            int major = GLHelper.GetInteger(GetPName.MajorVersion);
+            int minor = GLHelper.GetInteger(GetPName.MinorVersion);
             var extensions = new HashSet<string>();
 
-            for (uint i = 0; i < GLHelper.GetInt(GetPName.NumExtensions); i++)
+            for (uint i = 0; i < GLHelper.GetInteger(GetPName.NumExtensions); i++)
             {
                 string extension = GLHelper.GetString(StringNameIndexed.Extensions, i);
 

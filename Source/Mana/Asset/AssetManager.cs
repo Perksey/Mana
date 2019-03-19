@@ -19,6 +19,7 @@ namespace Mana.Asset
             [typeof(Texture2D)] = new Texture2DLoader(),
             [typeof(VertexShader)] = new VertexShaderLoader(),
             [typeof(FragmentShader)] = new FragmentShaderLoader(),
+            [typeof(ShaderProgram)] = new ShaderProgramLoader(),
         };
 
         private Dictionary<string, ManaAsset> _assetCache = new Dictionary<string, ManaAsset>();

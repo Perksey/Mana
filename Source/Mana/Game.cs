@@ -1,4 +1,5 @@
 using System;
+using Mana.Asset;
 using Mana.Graphics;
 using Mana.Graphics.Vertex;
 
@@ -15,6 +16,8 @@ namespace Mana
         
         public GraphicsDevice GraphicsDevice { get; private set; }
 
+        public AssetManager AssetManager { get; private set; }
+
         public void Dispose()
         {
         }
@@ -26,6 +29,7 @@ namespace Mana
         {
             Window = window;
             GraphicsDevice = window.GraphicsDevice;
+            AssetManager = new AssetManager(GraphicsDevice);
             
             Initialize();
         }

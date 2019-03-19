@@ -1,12 +1,15 @@
 using System;
 using System.Drawing;
 using System.Runtime.CompilerServices;
+using Mana.Logging;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics
 {
     public class GraphicsDevice
     {
+        private static Logger _log = Logger.Create();
+        
         private static GraphicsDevice _instance;
 
         internal readonly GLExtensions Extensions;
@@ -22,15 +25,14 @@ namespace Mana.Graphics
         private bool _cullBackfaces;
         private Rectangle _scissorRectangle;
         private Rectangle _viewportRectangle;
-        
-        
+                
         public GraphicsDevice()
         {
             if (_instance != null)
                 throw new InvalidOperationException("An instance of GraphicsDevice already exists.");
             
             _instance = this;
-
+            
             Extensions = new GLExtensions();
             Resources = new GraphicsResourceCollection();
             Bindings = new GraphicsDeviceBindings();
@@ -42,14 +44,18 @@ namespace Mana.Graphics
             DepthTest = true;
             ScissorTest = true;
             
-            //Logger.Info("OpenGL Context Information:");
-            //Logger.InfoFormat("Vendor: {0}", GL.GetString(StringName.Vendor));
-            //Logger.InfoFormat("Renderer: {0}", GL.GetString(StringName.Renderer));
-            //Logger.InfoFormat("Version: {0}", GL.GetString(StringName.Version));
-            //Logger.InfoFormat("ShadingLanguageVersion: {0}", GL.GetString(StringName.ShadingLanguageVersion));
+            _log.Info("--------- OpenGL Context Information ---------");
+            _log.Info($"Vendor: {GL.GetString(StringName.Vendor)}");
+            _log.Info($"Renderer: {GL.GetString(StringName.Renderer)}");
+            _log.Info($"Version: {GL.GetString(StringName.Version)}");
+            _log.Info($"ShadingLanguageVersion: {GL.GetString(StringName.ShadingLanguageVersion)}");
 
             GL.GetInteger(GetPName.NumExtensions, out int extensionCount);
-            //Logger.DebugFormat("Number of Available Extensions: {0}", extensionCount.ToString());
+            _log.Debug($"Number of Available Extensions: {extensionCount.ToString()}");
+
+            _log.Warn("Some random warning.");
+            _log.Error("An error occured.");
+            _log.Fatal("Fatal error occured.");
         }
 
         

@@ -22,7 +22,7 @@ namespace Mana.Graphics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator int(GLHandle handle)
+        public static implicit operator int(GLHandle handle)
         {
             return handle._id;
         }

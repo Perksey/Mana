@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Mana.Asset.Loaders;
 using Mana.Graphics;
+using Mana.Graphics.Shaders;
 
 namespace Mana.Asset
 {
@@ -16,6 +17,8 @@ namespace Mana.Asset
         private static Dictionary<Type, IAssetLoader> _assetLoaders = new Dictionary<Type, IAssetLoader>
         {
             [typeof(Texture2D)] = new Texture2DLoader(),
+            [typeof(VertexShader)] = new VertexShaderLoader(),
+            [typeof(FragmentShader)] = new FragmentShaderLoader(),
         };
 
         private Dictionary<string, ManaAsset> _assetCache = new Dictionary<string, ManaAsset>();

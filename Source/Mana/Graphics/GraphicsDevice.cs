@@ -54,7 +54,7 @@ namespace Mana.Graphics
             _log.Info($"Version: {GLHelper.GetString(StringName.Version)}");
             _log.Info($"ShadingLanguageVersion: {GLHelper.GetString(StringName.ShadingLanguageVersion)}");
             
-            _log.Debug($"Number of Available Extensions: {GLHelper.GetInteger(GetPName.NumExtensions).ToString()}");
+            _log.Info($"Number of Available Extensions: {GLHelper.GetInteger(GetPName.NumExtensions).ToString()}");
             
             _log.Warn("Some random warning.");
             _log.Error("An error occured.");

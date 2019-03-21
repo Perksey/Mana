@@ -111,7 +111,7 @@ namespace Mana.Graphics
             {
                 _openTKWindow = openTKWindow;
                 _game = game;
-                //VSync = VSyncMode.Off;
+                VSync = VSyncMode.Off;
                 //WindowState = WindowState.Maximized;
             }
 

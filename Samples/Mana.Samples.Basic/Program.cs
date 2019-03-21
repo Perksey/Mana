@@ -1,10 +1,13 @@
 ﻿using System;
 using Mana.Graphics;
+using Mana.Logging;
 
 namespace Mana.Samples.Basic
 {
     internal static class Program
     {
+        private static Logger _log = Logger.Create();
+        
         [STAThread]
         public static void Main(string[] args)
         {
@@ -12,7 +15,16 @@ namespace Mana.Samples.Basic
             {
                 using (OpenTKWindow window = new OpenTKWindow())
                 {
-                    window.Run(game);
+                    try
+                    {
+                        window.Run(game);
+                    }
+                    catch (Exception e)
+                    {
+                        _log.Fatal($"{e.Message}{Environment.NewLine}{e.StackTrace}");
+                        _log.Fatal("Press any key to continue...");
+                        Console.ReadKey();
+                    }
                 }
             }
         }

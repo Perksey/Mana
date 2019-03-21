@@ -22,8 +22,8 @@ namespace Mana.Logging
             [LogLevel.Debug] = ConsoleColor.Cyan,
             [LogLevel.Info] = ConsoleColor.White,
             [LogLevel.Warn] = ConsoleColor.Yellow,
-            [LogLevel.Error] = ConsoleColor.Red,
-            [LogLevel.Fatal] = ConsoleColor.Magenta,
+            [LogLevel.Error] = ConsoleColor.Magenta,
+            [LogLevel.Fatal] = ConsoleColor.Red,
         };
 
         private static Dictionary<LogLevel, string> _displayNames = new Dictionary<LogLevel, string>()

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Mana.Logging;
 using OpenTK;
@@ -10,6 +12,11 @@ namespace Mana.Graphics
 {
     public class OpenTKWindow : IGameWindow, IDisposable
     {
+        private static Logger _log = Logger.Create();
+        
+        public IEnumerable<DisplayResolution> AvailableResolutions =>
+            DisplayDevice.Default.AvailableResolutions.Distinct();
+        
         private GameWindowWrapper _windowWrapper;
         
         public OpenTKWindow()
@@ -68,6 +75,11 @@ namespace Mana.Graphics
             set => _windowWrapper.Title = value;
         }
 
+        public void Close()
+        {
+            _windowWrapper.Close();
+        }
+
         #endregion
         
         public void Run(Game game)
@@ -77,6 +89,13 @@ namespace Mana.Graphics
             GraphicsDevice = new GraphicsDevice();
             
             Game = game;
+            
+            _log.Debug("Available Display Resolutions: ");
+
+            foreach (var res in AvailableResolutions)
+            {
+                _log.Debug(res.ToString());
+            }
 
             Game.InitializeBase(this);
             
@@ -148,12 +167,25 @@ namespace Mana.Graphics
                 SwapBuffers();
             }
 
+            protected override void OnKeyPress(KeyPressEventArgs e)
+            {
+                base.OnKeyPress(e);
+
+                Input.OnKeyTyped(e.KeyChar);
+            }
+
             protected override void OnKeyDown(KeyboardKeyEventArgs e)
             {
                 base.OnKeyDown(e);
 
-                if (e.Key == Key.Escape)
-                    Close();
+                Input.OnKeyPressed(KeyConverter.FromDesktopScanCode(e.ScanCode));
+            }
+
+            protected override void OnKeyUp(KeyboardKeyEventArgs e)
+            {
+                base.OnKeyUp(e);
+                
+                Input.OnKeyReleased(KeyConverter.FromDesktopScanCode(e.ScanCode));
             }
         }
     }

@@ -10,6 +10,7 @@ namespace Mana
         protected Game()
         {
             VertexTypeInfo.Initialize();
+            Components = new GameComponentCollection(this);
         }
 
         public IGameWindow Window { get; private set; }
@@ -17,9 +18,16 @@ namespace Mana
         public GraphicsDevice GraphicsDevice { get; private set; }
 
         public AssetManager AssetManager { get; private set; }
+        
+        public GameComponentCollection Components { get; }
 
         public void Dispose()
         {
+        }
+
+        public void Quit()
+        {
+            Window.Close();
         }
 
         /// <summary>
@@ -30,6 +38,8 @@ namespace Mana
             Window = window;
             GraphicsDevice = window.GraphicsDevice;
             AssetManager = new AssetManager(GraphicsDevice);
+
+            Input.Initialize(window);
             
             Initialize();
         }
@@ -41,7 +51,14 @@ namespace Mana
         /// <param name="deltaTime">The time, in seconds, since the last frame.</param>
         public void UpdateBase(float time, float deltaTime)
         {
+            Components.EarlyUpdate(time, deltaTime);
+            
             Update(time, deltaTime);
+
+            Components.Update(time, deltaTime);
+
+            Components.LateUpdate(time, deltaTime);
+
         }
 
         /// <summary>
@@ -51,7 +68,16 @@ namespace Mana
         /// <param name="deltaTime">The time, in seconds, since the last frame.</param>
         public void RenderBase(float time, float deltaTime)
         {
+            Components.EarlyRender(time, deltaTime);
+            
             Render(time, deltaTime);
+            
+            Components.Render(time, deltaTime);
+
+            Components.LateRender(time, deltaTime);
+
+            Input.Update();
+            // TODO: Update Metrics Here
         }
 
         protected abstract void Initialize();

@@ -10,5 +10,6 @@ namespace Mana.Graphics
         bool Fullscreen { get; set; }
         bool VSync { get; set; }
         string Title { get; set; }
+        void Close();
     }
 }

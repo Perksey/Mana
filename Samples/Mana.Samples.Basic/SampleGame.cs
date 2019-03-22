@@ -28,6 +28,10 @@ namespace Mana.Samples.Basic
 
         protected override void Update(float time, float deltaTime)
         {
+            if (Input.WasKeyPressed(Key.Escape))
+            {
+                Quit();
+            }
         }
 
         protected override void Render(float time, float deltaTime)

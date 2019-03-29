@@ -1,4 +1,6 @@
 using System;
+using OpenTK;
+using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics.Shaders
 {

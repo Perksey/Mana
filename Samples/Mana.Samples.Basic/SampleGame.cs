@@ -10,11 +10,11 @@ namespace Mana.Samples.Basic
 {
     public class SampleGame : Game
     {
-        private VertexPositionColor[] _vertexData = new VertexPositionColor[]
+        private VertexPositionTexture[] _vertexData = new VertexPositionTexture[]
         {
-            new VertexPositionColor(new Vector3(0f, 0.5f, 0f), Color.Black),
-            new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0f), Color.Black),
-            new VertexPositionColor(new Vector3(0.5f, -0.5f, 0f), Color.Black),
+            new VertexPositionTexture(new Vector3(0f, 0.5f, 0f), new Vector2(0, 0)),
+            new VertexPositionTexture(new Vector3(-0.5f, -0.5f, 0f), new Vector2(1, 0)),
+            new VertexPositionTexture(new Vector3(0.5f, -0.5f, 0f), new Vector2(1, 1)),
         };
 
         private ShaderProgram _shader;

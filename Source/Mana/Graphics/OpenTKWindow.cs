@@ -14,7 +14,7 @@ namespace Mana.Graphics
     {
         private static Logger _log = Logger.Create();
         
-        public IEnumerable<DisplayResolution> AvailableResolutions =>
+        public IEnumerable<DisplayResolution> AvailableResolutions => 
             DisplayDevice.Default.AvailableResolutions.Distinct();
         
         private GameWindowWrapper _windowWrapper;
@@ -90,12 +90,14 @@ namespace Mana.Graphics
             
             Game = game;
             
+            /*
             _log.Debug("Available Display Resolutions: ");
 
             foreach (var res in AvailableResolutions)
             {
                 _log.Debug(res.ToString());
             }
+            */
 
             Game.InitializeBase(this);
             

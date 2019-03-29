@@ -1,3 +1,5 @@
+using Mana.Graphics;
+
 namespace Mana
 {
     public class GameComponent
@@ -7,6 +9,8 @@ namespace Mana
         public bool Visible = true;
 
         public Game Game { get; private set; }
+
+        public GraphicsDevice GraphicsDevice => Game.GraphicsDevice;
 
         public virtual void OnAddedToGame(Game game)
         {

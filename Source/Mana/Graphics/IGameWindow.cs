@@ -1,3 +1,6 @@
+using System;
+using System.Numerics;
+
 namespace Mana.Graphics
 {
     public interface IGameWindow

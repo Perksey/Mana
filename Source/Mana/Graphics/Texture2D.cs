@@ -35,7 +35,7 @@ namespace Mana.Graphics
         {
             _log.Error("Texture2D Leaked");
 #if DEBUG
-            throw new InvalidOperationException("Texture2D Leaked");
+            //throw new InvalidOperationException("Texture2D Leaked");
 #endif
         }
 
@@ -104,6 +104,9 @@ namespace Mana.Graphics
                     GLHelper.CheckLastError();
                 }
             }
+            
+            FilterMode = TextureFilterMode.Nearest;
+            WrapMode = TextureWrapMode.Repeat;
         }
 
         public unsafe void SetDataFromAlpha(byte* data, int width, int height)
@@ -123,6 +126,9 @@ namespace Mana.Graphics
                           PixelType.UnsignedByte,
                           new IntPtr(data));
             GLHelper.CheckLastError();
+
+            FilterMode = TextureFilterMode.Nearest;
+            WrapMode = TextureWrapMode.Repeat;
         }
         
         public override void Dispose()

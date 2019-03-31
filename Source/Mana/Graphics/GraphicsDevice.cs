@@ -61,6 +61,7 @@ namespace Mana.Graphics
             _log.Fatal("Fatal error occured.");
 
             _maxTextureImageUnits = GLHelper.GetInteger(GetPName.MaxTextureImageUnits);
+            Bindings.TextureUnits = new GLHandle[_maxTextureImageUnits];
         }
 
         

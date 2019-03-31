@@ -2,11 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Mana.Logging;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Input;
+
+using MouseButtonTK = OpenTK.Input.MouseButton;
 
 namespace Mana.Graphics
 {
@@ -188,6 +189,51 @@ namespace Mana.Graphics
                 base.OnKeyUp(e);
                 
                 Input.OnKeyReleased(KeyConverter.FromDesktopScanCode(e.ScanCode));
+            }
+
+            protected override void OnMouseDown(MouseButtonEventArgs e)
+            {
+                base.OnMouseDown(e);
+                
+                Input.OnMouseButtonPressed(GetMouseButton(e.Button));
+            }
+
+            protected override void OnMouseUp(MouseButtonEventArgs e)
+            {
+                base.OnMouseUp(e);
+                
+                Input.OnMouseButtonReleased(GetMouseButton(e.Button));
+            }
+
+            protected override void OnMouseMove(MouseMoveEventArgs e)
+            {
+                base.OnMouseMove(e);
+
+                Input.OnMouseMoved(e.Position);
+            }
+
+            protected override void OnMouseWheel(MouseWheelEventArgs e)
+            {
+                base.OnMouseWheel(e);
+
+                Input.OnMouseScroll(e.Delta, e.Value);
+            }
+
+            private MouseButton GetMouseButton(MouseButtonTK buttonTK)
+            {
+                // Convert the mouse button from OpenTK's enum to Mana's enum.
+                switch (buttonTK)
+                {
+                    case MouseButtonTK.Left:
+                        return MouseButton.Left;
+                    case MouseButtonTK.Middle:
+                        return MouseButton.Middle;
+                    case MouseButtonTK.Right:
+                        return MouseButton.Right;
+                    // TODO: Add more mouse buttons (?)
+                    default:
+                        return MouseButton.Unknown;
+                }
             }
         }
     }

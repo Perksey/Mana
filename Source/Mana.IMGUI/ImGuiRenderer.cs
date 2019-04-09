@@ -1,9 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Numerics;
 using ImGuiNET;
 using Mana.Graphics;
-using OpenTK.Graphics.OpenGL;
+using Mana.Graphics.Buffers;
+using Mana.Graphics.Shaders;
+using Mana.Graphics.Vertex;
+using Mana.Graphics.Vertex.Types;
+using OpenTK.Graphics.OpenGL4;
+using Buffer = System.Buffer;
+
+//
+// Modern OpenGL IMGUI Renderer adapted from Eric Mellino's IMGUI renderer for XNA: 
+//     https://github.com/mellinoe/ImGui.NET/blob/master/src/ImGui.NET.SampleProgram.XNA/ImGuiRenderer.cs
+//
 
 namespace Mana.IMGUI
 {
@@ -12,8 +24,21 @@ namespace Mana.IMGUI
         private int _textureID;
         private Dictionary<IntPtr, Texture2D> _boundTextures = new Dictionary<IntPtr, Texture2D>();
         private List<int> _keys = new List<int>();
+
+        private byte[] _vertexData;
+        private VertexBuffer _vertexBuffer;
+        private int _vertexBufferSize;
+
+        private byte[] _indexData;
+        private IndexBuffer _indexBuffer;
+        private int _indexBufferSize;
         
         private ImGuiIOPtr _io;
+
+        private Matrix4x4 _projection;
+        private float _displayX = float.MinValue;
+        private float _displayY = float.MinValue;
+        private ShaderProgram _shaderProgram;
         
         public ImGuiRenderer()
         {
@@ -30,6 +55,8 @@ namespace Mana.IMGUI
             SetupInput();
             RebuildFontAtlas();
             SetStyleDefaults();
+
+            _shaderProgram = CreateShaderProgram();
         }
 
         private unsafe void RebuildFontAtlas()
@@ -37,7 +64,7 @@ namespace Mana.IMGUI
             _io.Fonts.GetTexDataAsRGBA32(out byte* pixelData, out int width, out int height, out _);
             
             Texture2D fontTexture = new Texture2D(GraphicsDevice);
-            fontTexture.SetDataFromAlpha(pixelData, width, height);
+            fontTexture.SetDataFromRgba(pixelData, width, height);
 
             _io.Fonts.SetTexID(BindTexture(fontTexture));
             _io.Fonts.ClearTexData();
@@ -109,6 +136,16 @@ namespace Mana.IMGUI
             ImGui.NewFrame();
         }
 
+        private void AfterLayout()
+        {
+            if (!Visible)
+                return;
+
+            ImGui.Render();
+
+            RenderDrawData(ImGui.GetDrawData(), Game.Window.Width, Game.Window.Height);
+        }
+
         private void UpdateInput()
         {
             var keysDown = _io.KeysDown;
@@ -138,144 +175,234 @@ namespace Mana.IMGUI
             _io.MouseWheel = scrollDelta > 0 ? 1 : scrollDelta < 0 ? -1 : 0;
         }
 
-        private void AfterLayout()
-        {
-            if (!Visible)
-                return;
-
-            ImGui.Render();
-
-            RenderDrawData(ImGui.GetDrawData(), Game.Window.Width, Game.Window.Height);
-        }
-
         private void RenderDrawData(ImDrawDataPtr drawData, int windowWidth, int windowHeight)
         {
+            // If width or height is zero, game is minimized, so don't draw anything.
             if (windowWidth == 0 || windowHeight == 0)
-            {
-                // Game is minimized, so don't draw anything.
                 return;
-            }
-            
-            Rectangle oldScissorRectangle = GraphicsDevice.ScissorRectangle;
-            //bool oldWireframeRendering = GraphicsDevice.WireframeRendering;
-            Rectangle oldViewport = GraphicsDevice.ViewportRectangle;
-            bool oldBlend = GraphicsDevice.Blend;
-            bool oldCullBackfaces = GraphicsDevice.CullBackfaces;
-            bool oldDepthTest = GraphicsDevice.DepthTest;
-            bool oldScissorTest = GraphicsDevice.ScissorTest;
 
-            GraphicsDevice.DepthTest = false;
-            //GraphicsDevice.WireframeRendering = false;
-            GraphicsDevice.BindShaderProgram(null);
-            GraphicsDevice.BindTexture(0, (Texture2D)null);
-            //GraphicsDevice.BindVertexBuffer(null);
-            //GraphicsDevice.BindIndexBuffer(null);
-            GraphicsDevice.ViewportRectangle = new Rectangle(0, 0, windowWidth, windowHeight);
-            GL.UseProgram(0);
+            Rectangle lastViewport = GraphicsDevice.ViewportRectangle;
+            Rectangle lastScissorRectangle = GraphicsDevice.ScissorRectangle;
+            bool lastBlend = GraphicsDevice.Blend;
+            bool lastDepthTest = GraphicsDevice.DepthTest;
 
-            GL.PushAttrib(AttribMask.EnableBit | AttribMask.ColorBufferBit | AttribMask.TransformBit);
             GraphicsDevice.Blend = true;
             GraphicsDevice.CullBackfaces = false;
             GraphicsDevice.DepthTest = false;
             GraphicsDevice.ScissorTest = true;
-            GL.EnableClientState(ArrayCap.VertexArray);
-            GL.EnableClientState(ArrayCap.TextureCoordArray);
-            GL.EnableClientState(ArrayCap.ColorArray);
-            GL.Enable(EnableCap.Texture2D);
-            GLHelper.CheckLastError();
+            
+            drawData.ScaleClipRects(_io.DisplayFramebufferScale);
+            
+            GraphicsDevice.ScissorRectangle = new Rectangle(0, 0, windowWidth, windowHeight);
+            GraphicsDevice.ViewportRectangle = new Rectangle(0, 0, windowWidth, windowHeight);
 
-            for (int i = 0; i < 3; i++)
+            UpdateBuffers(drawData);
+
+            RenderCommandLists(drawData);
+            
+            GraphicsDevice.ViewportRectangle = lastViewport;
+            GraphicsDevice.ScissorRectangle = lastScissorRectangle;
+            GraphicsDevice.Blend = lastBlend;
+            GraphicsDevice.DepthTest = lastDepthTest;
+        }
+
+        private unsafe void UpdateBuffers(ImDrawDataPtr drawData)
+        {
+            if (drawData.TotalVtxCount == 0)
+                return;
+            
+            // Expand buffers if we need more room.
+            if (drawData.TotalVtxCount > _vertexBufferSize)
             {
-                GL.DisableVertexAttribArray(i);
+                _vertexBuffer?.Dispose();
+
+                _vertexBufferSize = (int)(drawData.TotalVtxCount * 1.5f);
+                _vertexBuffer = VertexBuffer.Create(GraphicsDevice, 
+                                                    _vertexBufferSize * sizeof(ImDrawVert),
+                                                    VertexTypeInfo.Get<VertexPosition2DTextureColor>(),
+                                                    BufferUsage.DynamicDraw,
+                                                    clear: false,
+                                                    dynamic: true);
+                _vertexData = new byte[_vertexBufferSize * sizeof(ImDrawVert)];
             }
 
-            // Handle cases of screen coordinates != from framebuffer coordinates (e.g. retina displays)
-            //ImGuiIOPtr io = ImGui.GetIO();
-            drawData.ScaleClipRects(_io.DisplayFramebufferScale);
+            if (drawData.TotalIdxCount > _indexBufferSize)
+            {
+                _indexBuffer?.Dispose();
 
-            // Setup orthographic projection matrix
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.PushMatrix();
-            GL.LoadIdentity();
-            GL.Ortho(
-                     0.0f,
-                     _io.DisplaySize.X / _io.DisplayFramebufferScale.X,
-                     _io.DisplaySize.Y / _io.DisplayFramebufferScale.Y,
-                     0.0f,
-                     -1.0f,
-                     1.0f);
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
-            GL.LoadIdentity();
-            GLHelper.CheckLastError();
+                _indexBufferSize = (int)(drawData.TotalIdxCount * 1.5f);
+                _indexBuffer = IndexBuffer.Create(GraphicsDevice,
+                                                  _indexBufferSize,
+                                                  sizeof(ushort),
+                                                  DrawElementsType.UnsignedShort,
+                                                  BufferUsage.DynamicDraw,
+                                                  clear: false,
+                                                  dynamic: true);
+                                                  
+                _indexData = new byte[_indexBufferSize * sizeof(ushort)];
+            }
+            
+            // Copy ImGui's vertices and indices to a set of managed byte arrays
+            int vtxOffset = 0;
+            int idxOffset = 0;
 
             for (int n = 0; n < drawData.CmdListsCount; n++)
             {
-                unsafe
+                ImDrawListPtr cmdList = drawData.CmdListsRange[n];
+
+                fixed (void* vtxDstPtr = &_vertexData[vtxOffset * sizeof(ImDrawVert)])
+                fixed (void* idxDstPtr = &_indexData[idxOffset * sizeof(ushort)])
                 {
-                    ImDrawListPtr cmdList = drawData.CmdListsRange[n];
-                    IntPtr vtxBufferData = cmdList.VtxBuffer.Data;
-                    ushort* idxBufferData = (ushort*)cmdList.IdxBuffer.Data;
-
-                    GL.VertexPointer(2, VertexPointerType.Float, sizeof(ImDrawVert), vtxBufferData);
-                    GL.TexCoordPointer(2, TexCoordPointerType.Float, sizeof(ImDrawVert), vtxBufferData + 8);
-                    GL.ColorPointer(4, ColorPointerType.UnsignedByte, sizeof(ImDrawVert), vtxBufferData + 16);
-                    GLHelper.CheckLastError();
-
-                    for (int cmdIndex = 0; cmdIndex < cmdList.CmdBuffer.Size; cmdIndex++)
-                    {
-                        ImDrawCmdPtr pcmd = cmdList.CmdBuffer[cmdIndex];
-                        {
-                            IntPtr textureId = pcmd.TextureId;
-
-                            GraphicsDevice.BindTexture(0, _boundTextures[textureId]);
-
-                            GraphicsDevice.ScissorRectangle = new Rectangle((int)pcmd.ClipRect.X,
-                                                                            (int)(_io.DisplaySize.Y - pcmd.ClipRect.W),
-                                                                            (int)(pcmd.ClipRect.Z - pcmd.ClipRect.X),
-                                                                            (int)(pcmd.ClipRect.W - pcmd.ClipRect.Y));
-                            ushort[] indices = new ushort[pcmd.ElemCount];
-                            for (int i = 0; i < indices.Length; i++)
-                            {
-                                indices[i] = idxBufferData[i];
-                            }
-
-                            GL.DrawElements(OpenTK.Graphics.OpenGL.PrimitiveType.Triangles, (int)pcmd.ElemCount,
-                                            DrawElementsType.UnsignedShort, new IntPtr(idxBufferData));
-                            GLHelper.CheckLastError();
-                        }
-
-                        idxBufferData += pcmd.ElemCount;
-                    }
+                    Buffer.MemoryCopy((void*)cmdList.VtxBuffer.Data, 
+                                      vtxDstPtr, 
+                                      _vertexData.Length, 
+                                      cmdList.VtxBuffer.Size * sizeof(ImDrawVert));
+                    Buffer.MemoryCopy((void*)cmdList.IdxBuffer.Data, 
+                                      idxDstPtr, 
+                                      _indexData.Length, 
+                                      cmdList.IdxBuffer.Size * sizeof(ushort));
                 }
+
+                vtxOffset += cmdList.VtxBuffer.Size;
+                idxOffset += cmdList.IdxBuffer.Size;
+            }
+            
+            // Copy the managed byte arrays to the gpu vertex and index buffers
+            _vertexBuffer.SetData(_vertexData, drawData.TotalVtxCount * sizeof(ImDrawVert));
+            _indexBuffer.SetData(_indexData, drawData.TotalIdxCount * sizeof(ushort));
+        }
+
+        private void RenderCommandLists(ImDrawDataPtr drawData)
+        {
+            GraphicsDevice.BindVertexBuffer(_vertexBuffer);
+            GraphicsDevice.BindIndexBuffer(_indexBuffer);
+            GraphicsDevice.BindShaderProgram(_shaderProgram);
+
+            int vtxOffset = 0;
+            int idxOffset = 0;
+            
+            _vertexBuffer.VertexTypeInfo.Apply(_shaderProgram);
+
+            for (int n = 0; n < drawData.CmdListsCount; n++)
+            {
+                ImDrawListPtr cmdList = drawData.CmdListsRange[n];
+
+                for (int cmdi = 0; cmdi < cmdList.CmdBuffer.Size; cmdi++)
+                {
+                    ImDrawCmdPtr drawCmd = cmdList.CmdBuffer[cmdi];
+
+                    if (!_boundTextures.ContainsKey(drawCmd.TextureId))
+                    {
+                        throw new InvalidOperationException($"Could not find a texture with id '{drawCmd.TextureId}', please check your bindings");
+                    }
+                    
+                    GraphicsDevice.ScissorRectangle = new Rectangle((int)drawCmd.ClipRect.X, 
+                                                                    (int)(_io.DisplaySize.Y - drawCmd.ClipRect.W),
+                                                                    (int)(drawCmd.ClipRect.Z - drawCmd.ClipRect.X),
+                                                                    (int)(drawCmd.ClipRect.W - drawCmd.ClipRect.Y));
+
+                    UpdateShader(_boundTextures[drawCmd.TextureId]);
+
+                    int baseVertex = vtxOffset;
+                    int minVertexIndex = 0;
+                    int numVertices = cmdList.VtxBuffer.Size;
+                    int startIndex = idxOffset;
+
+                    
+                    
+                    GL.DrawRangeElementsBaseVertex(PrimitiveType.Triangles,
+                                                   minVertexIndex,
+                                                   minVertexIndex + numVertices - 1,
+                                                   (int)drawCmd.ElemCount,
+                                                   DrawElementsType.UnsignedShort,
+                                                   (IntPtr)(startIndex * sizeof(ushort)),
+                                                   baseVertex);
+                    GLHelper.CheckLastError();
+                    
+                    unchecked
+                    {
+                        //GraphicsMetrics._drawCalls++;
+                        //GraphicsMetrics._primitiveCount += numVertices;
+                    }
+
+                    idxOffset += (int)drawCmd.ElemCount;
+                }
+
+                vtxOffset += cmdList.VtxBuffer.Size;
+            }
+        }
+
+        private void UpdateShader(Texture2D texture)
+        {
+            if (_io.DisplaySize.X != _displayX ||
+                _io.DisplaySize.Y != _displayY)
+            {
+                _projection = Matrix4x4.CreateOrthographicOffCenter(0f, _io.DisplaySize.X, _io.DisplaySize.Y, 0, -1f, 1f);
+                _displayX = _io.DisplaySize.X;
+                _displayY = _io.DisplaySize.Y;
+                _shaderProgram.SetUniform("projection", ref _projection);
             }
 
-            // Restore modified state
-            GL.DisableClientState(ArrayCap.ColorArray);
-            GL.DisableClientState(ArrayCap.TextureCoordArray);
-            GL.DisableClientState(ArrayCap.VertexArray);
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PopMatrix();
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.PopMatrix();
-            GL.PopAttrib();
+            GraphicsDevice.BindTexture(0, texture);
+        }
 
-            GraphicsDevice.BindShaderProgram(null);
-            GraphicsDevice.BindTexture(0, null);
-            //GraphicsDevice.BindVertexBuffer(null);
-            //GraphicsDevice.BindIndexBuffer(null);
+        private VertexShader CreateVertexShader()
+        {
+            return new VertexShader(GraphicsDevice, @"#version 330 core
 
-            GraphicsDevice.ScissorRectangle = oldScissorRectangle;
-            //GraphicsDevice.WireframeRendering = oldWireframeRendering;
-            GraphicsDevice.ViewportRectangle = oldViewport;
-            GraphicsDevice.Blend = oldBlend;
-            GraphicsDevice.CullBackfaces = oldCullBackfaces;
-            GraphicsDevice.DepthTest = oldDepthTest;
-            GraphicsDevice.ScissorTest = oldScissorTest;
+                layout (location = 0) in vec2 aPos;
+                layout (location = 1) in vec2 aTexCoord;
+                layout (location = 2) in vec4 aColor;
+                
+                out vec2 TexCoord;
+                out vec4 Color;
 
-            GLHelper.CheckLastError();
+                uniform mat4 projection;
+                
+                void main()
+                {
+                    gl_Position = projection * vec4(aPos, 1.0, 1.0);
+                    TexCoord = aTexCoord;
+                    Color = aColor;
+                }"
+            );
         }
         
+        private FragmentShader CreateFragmentShader()
+        {
+            return new FragmentShader(GraphicsDevice, @"#version 330 core
+                
+                out vec4 FragColor;
+                
+                in vec2 TexCoord;
+                in vec4 Color;
+                
+                uniform sampler2D texture0;
+                
+                void main()
+                {
+                    FragColor = texture(texture0, TexCoord) * Color;
+                }"
+            );
+        }
+
+        private ShaderProgram CreateShaderProgram()
+        {
+            VertexShader vertexShader = CreateVertexShader();
+            FragmentShader fragmentShader = CreateFragmentShader();
+            
+            ShaderProgram shaderProgram = new ShaderProgram(GraphicsDevice);
+
+            shaderProgram.Link(vertexShader, fragmentShader);
+            
+            vertexShader.Dispose();
+            fragmentShader.Dispose();
+            
+            ShaderHelper.BuildShaderInfo(shaderProgram);
+
+            return shaderProgram;
+        }
+
         public void SetStyleDefaults()
         {
             ImGuiStylePtr style = ImGui.GetStyle();

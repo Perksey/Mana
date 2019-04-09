@@ -11,14 +11,14 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics.Vertex
 {
-    internal class VertexTypeInfo
+    public class VertexTypeInfo
     {
         private static Logger _log = Logger.Create();
         private static Dictionary<Type, VertexTypeInfo> _vertexTypeInfoCache;
         private static bool _initialized;
 
-        public readonly int VertexStride;
-        public readonly VertexAttributeInfo[] Attributes;
+        internal readonly int VertexStride;
+        internal readonly VertexAttributeInfo[] Attributes;
 
         public VertexTypeInfo(Type type)
         {
@@ -45,7 +45,7 @@ namespace Mana.Graphics.Vertex
             _initialized = true;
         }
 
-        internal static VertexTypeInfo Get<T>()
+        public static VertexTypeInfo Get<T>()
         {
             Debug.Assert(_initialized);
 
@@ -57,22 +57,23 @@ namespace Mana.Graphics.Vertex
             throw new ArgumentOutOfRangeException(typeof(T).FullName, "Type not found in VertexTypeInfo cache. Was the type generated at runtime?");
         }
 
-        internal void Apply(ShaderProgram program)
+        public void Apply(ShaderProgram program)
         {
             int location = 0;
             for (uint i = 0; i < Attributes.Length; i++)
             {
+                EnableDisableAttributes(program, i);
+                
                 VertexAttributeInfo attribute = Attributes[i];
                 
+                GLHelper.CheckLastError();
                 GL.VertexAttribPointer(i,
                                        attribute.ComponentCount,
                                        attribute.Type,
                                        attribute.Normalize,
                                        VertexStride,
-                                       location);
+                                       new IntPtr(location));
                 GLHelper.CheckLastError();
-
-                EnableDisableAttributes(program, i);
 
                 location += attribute.Size * attribute.ComponentCount;
             }
@@ -85,7 +86,7 @@ namespace Mana.Graphics.Vertex
             {
                 EnableDisableAttributes(program, i);
 
-                program.AttributesByLocation.TryGetValue(i, out ShaderAttributeInfo info);
+                //program.AttributesByLocation.TryGetValue(i, out ShaderAttributeInfo info);
 
                 VertexAttributeInfo attribute = Attributes[i];
                 

@@ -33,19 +33,7 @@ namespace Mana.Asset.Loaders
             manager.Unload(fragmentShader);
             manager.Unload(vertexShader);
 
-            ShaderHelper.GetAttributeInfo(shaderProgram.Handle,
-                                          out int attributeCount,
-                                          out var attributes,
-                                          out var attributesByLocation);
-            shaderProgram.AttributeCount = attributeCount;
-            shaderProgram.Attributes = attributes;
-            shaderProgram.AttributesByLocation = attributesByLocation;
-
-            ShaderHelper.GetUniformInfo(shaderProgram.Handle,
-                                        out int uniformCount,
-                                        out var uniforms);
-            shaderProgram.UniformCount = uniformCount;
-            shaderProgram.Uniforms = uniforms;
+            ShaderHelper.BuildShaderInfo(shaderProgram);
 
             shaderProgram.SourcePath = assetSource.Path;
             shaderProgram.VertexShaderPath = vertexShaderPath;

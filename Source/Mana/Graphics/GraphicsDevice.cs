@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Mana.Graphics.Buffers;
 using Mana.Graphics.Shaders;
 using Mana.Graphics.Vertex;
 using Mana.Logging;
@@ -64,6 +65,12 @@ namespace Mana.Graphics
 
             _maxTextureImageUnits = GLHelper.GetInteger(GetPName.MaxTextureImageUnits);
             Bindings.TextureUnits = new GLHandle[_maxTextureImageUnits];
+            
+            int vao = GL.GenVertexArray();
+            GLHelper.CheckLastError();
+            
+            GL.BindVertexArray(vao);
+            GLHelper.CheckLastError();
         }
 
         
@@ -191,6 +198,82 @@ namespace Mana.Graphics
         
         #region Bindings
 
+        /// <summary>
+        /// Binds the given <see cref="VertexBuffer"/> object to the GraphicsDevice.
+        /// </summary>
+        /// <param name="vbo">The <see cref="VertexBuffer"/> object to bind.</param>
+        public void BindVertexBuffer(VertexBuffer vbo)
+        {
+            if (vbo == null)
+            {
+                BindBuffer(BufferTarget.ArrayBuffer, GLHandle.Zero);
+                Bindings.VertexBuffer = GLHandle.Zero;
+                return;
+            }
+            
+            Debug.Assert(!vbo.Disposed);
+
+            if (Bindings.VertexBuffer == vbo.Handle)
+                return;
+
+            BindBuffer(BufferTarget.ArrayBuffer, vbo.Handle);
+            Bindings.VertexBuffer = vbo.Handle;
+        }
+        
+        /// <summary>
+        /// Ensures that the given <see cref="VertexBuffer"/> object is unbound.
+        /// </summary>
+        /// <param name="vbo">The <see cref="VertexBuffer"/> object to ensure is unbound.</param>
+        public void UnbindVertexBuffer(VertexBuffer vbo)
+        {
+            if (vbo == null)
+                throw new ArgumentNullException(nameof(vbo));
+
+            if (Bindings.VertexBuffer != vbo.Handle)
+                return;
+
+            BindBuffer(BufferTarget.ArrayBuffer, GLHandle.Zero);
+            Bindings.VertexBuffer = GLHandle.Zero;
+        }
+        
+        /// <summary>
+        /// Binds the given <see cref="IndexBuffer"/> object to the GraphicsDevice.
+        /// </summary>
+        /// <param name="ebo">The <see cref="IndexBuffer"/> object to bind.</param>
+        public void BindIndexBuffer(IndexBuffer ebo)
+        {
+            if (ebo == null)
+            {
+                BindBuffer(BufferTarget.ElementArrayBuffer, GLHandle.Zero);
+                Bindings.IndexBuffer = GLHandle.Zero;
+                return;
+            }
+
+            Debug.Assert(!ebo.Disposed);
+
+            if (Bindings.IndexBuffer == ebo.Handle)
+                return;
+
+            BindBuffer(BufferTarget.ElementArrayBuffer, ebo.Handle);
+            Bindings.IndexBuffer = ebo.Handle;
+        }
+
+        /// <summary>
+        /// Ensures that the given <see cref="IndexBuffer"/> object is unbound.
+        /// </summary>
+        /// <param name="ebo">The <see cref="IndexBuffer"/> object to ensure is unbound.</param>
+        public void UnbindIndexBuffer(IndexBuffer ebo)
+        {
+            if (ebo == null)
+                throw new ArgumentNullException(nameof(ebo));
+
+            if (Bindings.IndexBuffer != ebo.Handle)
+                return;
+
+            BindBuffer(BufferTarget.ElementArrayBuffer, GLHandle.Zero);
+            Bindings.IndexBuffer = GLHandle.Zero;
+        }
+        
         /// <summary>
         /// Binds the given <see cref="ShaderProgram"/> object to the GraphicsDevice.
         /// </summary>
@@ -356,8 +439,37 @@ namespace Mana.Graphics
                 GraphicsMetrics._drawCalls++;
             }
         }
+
+        public void Render(VertexBuffer vertexBuffer,
+                           ShaderProgram shaderProgram,
+                           PrimitiveType primitiveType = PrimitiveType.Triangles)
+        {
+            if (vertexBuffer.VertexCount == 0)
+                return;
+            
+            BindVertexBuffer(vertexBuffer);
+            BindShaderProgram(shaderProgram);
+
+            vertexBuffer.VertexTypeInfo.Apply(shaderProgram);
+
+            GL.DrawArrays(primitiveType, 0, vertexBuffer.VertexCount);
+            GLHelper.CheckLastError();
+
+            unchecked
+            {
+                GraphicsMetrics._drawCalls++;
+                GraphicsMetrics._primitiveCount += vertexBuffer.VertexCount;
+            }
+        }
         
         #endregion
+
+
+        public bool IsVersionAtLeast(int major, int minor)
+        {
+            int version = (Extensions.Major * 10) + Extensions.Minor;
+            return version >= (major * 10) + minor;
+        }
         
         
         #region Private Helpers

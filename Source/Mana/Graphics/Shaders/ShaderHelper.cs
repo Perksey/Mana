@@ -5,7 +5,7 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics.Shaders
 {
-    internal static class ShaderHelper
+    public static class ShaderHelper
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CompileShader(GLHandle shaderHandle)
@@ -114,6 +114,23 @@ namespace Mana.Graphics.Shaders
                 ShaderUniformInfo info = new ShaderUniformInfo(name, location, size, type);
                 uniforms.Add(name, info);
             }
+        }
+
+        public static void BuildShaderInfo(ShaderProgram shaderProgram)
+        {
+            GetAttributeInfo(shaderProgram.Handle,
+                                          out int attributeCount,
+                                          out var attributes,
+                                          out var attributesByLocation);
+            shaderProgram.AttributeCount = attributeCount;
+            shaderProgram.Attributes = attributes;
+            shaderProgram.AttributesByLocation = attributesByLocation;
+
+            GetUniformInfo(shaderProgram.Handle,
+                                        out int uniformCount,
+                                        out var uniforms);
+            shaderProgram.UniformCount = uniformCount;
+            shaderProgram.Uniforms = uniforms;
         }
     }
 }

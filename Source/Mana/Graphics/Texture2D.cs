@@ -109,7 +109,7 @@ namespace Mana.Graphics
             WrapMode = TextureWrapMode.Repeat;
         }
 
-        public unsafe void SetDataFromAlpha(byte* data, int width, int height)
+        public unsafe void SetDataFromRgba(byte* data, int width, int height)
         {
             GraphicsDevice.BindTexture(0, this);
 

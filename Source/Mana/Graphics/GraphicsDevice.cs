@@ -55,10 +55,12 @@ namespace Mana.Graphics
             _log.Info($"ShadingLanguageVersion: {GLHelper.GetString(StringName.ShadingLanguageVersion)}");
             
             _log.Info($"Number of Available Extensions: {GLHelper.GetInteger(GetPName.NumExtensions).ToString()}");
+
+            _log.Info($"Max Texture Size: {GLHelper.GetInteger((GetPName.MaxTextureSize))}");
             
-            _log.Warn("Some random warning.");
-            _log.Error("An error occured.");
-            _log.Fatal("Fatal error occured.");
+            //_log.Warn("Some random warning.");
+            //_log.Error("An error occured.");
+            //_log.Fatal("Fatal error occured.");
 
             _maxTextureImageUnits = GLHelper.GetInteger(GetPName.MaxTextureImageUnits);
             Bindings.TextureUnits = new GLHandle[_maxTextureImageUnits];

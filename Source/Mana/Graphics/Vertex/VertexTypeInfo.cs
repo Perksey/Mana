@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Mana.Graphics.Shaders;
+using Mana.Logging;
 using Mana.Utilities.Reflection;
 using OpenTK.Graphics.OpenGL4;
 
@@ -12,6 +13,7 @@ namespace Mana.Graphics.Vertex
 {
     internal class VertexTypeInfo
     {
+        private static Logger _log = Logger.Create();
         private static Dictionary<Type, VertexTypeInfo> _vertexTypeInfoCache;
         private static bool _initialized;
 

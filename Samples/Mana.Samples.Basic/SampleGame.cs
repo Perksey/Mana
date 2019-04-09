@@ -23,7 +23,7 @@ namespace Mana.Samples.Basic
         
         protected override void Initialize()
         {
-            this.Window.Title = "Hello";
+            Window.Title = "Hello";
 
             _shader = AssetManager.Load<ShaderProgram>("./Assets/Shaders/shader1.json");
             
@@ -41,7 +41,7 @@ namespace Mana.Samples.Basic
         protected override void Render(float time, float deltaTime)
         {
             GraphicsDevice.Clear(Color.White);
-            GraphicsDevice.Render(_vertexData, _shader);
+            //GraphicsDevice.Render(_vertexData, _shader);
             
             if (ImGui.BeginMainMenuBar())
             {
@@ -63,21 +63,21 @@ namespace Mana.Samples.Basic
 
                 if (ImGui.BeginMenu("View"))
                 {
-                    void WindowToggle(string label, ref bool toggle)
-                    {
-                        if (ImGui.MenuItem(label, null, toggle))
-                        {
-                            toggle = !toggle;
-                        }
-                    }
-
-                    //WindowToggle("Scene", ref _sceneWindowOpen);
-                    //WindowToggle("Inspector", ref _inspectorWindowOpen);
-
-                    ImGui.Separator();
-
-                    //WindowToggle("Metrics", ref _metricsWindowOpen);
-                    //WindowToggle("Graphics Resources", ref _graphicsResourcesWindowOpen);
+                    // void WindowToggle(string label, ref bool toggle)
+                    // {
+                    //     if (ImGui.MenuItem(label, null, toggle))
+                    //     {
+                    //         toggle = !toggle;
+                    //     }
+                    // }
+                    //
+                    // WindowToggle("Scene", ref _sceneWindowOpen);
+                    // WindowToggle("Inspector", ref _inspectorWindowOpen);
+                    //
+                    // ImGui.Separator();
+                    //
+                    // WindowToggle("Metrics", ref _metricsWindowOpen);
+                    // WindowToggle("Graphics Resources", ref _graphicsResourcesWindowOpen);
 
                     ImGui.EndMenu();
                 }

@@ -118,11 +118,11 @@ namespace Mana.Graphics
             
             GL.TexImage2D(TextureTarget.Texture2D,
                           0,
-                          PixelInternalFormat.Alpha,
+                          PixelInternalFormat.Rgba,
                           Width,
                           Height,
                           0,
-                          PixelFormat.Alpha,
+                          PixelFormat.Rgba,
                           PixelType.UnsignedByte,
                           new IntPtr(data));
             GLHelper.CheckLastError();

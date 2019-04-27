@@ -418,11 +418,17 @@ namespace Mana.Graphics
         
         #region Render
 
+        [Obsolete("This method is deprecated. Use VertexBuffer rendering instead.")]
         public void Render<T>(T[] vertexData, 
                               ShaderProgram shaderProgram, 
                               PrimitiveType primitiveType = PrimitiveType.Triangles)
             where T : unmanaged
         {
+            if (vertexData.Length == 0)
+                return;
+            
+            BindVertexBuffer(null);
+            BindIndexBuffer(null);
             BindShaderProgram(shaderProgram);
 
             GCHandle pinned = GCHandle.Alloc(vertexData, GCHandleType.Pinned);
@@ -448,6 +454,7 @@ namespace Mana.Graphics
                 return;
             
             BindVertexBuffer(vertexBuffer);
+            BindIndexBuffer(null);
             BindShaderProgram(shaderProgram);
 
             vertexBuffer.VertexTypeInfo.Apply(shaderProgram);
@@ -459,6 +466,29 @@ namespace Mana.Graphics
             {
                 GraphicsMetrics._drawCalls++;
                 GraphicsMetrics._primitiveCount += vertexBuffer.VertexCount;
+            }
+        }
+
+        public void Render(VertexBuffer vertexBuffer,
+                           IndexBuffer indexBuffer,
+                           ShaderProgram shaderProgram,
+                           PrimitiveType primitiveType = PrimitiveType.Triangles)
+        {
+            if (vertexBuffer.VertexCount == 0 || indexBuffer.IndexCount == 0)
+                return;
+
+            BindVertexBuffer(vertexBuffer);
+            BindIndexBuffer(indexBuffer);
+            BindShaderProgram(shaderProgram);
+            
+            vertexBuffer.VertexTypeInfo.Apply(shaderProgram);
+            
+            GL.DrawElements(primitiveType, indexBuffer.IndexCount, indexBuffer.DataType, 0);
+            
+            unchecked
+            {
+                GraphicsMetrics._drawCalls++;
+                GraphicsMetrics._primitiveCount += indexBuffer.IndexCount;
             }
         }
         

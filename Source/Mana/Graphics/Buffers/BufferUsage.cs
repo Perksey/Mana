@@ -12,14 +12,4 @@ namespace Mana.Graphics.Buffers
         DynamicRead = 35049,
         DynamicCopy = 35050,
     }
-
-    public static class BufferUsageExtensions
-    {
-        public static bool IsDynamic(this BufferUsage bufferUsage)
-        {
-            return bufferUsage == BufferUsage.DynamicDraw ||
-                   bufferUsage == BufferUsage.DynamicRead ||
-                   bufferUsage == BufferUsage.DynamicCopy;
-        }
-    }
 }

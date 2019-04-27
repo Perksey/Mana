@@ -30,6 +30,10 @@ namespace Mana.Graphics.Vertex
                 Attributes[i] = VertexHelper.GetVertexAttributeInfo(fields[i].FieldType);
                 VertexStride += Attributes[i].Size * Attributes[i].ComponentCount;
             }
+
+            var asdfasd = 1;
+            var sdsdfsd = 1.0f;
+            var asdfsdf = true;
         }
 
         internal static void Initialize()
@@ -65,6 +69,8 @@ namespace Mana.Graphics.Vertex
                 EnableDisableAttributes(program, i);
                 
                 VertexAttributeInfo attribute = Attributes[i];
+
+                Dictionary<string[], Dictionary<int, List<string>>> foo = new Dictionary<string[], Dictionary<int, List<string>>>();
                 
                 GLHelper.CheckLastError();
                 GL.VertexAttribPointer(i,

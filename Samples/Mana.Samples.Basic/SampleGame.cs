@@ -1,14 +1,11 @@
 using System;
 using System.Numerics;
-using System.Reflection;
-using System.Runtime.Remoting.Messaging;
 using ImGuiNET;
 using Mana.Graphics;
 using Mana.Graphics.Buffers;
 using Mana.Graphics.Shaders;
 using Mana.Graphics.Vertex.Types;
 using Mana.IMGUI;
-using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Samples.Basic
 {
@@ -28,14 +25,14 @@ namespace Mana.Samples.Basic
             new VertexPositionColor(new Vector3(-0.3f, -0.5f, 0f), Color.Magenta),
         };
         
-        private VertexPositionColor[] _c = new VertexPositionColor[]
+        private VertexPositionColor[] _c = 
         {
             new VertexPositionColor(new Vector3(-0.3f, 0.5f, 0f), Color.Purple),
             new VertexPositionColor(new Vector3(-0.3f, -0.5f, 0f), Color.Gray),
             new VertexPositionColor(new Vector3(-0.1f, -0.5f, 0f), Color.White),
         };
         
-        private VertexPositionColor[] _data = new VertexPositionColor[]
+        private VertexPositionColor[] _data = 
         {
             new VertexPositionColor(new Vector3(-0.1f, 0.5f, 0f), Color.Magenta),
             new VertexPositionColor(new Vector3(-0.1f, -0.5f, 0f), Color.Magenta),
@@ -48,20 +45,30 @@ namespace Mana.Samples.Basic
             new VertexPositionColor(new Vector3(0.5f, -0.5f, 0f), Color.Magenta),
         };
 
+        private ushort[] _indices = 
+        {
+            0, 1, 2, 3, 4, 5, 6, 7, 8,
+        };
+
         private ShaderProgram _shader;
         private VertexBuffer _vertexBuffer;
+        private IndexBuffer _indexBuffer;
+        
+        private Texture2D _texture;
         
         protected override void Initialize()
         {
             Window.Title = "Hello";
 
-            //_shader = AssetManager.Load<ShaderProgram>("./Assets/Shaders/shader1.json");
+            _shader = AssetManager.Load<ShaderProgram>("./Assets/Shaders/shader1.json");
+
+            _texture = AssetManager.Load<Texture2D>("./Assets/Textures/cat.jpeg");
             
             Components.Add(new ImGuiRenderer());
 
-            //_vertexBuffer = VertexBuffer.Create(GraphicsDevice, _data, BufferUsage.StaticDraw, dynamic: true);
+            _vertexBuffer = VertexBuffer.Create(GraphicsDevice, _data, BufferUsage.StaticDraw, dynamic: true);
             
-            //_vertexBuffer = VertexBuffer.Create(GraphicsDevice, _vertexData, BufferUsage.StaticDraw);
+            _indexBuffer = IndexBuffer.Create(GraphicsDevice, _indices, BufferUsage.StaticDraw, dynamic: true);
         }
 
         protected override unsafe void Update(float time, float deltaTime)
@@ -91,6 +98,7 @@ namespace Mana.Samples.Basic
         {
             GraphicsDevice.Clear(Color.Gray);
             //GraphicsDevice.Render(_vertexBuffer, _shader);
+            GraphicsDevice.Render(_vertexBuffer, _indexBuffer, _shader);
 
             if (ImGui.BeginMainMenuBar())
             {

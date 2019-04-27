@@ -1,4 +1,6 @@
 using System;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using Mana.Asset;
@@ -8,6 +10,8 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using Image = SixLabors.ImageSharp.Image;
+using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace Mana.Graphics
 {
@@ -78,6 +82,30 @@ namespace Mana.Graphics
                 _wrapMode = value;
             }
         }
+        
+        public void SetDataFromBitmap(Bitmap bitmap)
+        {
+            GraphicsDevice.BindTexture(0, this);
+
+            BitmapData data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                                              ImageLockMode.ReadOnly,
+                                              System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            GL.TexImage2D(TextureTarget.Texture2D,
+                          0,
+                          PixelInternalFormat.Rgba,
+                          bitmap.Width,
+                          bitmap.Height,
+                          0,
+                          PixelFormat.Bgra,
+                          PixelType.UnsignedByte,
+                          data.Scan0);
+            
+            bitmap.UnlockBits(data);
+            
+            FilterMode = TextureFilterMode.Nearest;
+            WrapMode = TextureWrapMode.Repeat;
+        }
 
         public unsafe void SetDataFromStream(Stream stream)
         {
@@ -95,8 +123,8 @@ namespace Mana.Graphics
                     GL.TexImage2D(TextureTarget.Texture2D,
                                   0,
                                   PixelInternalFormat.Rgba,
-                                  Width,
-                                  Height,
+                                  image.Width,
+                                  image.Height,
                                   0,
                                   PixelFormat.Rgba,
                                   PixelType.UnsignedByte,

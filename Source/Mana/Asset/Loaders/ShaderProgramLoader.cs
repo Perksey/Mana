@@ -15,7 +15,6 @@ namespace Mana.Asset.Loaders
                 description = JsonConvert.DeserializeObject<ShaderProgramDescription>(streamReader.ReadToEnd());
             }
             
-            
             string containingPath = Path.GetDirectoryName(assetSource.Path);
             if (containingPath == null)
                 throw new System.Exception("Error getting parent for path: " + assetSource.Path);

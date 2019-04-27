@@ -24,7 +24,7 @@ namespace Mana.Graphics.Buffers
             GLHelper.CheckLastError();
         }
 
-        public static unsafe IndexBuffer Create(GraphicsDevice graphicsDevice,
+        public static IndexBuffer Create(GraphicsDevice graphicsDevice,
                                                 ushort[] data,
                                                 BufferUsage bufferUsage,
                                                 bool dynamic = false)
@@ -63,7 +63,7 @@ namespace Mana.Graphics.Buffers
             return ibo;
         }
         
-        public static unsafe IndexBuffer Create(GraphicsDevice graphicsDevice,
+        public static IndexBuffer Create(GraphicsDevice graphicsDevice,
                                                 int elementCount,
                                                 int elementSizeInBytes,
                                                 DrawElementsType dataType,

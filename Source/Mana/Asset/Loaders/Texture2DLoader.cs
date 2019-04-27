@@ -6,7 +6,9 @@ namespace Mana.Asset.Loaders
     {
         public Texture2D Load(AssetManager manager, AssetSource assetSource)
         {
-            throw new System.NotImplementedException();
+            Texture2D texture = new Texture2D(manager.GraphicsDevice);
+            texture.SetDataFromStream(assetSource.Stream);
+            return texture;
         }
     }
 }

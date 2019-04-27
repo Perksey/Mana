@@ -127,7 +127,7 @@ namespace Mana.Graphics
                        "Mana",
                        GameWindowFlags.Default,
                        DisplayDevice.Default,
-                       2, 
+                       4,
                        0,
                        GraphicsContextFlags.Debug)
             {

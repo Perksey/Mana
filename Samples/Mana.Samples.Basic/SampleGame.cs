@@ -11,22 +11,14 @@ namespace Mana.Samples.Basic
 {
     public class SampleGame : Game
     {
-        private VertexPositionTexture[] _data = 
+        private VertexPositionTexture[] _vertices = 
         {
-            new VertexPositionTexture(new Vector3(-0.5f, -0.5f, 0f), new Vector2(0.0f, 0.0f)),    // BL
-            new VertexPositionTexture(new Vector3( 0.5f, -0.5f, 0f), new Vector2(1.0f, 0.0f)),    // BR
-            new VertexPositionTexture(new Vector3( 0.5f,  0.5f, 0f), new Vector2(1.0f, 1.0f)),    // TR
-            new VertexPositionTexture(new Vector3(-0.5f,  0.5f, 0f), new Vector2(0.0f, 1.0f)),    // TL
+            new VertexPositionTexture(new Vector3(-0.3f, -0.5f, 0f), new Vector2(0.0f, 0.0f)),    // BL
+            new VertexPositionTexture(new Vector3( 0.3f, -0.5f, 0f), new Vector2(1.0f, 0.0f)),    // BR
+            new VertexPositionTexture(new Vector3( 0.3f,  0.5f, 0f), new Vector2(1.0f, 1.0f)),    // TR
+            new VertexPositionTexture(new Vector3(-0.3f,  0.5f, 0f), new Vector2(0.0f, 1.0f)),    // TL
         };
         
-        private VertexPositionColor[] _dataC = 
-        {
-            new VertexPositionColor(new Vector3(-0.5f, -0.5f, 0f), Color.Red),                    // BL
-            new VertexPositionColor(new Vector3( 0.5f, -0.5f, 0f), Color.Green),                  // BR
-            new VertexPositionColor(new Vector3( 0.5f,  0.5f, 0f), Color.Yellow),                 // TR
-            new VertexPositionColor(new Vector3(-0.5f,  0.5f, 0f), Color.Blue),                   // TL
-        };
-
         private ushort[] _indices = 
         {
             0, 1, 2, 0, 2, 3, 
@@ -49,7 +41,7 @@ namespace Mana.Samples.Basic
             
             Components.Add(new ImGuiRenderer());
 
-            _vertexBuffer = VertexBuffer.Create(GraphicsDevice, _data, BufferUsage.StaticDraw, dynamic: true);
+            _vertexBuffer = VertexBuffer.Create(GraphicsDevice, _vertices, BufferUsage.StaticDraw, dynamic: true);
             _indexBuffer = IndexBuffer.Create(GraphicsDevice, _indices, BufferUsage.StaticDraw, dynamic: true);
         }
 

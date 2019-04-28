@@ -7,6 +7,9 @@ namespace Mana
 {
     public abstract class Game : IDisposable
     {
+        private float _fpsAccumulator = 0;
+        private int _fpsFrameCounter = 0;
+        
         protected Game()
         {
             VertexTypeInfo.Initialize();
@@ -77,11 +80,29 @@ namespace Mana
             Components.LateRender(time, deltaTime);
 
             Input.Update();
-            // TODO: Update Metrics Here
+
+            UpdateMetrics(deltaTime);
         }
 
         protected abstract void Initialize();
         protected abstract void Update(float time, float deltaTime);
         protected abstract void Render(float time, float deltaTime);
+
+        private void UpdateMetrics(float deltaTime)
+        {
+            _fpsAccumulator += deltaTime;
+
+            if (_fpsAccumulator > 1.0f)
+            {
+                Metrics._framesPerSecond = _fpsFrameCounter;
+                _fpsAccumulator %= 1.0f;
+                _fpsFrameCounter = 0;
+                Metrics._totalMegabytes = GC.GetTotalMemory(false) / 1000000f;
+            }
+
+            _fpsFrameCounter++;
+            
+            Metrics.Reset();
+        }
     }
 }

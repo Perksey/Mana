@@ -395,7 +395,7 @@ namespace Mana.Graphics
 
             unchecked
             {
-                GraphicsMetrics._clearCount++;
+                Metrics._clearCount++;
             }
         }
 
@@ -409,7 +409,7 @@ namespace Mana.Graphics
             
             unchecked
             {
-                GraphicsMetrics._clearCount++;
+                Metrics._clearCount++;
             }
         }
         
@@ -441,8 +441,8 @@ namespace Mana.Graphics
 
             unchecked
             {
-                GraphicsMetrics._primitiveCount += vertexData.Length;
-                GraphicsMetrics._drawCalls++;
+                Metrics._primitiveCount += vertexData.Length;
+                Metrics._drawCalls++;
             }
         }
 
@@ -464,8 +464,8 @@ namespace Mana.Graphics
 
             unchecked
             {
-                GraphicsMetrics._drawCalls++;
-                GraphicsMetrics._primitiveCount += vertexBuffer.VertexCount;
+                Metrics._drawCalls++;
+                Metrics._primitiveCount += vertexBuffer.VertexCount;
             }
         }
 
@@ -487,8 +487,8 @@ namespace Mana.Graphics
             
             unchecked
             {
-                GraphicsMetrics._drawCalls++;
-                GraphicsMetrics._primitiveCount += indexBuffer.IndexCount;
+                Metrics._drawCalls++;
+                Metrics._primitiveCount += indexBuffer.IndexCount;
             }
         }
         

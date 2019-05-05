@@ -10,7 +10,7 @@ namespace Mana.Graphics.Shaders
     public class ShaderCompileException : Exception
     {
         public ShaderCompileException(string shaderInfoLog)
-            : base($"Error compiling shader:\n{shaderInfoLog}")
+            : base(shaderInfoLog.TrimEnd('\n'))
         {
         }
     }

@@ -8,7 +8,7 @@ namespace Mana.Graphics.Shaders
     public class ShaderProgramLinkException : Exception
     {
         public ShaderProgramLinkException(string shaderInfoLog)
-            : base($"Error linking program:\n{shaderInfoLog}")
+            : base(shaderInfoLog.TrimEnd('\n'))
         {
         }
     }

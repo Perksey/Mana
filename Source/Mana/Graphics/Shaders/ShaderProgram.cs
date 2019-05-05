@@ -5,12 +5,16 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Mana.Asset;
 using Mana.Asset.Watchers;
+using Mana.Logging;
+using Mana.Utilities;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics.Shaders
 {
     public class ShaderProgram : ManaAsset, IGraphicsResource, IReloadable
     {
+        private static Logger _log = Logger.Create();
+        
         internal bool Disposed = false;
         internal bool Linked = false;
         internal Dictionary<uint, ShaderAttributeInfo> AttributesByLocation;
@@ -445,71 +449,70 @@ namespace Mana.Graphics.Shaders
             }
         }
 
-        public void Reload(AssetManager assetManager, object info)
+        public bool Reload(AssetManager assetManager, object info)
         {
             if (Disposed)
-                return;
+                return false;
 
             GLHandle handle = (GLHandle)GL.CreateProgram();
             GLHelper.CheckLastError();
-
-            VertexShader vertexShader = null;
-            FragmentShader fragmentShader = null;
-
-            bool success = false;
-            bool attached = false;
-            bool vertexLoaded = false;
-            bool fragmentLoaded = false;
-
+            
+            VertexShader vertexShader;
             try
             {
                 vertexShader = assetManager.Load<VertexShader>(VertexShaderPath);
-                vertexLoaded = true;
-
-                fragmentShader = assetManager.Load<FragmentShader>(FragmentShaderPath);
-                fragmentLoaded = true;
-
-                ShaderHelper.AttachShaders(handle, vertexShader, fragmentShader);
-                attached = true;
-
-                ShaderHelper.LinkShader(handle);
-
-                ShaderHelper.DetachShaders(handle, vertexShader, fragmentShader);
-                attached = false;
-
-                assetManager.Unload(vertexShader);
-                vertexLoaded = false;
-
-                assetManager.Unload(fragmentShader);
-                fragmentLoaded = false;
-
-                success = true;
             }
-            catch (Exception exception)
+            catch (ShaderCompileException e)
             {
-                if (attached)
-                {
-                    ShaderHelper.DetachShaders(handle, vertexShader, fragmentShader);
-                }
-
-                if (fragmentLoaded)
-                {
-                    assetManager.Unload(fragmentShader);
-                }
-
-                if (vertexLoaded)
-                {
-                    assetManager.Unload(vertexShader);
-                }
-
+                _log.Error($"Error compiling VertexShader:\n{e.Message}");
+                
                 GL.DeleteProgram(handle);
                 GLHelper.CheckLastError();
-
-                Console.WriteLine(exception.Message);
+                
+                return false;
             }
 
-            if (!success) 
-                return;
+            FragmentShader fragmentShader;
+            try
+            {
+                fragmentShader = assetManager.Load<FragmentShader>(FragmentShaderPath);
+            }
+            catch (ShaderCompileException e)
+            {
+                _log.Error($"Error compiling FragmentShader:\n{e.Message}");
+
+                assetManager.Unload(vertexShader);
+                
+                GL.DeleteProgram(handle);
+                GLHelper.CheckLastError();
+                
+                return false;
+            }
+
+            ShaderHelper.AttachShaders(handle, vertexShader, fragmentShader);
+            
+            try
+            {
+                ShaderHelper.LinkShader(handle);
+            }
+            catch (ShaderProgramLinkException e)
+            {
+                _log.Error($"Error linking ShaderProgram:\n{e.Message}");
+
+                ShaderHelper.DetachShaders(handle, vertexShader, fragmentShader);
+                
+                assetManager.Unload(fragmentShader);
+                assetManager.Unload(vertexShader);
+                
+                GL.DeleteProgram(handle);
+                GLHelper.CheckLastError();
+                
+                return false;
+            }
+            
+            ShaderHelper.DetachShaders(handle, vertexShader, fragmentShader);
+            assetManager.Unload(fragmentShader);
+            assetManager.Unload(vertexShader);
             
             GraphicsDevice.UnbindShaderProgram(this);
 
@@ -517,8 +520,10 @@ namespace Mana.Graphics.Shaders
             GLHelper.CheckLastError();
 
             Handle = handle;
-                
+
             ShaderHelper.BuildShaderInfo(this);
+
+            return true;
         }
     }
 }

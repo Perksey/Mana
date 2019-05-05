@@ -1,10 +1,13 @@
 using System;
 using Mana.Graphics.Shaders;
+using Mana.Logging;
 
 namespace Mana.Asset.Watchers
 {
     internal class ShaderProgramWatcher : AssetWatcher
     {
+        private static Logger _log = Logger.Create();
+        
         private AssetManager _assetManager;
         private ShaderProgram _shaderProgram;
         
@@ -22,7 +25,10 @@ namespace Mana.Asset.Watchers
 
         protected override void Reload()
         {
-            _shaderProgram.Reload(_assetManager, null);
+            if (_shaderProgram.Reload(_assetManager, null))
+            {
+                _log.LogMessage($"Reloaded Shader: {_shaderProgram.SourcePath}", LogLevel.Debug, ConsoleColor.Green);
+            }
         }
     }
 }

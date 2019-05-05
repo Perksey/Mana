@@ -7,9 +7,9 @@ namespace Mana.Asset.Loaders
     public class VertexShaderLoader : IAssetLoader<VertexShader>
     {
         [DebuggerStepThrough]
-        public VertexShader Load(AssetManager manager, AssetSource assetSource)
+        public VertexShader Load(AssetManager manager, Stream sourceStream, string sourcePath)
         {
-            using (StreamReader streamReader = new StreamReader(assetSource.Stream))
+            using (StreamReader streamReader = new StreamReader(sourceStream))
             {
                 return new VertexShader(manager.GraphicsDevice, streamReader.ReadToEnd());
             }

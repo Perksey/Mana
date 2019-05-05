@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using Mana.Asset.Loaders;
 using Mana.Graphics;
 using Mana.Graphics.Shaders;
@@ -32,6 +31,11 @@ namespace Mana.Asset
 
         public GraphicsDevice GraphicsDevice { get; }
 
+        /// <summary>
+        /// Gets or sets a value that indicates whether Assets should be reloaded when updated.
+        /// </summary>
+        public bool ReloadOnUpdate { get; set; } = true;
+        
         public void Dispose()
         {
             GraphicsDevice.Resources.Remove(this);
@@ -82,11 +86,11 @@ namespace Mana.Asset
                 throw new InvalidOperationException($"AssetManager contains an invalid registered loader: \"{loader.GetType().FullName}\".");
             }
 
-            // Load the asset.
-            
-            AssetSource source = CreateAssetSource(path);
+            // For now: Assume the path is a file path.
+            Stream fileStream = File.OpenRead(path);
 
-            T asset = typedLoader.Load(this, source);
+            // Load the asset.
+            T asset = typedLoader.Load(this, fileStream, path);
 
             if (!typeof(T).IsValueType)
             {
@@ -94,7 +98,7 @@ namespace Mana.Asset
                 {
                     manaAsset.SourcePath = path;
                     _assetCache.Add(path, manaAsset);
-                    OnAssetLoaded(manaAsset, source);
+                    OnAssetLoaded(manaAsset);
                 }
                 else
                 {
@@ -107,22 +111,6 @@ namespace Mana.Asset
             }
             
             return asset;
-        }
-
-        /// <summary>
-        /// Loads a string from the given path.
-        /// This method does not cache the loaded data.
-        /// </summary>
-        /// <param name="path">The path to load the text from.</param>
-        /// <returns>The loaded string.</returns>
-        public string LoadString(string path)
-        {
-            AssetSource source = CreateAssetSource(path);
-
-            using (StreamReader streamReader = new StreamReader(source.Stream))
-            {
-                return streamReader.ReadToEnd();
-            }
         }
 
         /// <summary>
@@ -141,12 +129,7 @@ namespace Mana.Asset
             asset.Dispose();
         }
 
-        protected virtual AssetSource CreateAssetSource(string path)
-        {
-            return new FileAssetSource(path);
-        }
-
-        private void OnAssetLoaded(ManaAsset asset, AssetSource source)
+        private void OnAssetLoaded(ManaAsset asset)
         {
         }
 

@@ -7,9 +7,9 @@ namespace Mana.Asset.Loaders
     public class FragmentShaderLoader : IAssetLoader<FragmentShader>
     {
         [DebuggerStepThrough]
-        public FragmentShader Load(AssetManager manager, AssetSource assetSource)
+        public FragmentShader Load(AssetManager manager, Stream sourceStream, string sourcePath)
         {
-            using (StreamReader streamReader = new StreamReader(assetSource.Stream))
+            using (StreamReader streamReader = new StreamReader(sourceStream))
             {
                 return new FragmentShader(manager.GraphicsDevice, streamReader.ReadToEnd());
             }

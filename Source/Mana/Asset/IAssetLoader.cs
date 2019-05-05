@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace Mana.Asset
 {
     public interface IAssetLoader
@@ -7,6 +9,6 @@ namespace Mana.Asset
     public interface IAssetLoader<out T> : IAssetLoader
         where T : ManaAsset
     {
-        T Load(AssetManager manager, AssetSource assetSource);
+        T Load(AssetManager manager, Stream sourceStream, string sourcePath);
     }
 }

@@ -7,5 +7,9 @@ namespace Mana.Asset
         internal string SourcePath { get; set; }
 
         public abstract void Dispose();
+
+        internal virtual void OnAssetLoaded(AssetManager assetManager)
+        {
+        }
     }
 }

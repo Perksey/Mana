@@ -5,6 +5,7 @@ using System.IO;
 using Mana.Asset.Loaders;
 using Mana.Graphics;
 using Mana.Graphics.Shaders;
+using Mana.Logging;
 
 namespace Mana.Asset
 {
@@ -13,6 +14,8 @@ namespace Mana.Asset
     /// </summary>
     public class AssetManager : IGraphicsResource
     {
+        private static Logger _log = Logger.Create();
+        
         private static Dictionary<Type, IAssetLoader> _assetLoaders = new Dictionary<Type, IAssetLoader>
         {
             [typeof(Texture2D)] = new Texture2DLoader(),
@@ -23,12 +26,17 @@ namespace Mana.Asset
 
         private Dictionary<string, ManaAsset> _assetCache = new Dictionary<string, ManaAsset>();
         
+        private Dictionary<string, IReloadable> _reloadableAssets = new Dictionary<string, IReloadable>();
+        
         public AssetManager(GraphicsDevice graphicsDevice)
         {
             GraphicsDevice = graphicsDevice;
             GraphicsDevice.Resources.Add(this);
         }
 
+        /// <summary>
+        /// Gets the <see cref="GraphicsDevice"/> associated with the AssetManager.
+        /// </summary>
         public GraphicsDevice GraphicsDevice { get; }
 
         /// <summary>
@@ -60,6 +68,9 @@ namespace Mana.Asset
         public T Load<T>(string path)
             where T : ManaAsset
         {
+            path = path.Replace('\\', '/')
+                       .Replace('/', Path.DirectorySeparatorChar);
+            
             if (_assetCache.TryGetValue(path, out ManaAsset cachedAsset))
             {
                 // Cached asset found.
@@ -92,23 +103,14 @@ namespace Mana.Asset
             // Load the asset.
             T asset = typedLoader.Load(this, fileStream, path);
 
-            if (!typeof(T).IsValueType)
+            if (!(asset is ManaAsset manaAsset))
             {
-                if (asset is ManaAsset manaAsset)
-                {
-                    manaAsset.SourcePath = path;
-                    _assetCache.Add(path, manaAsset);
-                    OnAssetLoaded(manaAsset);
-                }
-                else
-                {
-                    throw new InvalidOperationException("Cannot load reference type that doesn't implement the IAsset interface.");
-                }
+                throw new InvalidOperationException("Cannot load type that doesn't implement the IAsset interface.");
             }
-            else
-            {
-                // Asset is value type
-            }
+
+            manaAsset.SourcePath = path;
+            _assetCache.Add(path, manaAsset);
+            OnAssetLoaded(manaAsset);
             
             return asset;
         }
@@ -131,6 +133,9 @@ namespace Mana.Asset
 
         private void OnAssetLoaded(ManaAsset asset)
         {
+            asset.OnAssetLoaded(this);
+            
+            _log.Debug($"Loaded Asset: {asset.SourcePath} [{asset.GetType().Name}]");
         }
 
         private void OnAssetUnloaded(ManaAsset asset)

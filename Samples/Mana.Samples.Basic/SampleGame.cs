@@ -1,4 +1,3 @@
-using System;
 using System.Numerics;
 using ImGuiNET;
 using Mana.Graphics;
@@ -43,6 +42,8 @@ namespace Mana.Samples.Basic
 
             _vertexBuffer = VertexBuffer.Create(GraphicsDevice, _vertices, BufferUsage.StaticDraw, dynamic: true);
             _indexBuffer = IndexBuffer.Create(GraphicsDevice, _indices, BufferUsage.StaticDraw, dynamic: true);
+
+            ImGui.GetStyle().Alpha = 0.78f;
         }
 
         protected override void Update(float time, float deltaTime)

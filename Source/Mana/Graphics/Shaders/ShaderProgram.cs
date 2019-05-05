@@ -454,8 +454,7 @@ namespace Mana.Graphics.Shaders
             if (Disposed)
                 return false;
 
-            GLHandle handle = (GLHandle)GL.CreateProgram();
-            GLHelper.CheckLastError();
+            
             
             VertexShader vertexShader;
             try
@@ -466,12 +465,9 @@ namespace Mana.Graphics.Shaders
             {
                 _log.Error($"Error compiling VertexShader:\n{e.Message}");
                 
-                GL.DeleteProgram(handle);
-                GLHelper.CheckLastError();
-                
                 return false;
             }
-
+            
             FragmentShader fragmentShader;
             try
             {
@@ -483,11 +479,11 @@ namespace Mana.Graphics.Shaders
 
                 assetManager.Unload(vertexShader);
                 
-                GL.DeleteProgram(handle);
-                GLHelper.CheckLastError();
-                
                 return false;
             }
+            
+            GLHandle handle = (GLHandle)GL.CreateProgram();
+            GLHelper.CheckLastError();
 
             ShaderHelper.AttachShaders(handle, vertexShader, fragmentShader);
             

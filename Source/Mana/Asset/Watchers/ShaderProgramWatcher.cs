@@ -19,8 +19,6 @@ namespace Mana.Asset.Watchers
             WatchPaths(shaderProgram.SourcePath, 
                        shaderProgram.VertexShaderPath,
                        shaderProgram.FragmentShaderPath);
-
-            Console.WriteLine("Created shader program watcher.");
         }
 
         protected override void Reload()

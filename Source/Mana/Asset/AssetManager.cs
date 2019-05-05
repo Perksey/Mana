@@ -6,6 +6,7 @@ using Mana.Asset.Loaders;
 using Mana.Graphics;
 using Mana.Graphics.Shaders;
 using Mana.Logging;
+using Mana.Utilities;
 
 namespace Mana.Asset
 {
@@ -33,7 +34,7 @@ namespace Mana.Asset
             GraphicsDevice = graphicsDevice;
             GraphicsDevice.Resources.Add(this);
         }
-
+        
         /// <summary>
         /// Gets the <see cref="GraphicsDevice"/> associated with the AssetManager.
         /// </summary>

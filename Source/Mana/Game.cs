@@ -2,6 +2,7 @@ using System;
 using Mana.Asset;
 using Mana.Graphics;
 using Mana.Graphics.Vertex;
+using Mana.Utilities;
 
 namespace Mana
 {
@@ -23,7 +24,7 @@ namespace Mana
         public AssetManager AssetManager { get; private set; }
         
         public GameComponentCollection Components { get; }
-
+        
         public void Dispose()
         {
         }
@@ -54,14 +55,16 @@ namespace Mana
         /// <param name="deltaTime">The time, in seconds, since the last frame.</param>
         public void UpdateBase(float time, float deltaTime)
         {
+            // Early Update
+            Dispatcher.EarlyUpdateDispatcher.InvokeActionsInQueue();
             Components.EarlyUpdate(time, deltaTime);
             
+            // Update
             Update(time, deltaTime);
-
             Components.Update(time, deltaTime);
 
+            // Late Update
             Components.LateUpdate(time, deltaTime);
-
         }
 
         /// <summary>
@@ -71,16 +74,16 @@ namespace Mana
         /// <param name="deltaTime">The time, in seconds, since the last frame.</param>
         public void RenderBase(float time, float deltaTime)
         {
+            // Early Render
             Components.EarlyRender(time, deltaTime);
             
+            // Render
             Render(time, deltaTime);
-            
             Components.Render(time, deltaTime);
 
+            // Late Render
             Components.LateRender(time, deltaTime);
-
             Input.Update();
-
             UpdateMetrics(deltaTime);
         }
 

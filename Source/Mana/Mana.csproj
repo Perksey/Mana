@@ -9,4 +9,7 @@
       <PackageReference Include="OpenTK" Version="3.0.1" />
       <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0006" />
     </ItemGroup>
+    <ItemGroup>
+      <Reference Include="System.Runtime.Caching" />
+    </ItemGroup>
 </Project>

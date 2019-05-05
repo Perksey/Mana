@@ -2,6 +2,6 @@ namespace Mana.Asset
 {
     public interface IReloadable
     {
-        void Reload(object info);
+        void Reload(AssetManager assetManager, object info);
     }
 }

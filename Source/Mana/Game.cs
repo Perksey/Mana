@@ -10,6 +10,8 @@ namespace Mana
     {
         private float _fpsAccumulator = 0;
         private int _fpsFrameCounter = 0;
+
+        internal static long CurrentFrame = 0;
         
         protected Game()
         {
@@ -65,6 +67,8 @@ namespace Mana
 
             // Late Update
             Components.LateUpdate(time, deltaTime);
+
+            CurrentFrame++;
         }
 
         /// <summary>

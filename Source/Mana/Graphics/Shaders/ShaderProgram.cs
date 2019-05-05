@@ -4,17 +4,20 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Mana.Asset;
+using Mana.Asset.Watchers;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics.Shaders
 {
-    public class ShaderProgram : ManaAsset, IGraphicsResource
+    public class ShaderProgram : ManaAsset, IGraphicsResource, IReloadable
     {
         internal bool Disposed = false;
         internal bool Linked = false;
         internal Dictionary<uint, ShaderAttributeInfo> AttributesByLocation;
         internal string VertexShaderPath;
         internal string FragmentShaderPath;
+
+        private ShaderProgramWatcher _watcher;
         
         public ShaderProgram(GraphicsDevice graphicsDevice)
         {
@@ -430,6 +433,92 @@ namespace Mana.Graphics.Shaders
             GLHelper.CheckLastError();
            
             Disposed = true;
+        }
+
+        internal override void OnAssetLoaded(AssetManager assetManager)
+        {
+            base.OnAssetLoaded(assetManager);
+
+            if (assetManager.ReloadOnUpdate)
+            {
+                _watcher = new ShaderProgramWatcher(assetManager, this);
+            }
+        }
+
+        public void Reload(AssetManager assetManager, object info)
+        {
+            if (Disposed)
+                return;
+
+            GLHandle handle = (GLHandle)GL.CreateProgram();
+            GLHelper.CheckLastError();
+
+            VertexShader vertexShader = null;
+            FragmentShader fragmentShader = null;
+
+            bool success = false;
+            bool attached = false;
+            bool vertexLoaded = false;
+            bool fragmentLoaded = false;
+
+            try
+            {
+                vertexShader = assetManager.Load<VertexShader>(VertexShaderPath);
+                vertexLoaded = true;
+
+                fragmentShader = assetManager.Load<FragmentShader>(FragmentShaderPath);
+                fragmentLoaded = true;
+
+                ShaderHelper.AttachShaders(handle, vertexShader, fragmentShader);
+                attached = true;
+
+                ShaderHelper.LinkShader(handle);
+
+                ShaderHelper.DetachShaders(handle, vertexShader, fragmentShader);
+                attached = false;
+
+                assetManager.Unload(vertexShader);
+                vertexLoaded = false;
+
+                assetManager.Unload(fragmentShader);
+                fragmentLoaded = false;
+
+                success = true;
+            }
+            catch (Exception exception)
+            {
+                if (attached)
+                {
+                    ShaderHelper.DetachShaders(handle, vertexShader, fragmentShader);
+                }
+
+                if (fragmentLoaded)
+                {
+                    assetManager.Unload(fragmentShader);
+                }
+
+                if (vertexLoaded)
+                {
+                    assetManager.Unload(vertexShader);
+                }
+
+                GL.DeleteProgram(handle);
+                GLHelper.CheckLastError();
+
+                Console.WriteLine(exception.Message);
+            }
+
+            if (!success) 
+                return;
+            
+            GraphicsDevice.UnbindShaderProgram(this);
+
+            GL.DeleteProgram(Handle);
+            GLHelper.CheckLastError();
+
+            Handle = handle;
+                
+            ShaderHelper.BuildShaderInfo(this);
         }
     }
 }

@@ -26,7 +26,6 @@ namespace Mana.Asset
         };
 
         private Dictionary<string, ManaAsset> _assetCache = new Dictionary<string, ManaAsset>();
-        
         private Dictionary<string, IReloadable> _reloadableAssets = new Dictionary<string, IReloadable>();
         
         public AssetManager(GraphicsDevice graphicsDevice)
@@ -120,7 +119,7 @@ namespace Mana.Asset
         {
             asset.OnAssetLoaded(this);
             
-            _log.Debug($"Loaded Asset: {asset.SourcePath} [{asset.GetType().Name}]");
+            //_log.Debug($"Loaded Asset: {asset.SourcePath} [{asset.GetType().Name}]");
         }
 
         private void OnAssetUnloaded(ManaAsset asset)

@@ -71,42 +71,28 @@ namespace Mana.Asset
             path = path.Replace('\\', '/')
                        .Replace('/', Path.DirectorySeparatorChar);
             
+            // Return asset if it's cached.
             if (_assetCache.TryGetValue(path, out ManaAsset cachedAsset))
             {
-                // Cached asset found.
-                
                 if (!(cachedAsset is T typedCachedAsset))
-                {
                     throw new InvalidOperationException($"Cached asset of type \"{cachedAsset.GetType().FullName}\" cannot be loaded as type \"{typeof(T).FullName}\".");
-                }
 
                 return typedCachedAsset;
             }
-            
-            // Cached asset was not found.
                 
             if (!_assetLoaders.TryGetValue(typeof(T), out IAssetLoader loader))
-            {
-                // Loader for type T was not found.
                 throw new InvalidOperationException($"AssetManager does not contain a loader for asset type: \"{typeof(T).FullName}\".");
-            }
 
             if (!(loader is IAssetLoader<T> typedLoader))
-            {
-                // Loader implements IAssetLoader but not IAssetLoader<T>, or was registered with the wrong type.
                 throw new InvalidOperationException($"AssetManager contains an invalid registered loader: \"{loader.GetType().FullName}\".");
-            }
 
             // For now: Assume the path is a file path.
             Stream fileStream = File.OpenRead(path);
 
-            // Load the asset.
             T asset = typedLoader.Load(this, fileStream, path);
 
             if (!(asset is ManaAsset manaAsset))
-            {
                 throw new InvalidOperationException("Cannot load type that doesn't implement the IAsset interface.");
-            }
 
             manaAsset.SourcePath = path;
             _assetCache.Add(path, manaAsset);
@@ -123,9 +109,7 @@ namespace Mana.Asset
         public void Unload(ManaAsset asset)
         {
             if (!_assetCache.Remove(asset.SourcePath))
-            {
                 throw new ArgumentException("Asset was not found in AssetManager. Was the SourcePath modified?");
-            }
             
             OnAssetUnloaded(asset);
             asset.Dispose();

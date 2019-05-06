@@ -5,7 +5,6 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using Mana.Asset;
-using Mana.Asset.Watchers;
 using Mana.Logging;
 using Mana.Utilities;
 using OpenTK.Graphics.OpenGL4;
@@ -27,7 +26,7 @@ namespace Mana.Graphics
         private TextureFilterMode _filterMode = TextureFilterMode.Nearest;
         private TextureWrapMode _wrapMode = TextureWrapMode.Repeat;
 
-        private Texture2DWatcher _watcher; 
+        private AssetWatcher<Texture2D> _watcher; 
         
         public Texture2D(GraphicsDevice graphicsDevice)
         {
@@ -184,7 +183,7 @@ namespace Mana.Graphics
 
             if (assetManager.ReloadOnUpdate)
             {
-                _watcher = new Texture2DWatcher(assetManager, this);
+                _watcher = new AssetWatcher<Texture2D>(assetManager, this);
             }
         }
 

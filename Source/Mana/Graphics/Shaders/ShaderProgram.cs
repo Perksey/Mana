@@ -4,9 +4,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Mana.Asset;
-using Mana.Asset.Watchers;
 using Mana.Logging;
-using Mana.Utilities;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics.Shaders
@@ -21,7 +19,7 @@ namespace Mana.Graphics.Shaders
         internal string VertexShaderPath;
         internal string FragmentShaderPath;
 
-        private ShaderProgramWatcher _watcher;
+        private AssetWatcher<ShaderProgram> _watcher;
         
         public ShaderProgram(GraphicsDevice graphicsDevice)
         {
@@ -445,7 +443,8 @@ namespace Mana.Graphics.Shaders
 
             if (assetManager.ReloadOnUpdate)
             {
-                _watcher = new ShaderProgramWatcher(assetManager, this);
+                _watcher = new AssetWatcher<ShaderProgram>(assetManager, this);
+                _watcher.AddWatchPaths(VertexShaderPath, FragmentShaderPath);
             }
         }
 

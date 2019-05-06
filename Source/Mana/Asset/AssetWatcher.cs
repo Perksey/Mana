@@ -3,15 +3,29 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using Mana.Logging;
 using Mana.Utilities;
 
 namespace Mana.Asset
 {
-    public abstract class AssetWatcher : IDisposable
+    public class AssetWatcher<T> : IDisposable
+        where T : ManaAsset, IReloadable
     {
+        private static Logger _log = Logger.Create();
+        
         private List<FileSystemWatcher> _watchers = new List<FileSystemWatcher>();
         private List<string> _fileNames = new List<string>();
         private DateTime _timeOfLastReload;
+        private AssetManager _assetManager;
+        private T _reloadable;
+
+        public AssetWatcher(AssetManager assetManager, T reloadable)
+        {
+            _assetManager = assetManager;
+            _reloadable = reloadable;
+            
+            AddWatchPath(reloadable.SourcePath);
+        }
         
         public void Dispose()
         {
@@ -27,17 +41,23 @@ namespace Mana.Asset
             _watchers.Clear();
         }
 
-        protected abstract void Reload();
-
-        protected void WatchPaths(params string[] paths)
+        protected void Reload()
         {
-            foreach (string path in paths)
+            if (_reloadable.Reload(_assetManager, null))
             {
-                WatchPath(path);
+                _log.LogMessage($"Reloaded {typeof(T).Name}: {_reloadable.SourcePath}", LogLevel.Debug, ConsoleColor.Green);
             }
         }
 
-        protected void WatchPath(string path)
+        public void AddWatchPaths(params string[] paths)
+        {
+            foreach (string path in paths)
+            {
+                AddWatchPath(path);
+            }
+        }
+
+        public void AddWatchPath(string path)
         {
             Debug.Assert(File.Exists(path));
             
@@ -61,16 +81,11 @@ namespace Mana.Asset
             Console.WriteLine($"Watching Path: {path} [{fileName}]");
         }
 
-        private void ReloadImpl()
-        {
-            Reload();
-        }
-
         private void RequestReload()
         {
             if (DateTime.Now - _timeOfLastReload > TimeSpan.FromMilliseconds(250))
             {
-                Dispatcher.OnEarlyUpdate(ReloadImpl);
+                Dispatcher.OnEarlyUpdate(Reload);
                 _timeOfLastReload = DateTime.Now;
             }
         }

@@ -528,7 +528,7 @@ namespace Mana.Graphics
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SetActiveTexture(int activeTexture)
+        internal void SetActiveTexture(int activeTexture)
         {
             if (Bindings.ActiveTexture != activeTexture)
             {

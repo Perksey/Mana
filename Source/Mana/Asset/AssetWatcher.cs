@@ -19,6 +19,7 @@ namespace Mana.Asset
             {
                 item.Changed -= OnChanged;
                 item.Renamed -= OnRenamed;
+                item.Created -= OnCreated;
                 
                 item.Dispose();
             }
@@ -50,11 +51,14 @@ namespace Mana.Asset
 
             watcher.Changed += OnChanged;
             watcher.Renamed += OnRenamed;
+            watcher.Created += OnCreated;
             
             watcher.EnableRaisingEvents = true;
 
             _watchers.Add(watcher);
             _fileNames.Add(fileName);
+            
+            Console.WriteLine($"Watching Path: {path} [{fileName}]");
         }
 
         private void ReloadImpl()
@@ -81,6 +85,14 @@ namespace Mana.Asset
         }
 
         private void OnRenamed(object sender, FileSystemEventArgs e)
+        {
+            if (_fileNames.Contains(e.Name))
+            {
+                RequestReload();
+            }
+        }
+
+        private void OnCreated(object sender, FileSystemEventArgs e)
         {
             if (_fileNames.Contains(e.Name))
             {

@@ -1,10 +1,13 @@
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using Mana.Asset;
+using Mana.Asset.Watchers;
 using Mana.Logging;
+using Mana.Utilities;
 using OpenTK.Graphics.OpenGL4;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
@@ -15,16 +18,16 @@ using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace Mana.Graphics
 {
-    public class Texture2D : ManaAsset, IGraphicsResource
+    public class Texture2D : ManaAsset, IGraphicsResource, IReloadable
     {
         private static Logger _log = Logger.Create();
         
-        public readonly GLHandle Handle;
-
         internal bool Disposed = false;
-        
+
         private TextureFilterMode _filterMode = TextureFilterMode.Nearest;
         private TextureWrapMode _wrapMode = TextureWrapMode.Repeat;
+
+        private Texture2DWatcher _watcher; 
         
         public Texture2D(GraphicsDevice graphicsDevice)
         {
@@ -42,6 +45,8 @@ namespace Mana.Graphics
             //throw new InvalidOperationException("Texture2D Leaked");
 #endif
         }
+        
+        public GLHandle Handle { get; private set; }
 
         public GraphicsDevice GraphicsDevice { get; }
 
@@ -82,7 +87,7 @@ namespace Mana.Graphics
                 _wrapMode = value;
             }
         }
-        
+
         public void SetDataFromBitmap(Bitmap bitmap)
         {
             GraphicsDevice.BindTexture(0, this);
@@ -158,15 +163,88 @@ namespace Mana.Graphics
             FilterMode = TextureFilterMode.Nearest;
             WrapMode = TextureWrapMode.Repeat;
         }
-        
+
         public override void Dispose()
         {
+            Debug.Assert(!Disposed);
+            
             GraphicsDevice.Resources.Remove(this);
             
             GL.DeleteTexture(Handle);
             GLHelper.CheckLastError();
             
             GC.SuppressFinalize(this);
+
+            Disposed = true;
+        }
+
+        internal override void OnAssetLoaded(AssetManager assetManager)
+        {
+            base.OnAssetLoaded(assetManager);
+
+            if (assetManager.ReloadOnUpdate)
+            {
+                _watcher = new Texture2DWatcher(assetManager, this);
+            }
+        }
+
+        public bool Reload(AssetManager assetManager, object info)
+        {
+            if (Disposed)
+                return false;
+
+            GLHandle handle = (GLHandle)GL.GenTexture();
+            GLHelper.CheckLastError();
+
+            int newWidth = 0;
+            int newHeight = 0;
+
+            FileHelper.WaitForFile(SourcePath);
+            
+            using (Stream stream = File.OpenRead(SourcePath))
+            using (Image<Rgba32> image = Image.Load(stream))
+            {
+                GraphicsDevice.SetActiveTexture(0);
+
+                GL.BindTexture(TextureTarget.Texture2D, handle);
+                GLHelper.CheckLastError();
+                GraphicsDevice.Bindings.Texture = handle;
+
+                image.Mutate(x => x.Flip(FlipMode.Vertical));
+
+                newWidth = image.Width;
+                newHeight = image.Height;
+
+                unsafe
+                {
+                    fixed (void* data = &MemoryMarshal.GetReference(image.GetPixelSpan()))
+                    {
+                        GL.TexImage2D(TextureTarget.Texture2D,
+                                      0,
+                                      PixelInternalFormat.Rgba,
+                                      image.Width,
+                                      image.Height,
+                                      0,
+                                      PixelFormat.Rgba,
+                                      PixelType.UnsignedByte,
+                                      new IntPtr(data));
+                        GLHelper.CheckLastError();
+                    }
+                }
+            }
+            
+            GL.DeleteTexture(Handle);
+            GLHelper.CheckLastError();
+
+            Handle = handle;
+            Width = newWidth;
+            Height = newHeight;
+
+            // Reapply filter mode and wrap mode to new texture.
+            FilterMode = this.FilterMode;
+            WrapMode = this.WrapMode;
+
+            return true;
         }
     }
 }

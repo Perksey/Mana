@@ -454,8 +454,6 @@ namespace Mana.Graphics.Shaders
             if (Disposed)
                 return false;
 
-            
-            
             VertexShader vertexShader;
             try
             {

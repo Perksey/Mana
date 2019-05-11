@@ -23,7 +23,7 @@ namespace Mana.Graphics.Buffers
             GraphicsDevice = graphicsDevice;
             GraphicsDevice.Resources.Add(this);
 
-            if (graphicsDevice.Extensions.ARB_DirectStateAccess || graphicsDevice.IsVersionAtLeast(4, 5))
+            if (graphicsDevice.NamedBuffersSupported)
             {
                 GL.CreateBuffers(1, out int bufferInt);
                 GLHelper.CheckLastError();

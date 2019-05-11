@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Numerics;
 using Mana.Graphics.Buffers;
 using Mana.Graphics.Shaders;
 using Mana.Graphics.Vertex;
@@ -77,21 +76,10 @@ namespace Mana.Graphics.Batch
             Flush(true);
         }
 
-        private Stopwatch _sw = new Stopwatch();
-        public static TimeSpan A;
-        public static TimeSpan B;
-        public static TimeSpan C;
-
-        public static long ASum;
-        public static long BSum;
-        public static long CSum;
-
         public void Draw(Texture2D texture, Rectangle rectangle)
         {
             unsafe
             {
-                _sw.Restart();
-
                 if (_lastTexture == null)
                 {
                     _lastTexture = texture;
@@ -108,30 +96,17 @@ namespace Mana.Graphics.Batch
                     _lastShader = Shader;
                 }
             
-                if (((_storedItems ) * 4) + 3 > ushort.MaxValue)
+                if (((_storedItems ) * 4) + 3 > ushort.MaxValue || _storedItems >= MAX_BATCH_SIZE)
                 {
-                    _log.Debug("Vertex indices hit ushort.MaxValue. Flushing SpriteBatch...");
                     Flush();
                 }
 
-                if (_storedItems >= MAX_BATCH_SIZE)
-                {
-                    Flush();
-                }
-            
                 _storedItems++;
                 EnsureBufferLargeEnough();
 
-                ushort firstVertexIndex = (ushort)((_storedItems - 1) * 4);
-                int firstIndexIndex = (ushort)((_storedItems - 1) * 6);
+                int firstVertexIndex = (_storedItems - 1) * 4;
+                int firstIndexIndex = (_storedItems - 1) * 6;
                 
-                _sw.Stop();
-
-                A = _sw.Elapsed;
-                ASum += _sw.ElapsedTicks;
-                
-                _sw.Restart();
-
                 fixed (VertexPosition2DTextureColor* dest = &_vertexData[firstVertexIndex])
                 {
                     dest[0].Position.X = rectangle.Left;
@@ -171,27 +146,15 @@ namespace Mana.Graphics.Batch
                     dest[3].Color.A = byte.MaxValue;
                 }
                 
-                _sw.Stop();
-                
-                B = _sw.Elapsed;
-                BSum += _sw.ElapsedTicks;
-                
-                _sw.Restart();
-                
                 fixed (ushort* dest = &_indexData[firstIndexIndex])
                 {
-                    dest[0] = firstVertexIndex;
+                    dest[0 + 0] = (ushort)(firstVertexIndex + 0);
                     dest[0 + 1] = (ushort)(firstVertexIndex + 1);
                     dest[0 + 2] = (ushort)(firstVertexIndex + 2);
-                    dest[0 + 3] = firstVertexIndex;
+                    dest[0 + 3] = (ushort)(firstVertexIndex + 0);
                     dest[0 + 4] = (ushort)(firstVertexIndex + 2);
                     dest[0 + 5] = (ushort)(firstVertexIndex + 3);
                 }
-
-                _sw.Stop();
-                
-                C = _sw.Elapsed;
-                CSum += _sw.ElapsedTicks;
             }
         }
         
@@ -215,7 +178,6 @@ namespace Mana.Graphics.Batch
                     _indexBuffer.DiscardData();
                     _indexBuffer.SetDataPointer((IntPtr)idx, _storedItems * 6 * sizeof(ushort));
                 }
-                    
             }
 
             GraphicsDevice.BindVertexBuffer(_vertexBuffer);
@@ -227,8 +189,8 @@ namespace Mana.Graphics.Batch
 
             GL.DrawRangeElements(PrimitiveType.Triangles,
                                  0,
-                                 ((_storedItems) * 4),
-                                 ((_storedItems) * 6),
+                                 _storedItems * 4,
+                                 _storedItems * 6,
                                  DrawElementsType.UnsignedShort,
                                  IntPtr.Zero);
             GLHelper.CheckLastError();

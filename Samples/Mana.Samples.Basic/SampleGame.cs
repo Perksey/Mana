@@ -38,7 +38,10 @@ namespace Mana.Samples.Basic
         private bool _metricsWindowOpen = true;
         private bool _check = true;
 
-        private int _count = 15000;
+        private int _count = 1;
+
+        private float _x = 0;
+        private float _y = 0;
         
         protected override void Initialize()
         {
@@ -70,6 +73,9 @@ namespace Mana.Samples.Basic
             {
                 Quit();
             }
+
+            _y = (float)((Math.Cos(time * 4.5f) * 100) + 250);
+            _x = (float)((Math.Sin(time * 4.5f) * 100) + 250);
         }
 
         private Stopwatch _stopwatch = new Stopwatch();
@@ -92,7 +98,10 @@ namespace Mana.Samples.Basic
                 
                 for (int i = 0; i < _count; i++)
                 {
-                    _spriteBatch.Draw(_texture, new Rectangle(20, 20, 25, 25));
+                    var x = (float)((Math.Sin((time + (i / 5000.012f)) * 4.5f) * 100) + 250);
+                    var y = (float)((Math.Cos((time + (i / 5000.012f)) * 4.5f) * 100) + 250);
+                    
+                    _spriteBatch.Draw(_texture, new Rectangle((int)x, (int)y, 25, 25));
                 }
 
                 _stopwatch.Stop();
@@ -140,7 +149,6 @@ namespace Mana.Samples.Basic
 
             if (_metricsWindowOpen && ImGui.Begin("Metrics", ref _metricsWindowOpen))
             {
-                
                 ImGui.Text($"FPS:          {Metrics.FramesPerSecond} fps");
                 ImGui.Text($"Frame Time:   {Metrics.MillisecondsPerFrame:F3} ms");
                 ImGui.Text($"Memory:       {Metrics.TotalMegabytes} MB");
@@ -164,27 +172,27 @@ namespace Mana.Samples.Basic
 
                 ImGui.Separator();
                 
-                ImGui.Text($"Prep: {SpriteBatch.A.Ticks:F3}");
-                ImGui.Text($"vtx send: {SpriteBatch.B.Ticks:F3}");
-                ImGui.Text($"idx send: {SpriteBatch.C.Ticks:F3}");
-                
-                ImGui.Separator();
-
-                long sum = SpriteBatch.ASum + SpriteBatch.BSum + SpriteBatch.CSum;
-
-                float a = (SpriteBatch.ASum / (float)sum) * 100.0f;
-                float b = (SpriteBatch.BSum / (float)sum) * 100.0f;
-                float c = (SpriteBatch.CSum / (float)sum) * 100.0f;
-
-                ImGui.Text($"PrepSum:     {SpriteBatch.ASum:F3}");
-                ImGui.Text($"vtx sendSum: {SpriteBatch.BSum:F3}");
-                ImGui.Text($"idx sendSum: {SpriteBatch.CSum:F3}");
-                
-                ImGui.Separator();
-                
-                ImGui.Text($"prp%: {a:F3}");
-                ImGui.Text($"vtx%: {b:F3}");
-                ImGui.Text($"idx%: {c:F3}");
+                // ImGui.Text($"Prep: {SpriteBatch.A.Ticks:F3}");
+                // ImGui.Text($"vtx send: {SpriteBatch.B.Ticks:F3}");
+                // ImGui.Text($"idx send: {SpriteBatch.C.Ticks:F3}");
+                //
+                // ImGui.Separator();
+                //
+                // long sum = SpriteBatch.ASum + SpriteBatch.BSum + SpriteBatch.CSum;
+                //
+                // float a = (SpriteBatch.ASum / (float)sum) * 100.0f;
+                // float b = (SpriteBatch.BSum / (float)sum) * 100.0f;
+                // float c = (SpriteBatch.CSum / (float)sum) * 100.0f;
+                //
+                // ImGui.Text($"PrepSum:     {SpriteBatch.ASum:F3}");
+                // ImGui.Text($"vtx sendSum: {SpriteBatch.BSum:F3}");
+                // ImGui.Text($"idx sendSum: {SpriteBatch.CSum:F3}");
+                //
+                // ImGui.Separator();
+                //
+                // ImGui.Text($"prp%: {a:F3}");
+                // ImGui.Text($"vtx%: {b:F3}");
+                // ImGui.Text($"idx%: {c:F3}");
 
                 ImGui.End();
             }

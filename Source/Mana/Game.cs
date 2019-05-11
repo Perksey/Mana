@@ -11,8 +11,6 @@ namespace Mana
         private float _fpsAccumulator = 0;
         private int _fpsFrameCounter = 0;
 
-        internal static long CurrentFrame = 0;
-        
         protected Game()
         {
             VertexTypeInfo.Initialize();
@@ -67,8 +65,6 @@ namespace Mana
 
             // Late Update
             Components.LateUpdate(time, deltaTime);
-
-            CurrentFrame++;
         }
 
         /// <summary>
@@ -98,7 +94,7 @@ namespace Mana
         private void UpdateMetrics(float deltaTime)
         {
             _fpsAccumulator += deltaTime;
-
+            
             if (_fpsAccumulator > 1.0f)
             {
                 Metrics._framesPerSecond = _fpsFrameCounter;

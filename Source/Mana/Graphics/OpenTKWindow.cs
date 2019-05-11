@@ -91,14 +91,12 @@ namespace Mana.Graphics
             
             Game = game;
             
-            /*
-            _log.Debug("Available Display Resolutions: ");
-
-            foreach (var res in AvailableResolutions)
-            {
-                _log.Debug(res.ToString());
-            }
-            */
+            // _log.Debug("Available Display Resolutions: ");
+            //
+            // foreach (var res in AvailableResolutions)
+            // {
+            //     _log.Debug(res.ToString());
+            // }
 
             Game.InitializeBase(this);
             
@@ -129,7 +127,7 @@ namespace Mana.Graphics
                        DisplayDevice.Default,
                        4,
                        0,
-                       GraphicsContextFlags.Debug)
+                       GraphicsContextFlags.Default)
             {
                 _openTKWindow = openTKWindow;
                 _game = game;

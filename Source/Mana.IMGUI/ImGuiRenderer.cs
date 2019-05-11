@@ -154,17 +154,17 @@ namespace Mana.IMGUI
             {
                 keysDown[_keys[i]] = Input.IsKeyDown((Key)_keys[i]);
             }
-
+            
             _io.KeyShift = Input.IsKeyDown(Key.LeftShift) || Input.IsKeyDown(Key.RightShift);
             _io.KeyCtrl = Input.IsKeyDown(Key.LeftControl) || Input.IsKeyDown(Key.RightControl);
             _io.KeyAlt = Input.IsKeyDown(Key.LeftAlt) || Input.IsKeyDown(Key.RightAlt);
             // TODO: Windows key?
             
-            _io.DisplaySize = new System.Numerics.Vector2(Game.Window.Width, Game.Window.Height);
-            _io.DisplayFramebufferScale = System.Numerics.Vector2.One;
+            _io.DisplaySize = new Vector2(Game.Window.Width, Game.Window.Height);
+            _io.DisplayFramebufferScale = Vector2.One;
             
-            _io.MousePos = new System.Numerics.Vector2(Input.MousePosition.X, Input.MousePosition.Y);
-
+            _io.MousePos = new Vector2(Input.MousePosition.X, Input.MousePosition.Y);
+            
             var mouseDown = _io.MouseDown;
             
             mouseDown[0] = Input.IsMouseDown(MouseButton.Left);
@@ -276,6 +276,9 @@ namespace Mana.IMGUI
 
         private void RenderCommandLists(ImDrawDataPtr drawData)
         {
+            if (drawData.TotalVtxCount == 0)
+                return;
+            
             GraphicsDevice.BindVertexBuffer(_vertexBuffer);
             GraphicsDevice.BindIndexBuffer(_indexBuffer);
             GraphicsDevice.BindShaderProgram(_shaderProgram);
@@ -309,8 +312,6 @@ namespace Mana.IMGUI
                     int minVertexIndex = 0;
                     int numVertices = cmdList.VtxBuffer.Size;
                     int startIndex = idxOffset;
-
-                    
                     
                     GL.DrawRangeElementsBaseVertex(PrimitiveType.Triangles,
                                                    minVertexIndex,

@@ -8,13 +8,14 @@ using Mana.Logging;
 using OpenTK.Graphics.OpenGL4;
 using Buffer = System.Buffer;
 
-namespace Mana.Graphics.Batch
+namespace Mana.Graphics
 {
     public class SpriteBatch : IGraphicsResource
     {
-        private static Logger _log = Logger.Create();
-
         private const int MAX_BATCH_SIZE = 3000; 
+        
+        private static Logger _log = Logger.Create();
+        
         private int _storedItems = 0;
         
         private VertexBuffer _vertexBuffer;
@@ -170,13 +171,14 @@ namespace Mana.Graphics.Batch
 
             unsafe
             {
-                fixed (VertexPosition2DTextureColor* vtx = &_vertexData[0])
-                fixed (ushort* idx = &_indexData[0])
+                fixed (VertexPosition2DTextureColor* vertexPtr = &_vertexData[0])
+                fixed (ushort* indexPtr = &_indexData[0])
                 {
                     _vertexBuffer.DiscardData();
-                    _vertexBuffer.SetDataPointer((IntPtr)vtx, _storedItems * 4 * sizeof(VertexPosition2DTextureColor));
+                    _vertexBuffer.SetDataPointer((IntPtr)vertexPtr, _storedItems * 4 * sizeof(VertexPosition2DTextureColor));
+                    
                     _indexBuffer.DiscardData();
-                    _indexBuffer.SetDataPointer((IntPtr)idx, _storedItems * 6 * sizeof(ushort));
+                    _indexBuffer.SetDataPointer((IntPtr)indexPtr, _storedItems * 6 * sizeof(ushort));
                 }
             }
 
@@ -213,7 +215,6 @@ namespace Mana.Graphics.Batch
                 fixed (void* vertexSourcePtr = &_vertexData[0])
                 fixed (void* vertexDestPtr = &tempVertexData[0])
                 {
-                    // Store vertex data in temp array
                     Buffer.MemoryCopy(vertexSourcePtr,
                                       vertexDestPtr,
                                       tempVertexData.Length * sizeof(VertexPosition2DTextureColor),

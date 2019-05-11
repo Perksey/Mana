@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Numerics;
 using ImGuiNET;
 using Mana.Graphics;
-using Mana.Graphics.Batch;
 using Mana.Graphics.Buffers;
 using Mana.Graphics.Shaders;
 using Mana.Graphics.Vertex.Types;

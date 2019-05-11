@@ -17,7 +17,7 @@ using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace Mana.Graphics
 {
-    public class Texture2D : ManaAsset, IGraphicsResource, IReloadable
+    public class Texture2D : ReloadableAsset, IGraphicsResource
     {
         private static Logger _log = Logger.Create();
         
@@ -26,8 +26,6 @@ namespace Mana.Graphics
         private TextureFilterMode _filterMode = TextureFilterMode.Nearest;
         private TextureWrapMode _wrapMode = TextureWrapMode.Repeat;
 
-        private AssetWatcher<Texture2D> _watcher; 
-        
         public Texture2D(GraphicsDevice graphicsDevice)
         {
             GraphicsDevice = graphicsDevice;
@@ -91,7 +89,7 @@ namespace Mana.Graphics
         {
             GraphicsDevice.BindTexture(0, this);
 
-            BitmapData data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
+            var data = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height),
                                               ImageLockMode.ReadOnly,
                                               System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
@@ -177,17 +175,7 @@ namespace Mana.Graphics
             Disposed = true;
         }
 
-        internal override void OnAssetLoaded(AssetManager assetManager)
-        {
-            base.OnAssetLoaded(assetManager);
-
-            if (assetManager.ReloadOnUpdate)
-            {
-                _watcher = new AssetWatcher<Texture2D>(assetManager, this);
-            }
-        }
-
-        public bool Reload(AssetManager assetManager, object info)
+        public override bool Reload(AssetManager assetManager)
         {
             if (Disposed)
                 return false;

@@ -8,8 +8,7 @@ using Mana.Utilities;
 
 namespace Mana.Asset
 {
-    public class AssetWatcher<T> : IDisposable
-        where T : ManaAsset, IReloadable
+    public class AssetWatcher : IDisposable
     {
         private static Logger _log = Logger.Create();
         
@@ -17,9 +16,9 @@ namespace Mana.Asset
         private List<string> _fileNames = new List<string>();
         private DateTime _timeOfLastReload;
         private AssetManager _assetManager;
-        private T _reloadable;
+        private ReloadableAsset _reloadable;
 
-        public AssetWatcher(AssetManager assetManager, T reloadable)
+        public AssetWatcher(AssetManager assetManager, ReloadableAsset reloadable)
         {
             _assetManager = assetManager;
             _reloadable = reloadable;
@@ -43,9 +42,9 @@ namespace Mana.Asset
 
         protected void Reload()
         {
-            if (_reloadable.Reload(_assetManager, null))
+            if (_reloadable.Reload(_assetManager))
             {
-                _log.LogMessage($"Reloaded {typeof(T).Name}: {_reloadable.SourcePath}", LogLevel.Debug, ConsoleColor.Green);
+                _log.LogMessage($"Reloaded {_reloadable.GetType().Name}: {_reloadable.SourcePath}", LogLevel.Debug, ConsoleColor.Green);
             }
         }
 
@@ -85,7 +84,7 @@ namespace Mana.Asset
         {
             if (DateTime.Now - _timeOfLastReload > TimeSpan.FromMilliseconds(250))
             {
-                Dispatcher.OnEarlyUpdate(Reload);
+                Dispatcher.OnEarlyUpdate(() => Reload());
                 _timeOfLastReload = DateTime.Now;
             }
         }

@@ -26,7 +26,6 @@ namespace Mana.Asset
         };
 
         private Dictionary<string, ManaAsset> _assetCache = new Dictionary<string, ManaAsset>();
-        private Dictionary<string, IReloadable> _reloadableAssets = new Dictionary<string, IReloadable>();
         
         public AssetManager(GraphicsDevice graphicsDevice)
         {

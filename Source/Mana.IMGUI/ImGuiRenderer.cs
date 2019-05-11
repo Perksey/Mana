@@ -222,7 +222,8 @@ namespace Mana.IMGUI
                                                     VertexTypeInfo.Get<VertexPosition2DTextureColor>(),
                                                     BufferUsage.DynamicDraw,
                                                     clear: false,
-                                                    dynamic: true);
+                                                    dynamic: true,
+                                                    mutable: true);
                 _vertexData = new byte[_vertexBufferSize * sizeof(ImDrawVert)];
             }
 
@@ -237,7 +238,8 @@ namespace Mana.IMGUI
                                                   DrawElementsType.UnsignedShort,
                                                   BufferUsage.DynamicDraw,
                                                   clear: false,
-                                                  dynamic: true);
+                                                  dynamic: true,
+                                                  mutable: true);
                                                   
                 _indexData = new byte[_indexBufferSize * sizeof(ushort)];
             }

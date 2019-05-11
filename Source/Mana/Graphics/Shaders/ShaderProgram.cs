@@ -9,7 +9,7 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics.Shaders
 {
-    public class ShaderProgram : ManaAsset, IGraphicsResource, IReloadable
+    public class ShaderProgram : ReloadableAsset, IGraphicsResource
     {
         private static Logger _log = Logger.Create();
         
@@ -18,8 +18,6 @@ namespace Mana.Graphics.Shaders
         internal Dictionary<uint, ShaderAttributeInfo> AttributesByLocation;
         internal string VertexShaderPath;
         internal string FragmentShaderPath;
-
-        private AssetWatcher<ShaderProgram> _watcher;
         
         public ShaderProgram(GraphicsDevice graphicsDevice)
         {
@@ -440,15 +438,10 @@ namespace Mana.Graphics.Shaders
         internal override void OnAssetLoaded(AssetManager assetManager)
         {
             base.OnAssetLoaded(assetManager);
-
-            if (assetManager.ReloadOnUpdate)
-            {
-                _watcher = new AssetWatcher<ShaderProgram>(assetManager, this);
-                _watcher.AddWatchPaths(VertexShaderPath, FragmentShaderPath);
-            }
+            Watcher.AddWatchPaths(VertexShaderPath, FragmentShaderPath);
         }
 
-        public bool Reload(AssetManager assetManager, object info)
+        public override bool Reload(AssetManager assetManager)
         {
             if (Disposed)
                 return false;

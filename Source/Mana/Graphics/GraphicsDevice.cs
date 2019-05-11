@@ -21,6 +21,9 @@ namespace Mana.Graphics
         internal readonly GraphicsResourceCollection Resources;
         internal GraphicsDeviceBindings Bindings;
 
+        internal readonly bool NamedBuffersSupported;
+        internal readonly bool ImmutableStorageSupported;
+
         private Color _clearColor;
         
         /* State */
@@ -30,7 +33,7 @@ namespace Mana.Graphics
         private bool _cullBackfaces;
         private Rectangle _scissorRectangle;
         private Rectangle _viewportRectangle;
-                
+        
         public GraphicsDevice()
         {
             if (_instance != null)
@@ -39,6 +42,12 @@ namespace Mana.Graphics
             _instance = this;
             
             Extensions = new GLExtensions();
+            NamedBuffersSupported = Extensions.ARB_DirectStateAccess || IsVersionAtLeast(4, 5);
+            ImmutableStorageSupported = Extensions.ARB_DirectStateAccess || IsVersionAtLeast(4, 5);
+
+            NamedBuffersSupported = true;
+            ImmutableStorageSupported = true;
+            
             Resources = new GraphicsResourceCollection();
             Bindings = new GraphicsDeviceBindings();
 
@@ -505,7 +514,7 @@ namespace Mana.Graphics
         #region Private Helpers
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SetCapability(EnableCap enableCap, bool value)
+        internal void SetCapability(EnableCap enableCap, bool value)
         {
             if (value)
             {
@@ -521,7 +530,7 @@ namespace Mana.Graphics
         
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void BindBuffer(BufferTarget buffer, GLHandle handle)
+        internal void BindBuffer(BufferTarget buffer, GLHandle handle)
         {
             GL.BindBuffer(buffer, handle);
             GLHelper.CheckLastError();

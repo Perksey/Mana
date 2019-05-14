@@ -36,7 +36,7 @@ namespace Mana.Samples.Basic
         private bool _metricsWindowOpen = true;
         private bool _check = true;
 
-        private int _count = 10000;
+        private int _count = 2000;
 
         protected override void Initialize()
         {
@@ -44,7 +44,7 @@ namespace Mana.Samples.Basic
 
             _shader = AssetManager.Load<ShaderProgram>("./Assets/Shaders/shader1.json");
             _spriteShader = AssetManager.Load<ShaderProgram>("./Assets/Shaders/sprite.json");
-            _texture = AssetManager.Load<Texture2D>("./Assets/Textures/cat.jpeg");
+            _texture = AssetManager.Load<Texture2D>("./Assets/Textures/mittens.png");
             
             Components.Add(new ImGuiRenderer());
 
@@ -94,10 +94,10 @@ namespace Mana.Samples.Basic
                 
                 for (int i = 0; i < _count; i++)
                 {
-                    float x = (float)((Math.Sin((time + (i / 5000.012f)) * 4.5f) * 100) + 250);
-                    float y = (float)((Math.Cos((time + (i / 5000.012f)) * 4.5f) * 100) + 250);
+                    float x = (float)((Math.Sin((time + (i / 1000.012f)) * 4.5f) * 100) + 250);
+                    float y = (float)((Math.Cos((time + (i / 1000.012f)) * 4.5f) * 100) + 250);
                     
-                    _spriteBatch.Draw(_texture, new Rectangle((int)x, (int)y, 25, 25));
+                    _spriteBatch.Draw(_texture, new Rectangle((int)x, (int)y, 200, 200));
                 }
                 
                 _spriteBatch.End();

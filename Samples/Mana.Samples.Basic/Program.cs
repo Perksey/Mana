@@ -11,26 +11,25 @@ namespace Mana.Samples.Basic
         [STAThread]
         public static void Main(string[] args)
         {
-            using (SampleGame game = new SampleGame())
+            using (OpenTKWindow window = new OpenTKWindow())
             {
-                using (OpenTKWindow window = new OpenTKWindow())
+#if RELEASE
+                try
                 {
-#if RELEASE
-                    try
-                    {
 #endif
-                        window.Run(game);
+                    window.Run(new SampleGame());
 #if RELEASE
-                    }
-                    catch (Exception e)
-                    {
-                        _log.Fatal($"{e.Message}{Environment.NewLine}{e.StackTrace}");
-                        _log.Fatal("Press any key to continue...");
-                        Console.ReadKey();
-                    }
-#endif
                 }
+                catch (Exception e)
+                {
+                    _log.Fatal($"{e.Message}{Environment.NewLine}{e.StackTrace}");
+                    _log.Fatal("Press any key to continue...");
+                    Console.ReadKey();
+                }
+#endif
             }
+            
+            GC.Collect();
         }
     }
 }

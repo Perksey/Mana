@@ -1,7 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using Mana.Asset;
@@ -26,13 +24,31 @@ namespace Mana.Graphics
         private TextureFilterMode _filterMode = TextureFilterMode.Nearest;
         private TextureWrapMode _wrapMode = TextureWrapMode.Repeat;
 
-        public Texture2D(GraphicsDevice graphicsDevice)
+        private Texture2D(GraphicsDevice graphicsDevice, int width, int height)
         {
             GraphicsDevice = graphicsDevice;
             GraphicsDevice.Resources.Add(this);
-            
-            Handle = (GLHandle)GL.GenTexture();
-            GLHelper.CheckLastError();
+
+            if (graphicsDevice.DirectStateAccessSupported)
+            {
+                GL.CreateTextures(TextureTarget.Texture2D, 1, out int textureInt);
+                GLHelper.CheckLastError();
+                Handle = (GLHandle)textureInt;
+            }
+            else
+            {
+                Handle = (GLHandle)GL.GenTexture();
+                GLHelper.CheckLastError();
+            }
+
+            Width = width;
+            Height = height;
+
+            if (graphicsDevice.DirectStateAccessSupported)
+            {
+                GL.TextureStorage2D(Handle, 1, SizedInternalFormat.Rgba8, Width, Height);
+                GLHelper.CheckLastError();
+            }
         }
 
         ~Texture2D()
@@ -85,80 +101,130 @@ namespace Mana.Graphics
             }
         }
 
-        public void SetDataFromBitmap(Bitmap bitmap)
+        public static unsafe Texture2D CreateFromStream(GraphicsDevice graphicsDevice, Stream stream)
         {
-            GraphicsDevice.BindTexture(0, this);
-
-            var data = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height),
-                                              ImageLockMode.ReadOnly,
-                                              System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
-            GL.TexImage2D(TextureTarget.Texture2D,
-                          0,
-                          PixelInternalFormat.Rgba,
-                          bitmap.Width,
-                          bitmap.Height,
-                          0,
-                          PixelFormat.Bgra,
-                          PixelType.UnsignedByte,
-                          data.Scan0);
+            Texture2D texture;
             
-            bitmap.UnlockBits(data);
-            
-            FilterMode = TextureFilterMode.Nearest;
-            WrapMode = TextureWrapMode.Repeat;
-        }
-
-        public unsafe void SetDataFromStream(Stream stream)
-        {
-            GraphicsDevice.BindTexture(0, this);
-
             using (Image<Rgba32> image = Image.Load(stream))
             {
                 image.Mutate(x => x.Flip(FlipMode.Vertical));
 
-                Width = image.Width;
-                Height = image.Height;
-
+                texture = new Texture2D(graphicsDevice, image.Width, image.Height);
+                
                 fixed (void* data = &MemoryMarshal.GetReference(image.GetPixelSpan()))
                 {
-                    GL.TexImage2D(TextureTarget.Texture2D,
-                                  0,
-                                  PixelInternalFormat.Rgba,
-                                  image.Width,
-                                  image.Height,
-                                  0,
-                                  PixelFormat.Rgba,
-                                  PixelType.UnsignedByte,
-                                  new IntPtr(data));
-                    GLHelper.CheckLastError();
+                    if (graphicsDevice.DirectStateAccessSupported)
+                    {
+                        GL.TextureSubImage2D(texture.Handle, 
+                                             0,
+                                             0,
+                                             0,
+                                             texture.Width,
+                                             texture.Height,
+                                             PixelFormat.Rgba,
+                                             PixelType.UnsignedByte,
+                                             new IntPtr(data));
+                        GLHelper.CheckLastError();
+                    }
+                    else
+                    {
+                        graphicsDevice.BindTexture(0, texture);
+                        
+                        GL.TexImage2D(TextureTarget.Texture2D,
+                                      0,
+                                      PixelInternalFormat.Rgba,
+                                      texture.Width,
+                                      texture.Height,
+                                      0,
+                                      PixelFormat.Rgba,
+                                      PixelType.UnsignedByte,
+                                      new IntPtr(data));
+                        GLHelper.CheckLastError();
+                    }
                 }
             }
             
-            FilterMode = TextureFilterMode.Nearest;
-            WrapMode = TextureWrapMode.Repeat;
+            texture.FilterMode = TextureFilterMode.Nearest;
+            texture.WrapMode = TextureWrapMode.Repeat;
+
+            return texture;
+        }
+        
+        public static unsafe Texture2D CreateFromRGBAPointer(GraphicsDevice graphicsDevice, int width, int height, byte* data)
+        {
+            Texture2D texture = new Texture2D(graphicsDevice, width, height);
+
+            if (graphicsDevice.DirectStateAccessSupported)
+            {
+                GL.TextureSubImage2D(texture.Handle, 
+                                     0,
+                                     0,
+                                     0,
+                                     texture.Width,
+                                     texture.Height,
+                                     PixelFormat.Rgba,
+                                     PixelType.UnsignedByte,
+                                     new IntPtr(data));
+                GLHelper.CheckLastError();
+            }
+            else
+            {
+                graphicsDevice.BindTexture(0, texture);
+                
+                GL.TexImage2D(TextureTarget.Texture2D,
+                              0,
+                              PixelInternalFormat.Rgba,
+                              width,
+                              height,
+                              0,
+                              PixelFormat.Rgba,
+                              PixelType.UnsignedByte,
+                              new IntPtr(data));
+                GLHelper.CheckLastError();
+            }
+            
+            texture.FilterMode = TextureFilterMode.Nearest;
+            texture.WrapMode = TextureWrapMode.Repeat;
+
+            return texture;
         }
 
-        public unsafe void SetDataFromRgba(byte* data, int width, int height)
+        public Color GetPixel(int x, int y)
         {
-            GraphicsDevice.BindTexture(0, this);
-
-            Width = width;
-            Height = height;
+            throw new NotImplementedException();
             
-            GL.TexImage2D(TextureTarget.Texture2D,
-                          0,
-                          PixelInternalFormat.Rgba,
-                          Width,
-                          Height,
-                          0,
-                          PixelFormat.Rgba,
-                          PixelType.UnsignedByte,
-                          new IntPtr(data));
-            GLHelper.CheckLastError();
+            var data = new Color[1];
+            
+            GetPixels(0, new Rectangle(x, y, 1, 1), data, 0);
+            
+            return data[0];
+        }
 
-            FilterMode = TextureFilterMode.Nearest;
-            WrapMode = TextureWrapMode.Repeat;
+        public unsafe void GetPixels(int mipLevel, Rectangle rect, Color[] data, int startIndex)
+        {
+            throw new NotImplementedException();
+            
+            GraphicsDevice.BindTexture(0, this);
+            
+            var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+
+            var intPtr = handle.AddrOfPinnedObject();
+            
+            GL.GetTextureSubImage(Handle,
+                                  0,
+                                  rect.X,
+                                  rect.Y,
+                                  0,
+                                  rect.Width,
+                                  rect.Height,
+                                  1,
+                                  PixelFormat.Rgba,
+                                  PixelType.UnsignedByte,
+                                  data.Length * sizeof(Color),
+                                  ref intPtr);
+            GLHelper.CheckLastError();
+            
+            handle.Free();
         }
 
         public override void Dispose()
@@ -166,7 +232,7 @@ namespace Mana.Graphics
             Debug.Assert(!Disposed);
             
             GraphicsDevice.Resources.Remove(this);
-            
+
             GL.DeleteTexture(Handle);
             GLHelper.CheckLastError();
             
@@ -228,8 +294,8 @@ namespace Mana.Graphics
             Height = newHeight;
 
             // Reapply filter mode and wrap mode to new texture.
-            FilterMode = this.FilterMode;
-            WrapMode = this.WrapMode;
+            FilterMode = FilterMode;
+            WrapMode = WrapMode;
 
             return true;
         }

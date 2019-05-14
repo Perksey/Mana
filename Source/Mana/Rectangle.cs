@@ -2,6 +2,11 @@ namespace Mana
 {
     public struct Rectangle
     {
+        public int X;
+        public int Y;
+        public int Width;
+        public int Height;
+        
         public bool Equals(Rectangle other)
         {
             return X == other.X && Y == other.Y && Width == other.Width && Height == other.Height;
@@ -23,11 +28,6 @@ namespace Mana
                 return hashCode;
             }
         }
-
-        public int X;
-        public int Y;
-        public int Width;
-        public int Height;
 
         public Rectangle(int x, int y, int width, int height)
         {

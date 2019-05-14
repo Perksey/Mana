@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Mana.Graphics.Buffers;
 using Mana.Graphics.Shaders;
 using Mana.Graphics.Vertex;
@@ -12,11 +13,9 @@ namespace Mana.Graphics
 {
     public class SpriteBatch : IGraphicsResource
     {
-        private const int MAX_BATCH_SIZE = 3000; 
+        private const int MAX_BATCH_SIZE = 3000;
         
         private static Logger _log = Logger.Create();
-        
-        private int _storedItems = 0;
         
         private VertexBuffer _vertexBuffer;
         private int _vertexBufferSize;
@@ -29,7 +28,8 @@ namespace Mana.Graphics
         private Texture2D _lastTexture;
         private ShaderProgram _lastShader;
         
-        public ShaderProgram Shader { get; set; }
+        private int _storedItems = 0;
+        private bool _began = false;
         
         public SpriteBatch(GraphicsDevice graphicsDevice)
         {
@@ -40,47 +40,63 @@ namespace Mana.Graphics
 
                 _vertexBufferSize = 64;
                 _indexBufferSize = 96;
-                
-                _vertexBuffer = VertexBuffer.Create(GraphicsDevice,
-                                                    _vertexBufferSize * sizeof(VertexPosition2DTextureColor),
-                                                    VertexTypeInfo.Get<VertexPosition2DTextureColor>(),
-                                                    BufferUsage.DynamicDraw,
-                                                    clear: false,
-                                                    dynamic: true,
-                                                    mutable: true);
+
+                CreateVertexBuffer();
                 _vertexData = new VertexPosition2DTextureColor[_vertexBufferSize];
 
-                _indexBuffer = IndexBuffer.Create(GraphicsDevice,
-                                                  _indexBufferSize,
-                                                  sizeof(ushort),
-                                                  DrawElementsType.UnsignedShort,
-                                                  BufferUsage.DynamicDraw,
-                                                  clear: false,
-                                                  dynamic: true,
-                                                  mutable: true);
+                CreateIndexBuffer();
                 _indexData = new ushort[_indexBufferSize];
             }
         }
         
         public GraphicsDevice GraphicsDevice { get; }
+        
+        public ShaderProgram Shader { get; set; }
 
         public void Begin()
         {
+            if (_began)
+                throw new InvalidOperationException("SpriteBatch already began.");
+            
             _storedItems = 0;
+            _began = true;
         }
 
         public void End()
         {
-            if (_storedItems == 0)
-                return;
+            if (!_began)
+                throw new InvalidOperationException("End() must be called before Begin() may be called.");
             
-            Flush(true);
+            if (_storedItems != 0)
+                Flush(true);
+            
+            _began = false;
         }
 
-        public void Draw(Texture2D texture, Rectangle rectangle)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Draw(Texture2D texture, Rectangle destination)
         {
+            Draw(texture, destination, new Rectangle(0, 0, texture.Width, texture.Height), Color.White);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]   
+        public void Draw(Texture2D texture, Rectangle destination, Rectangle source)
+        {
+            Draw(texture, destination, source, Color.White);
+        }
+
+        public void Draw(Texture2D texture, Rectangle destination, Rectangle source, Color color)
+        {
+            if (!_began)
+                throw new InvalidOperationException("Begin() must be called before SpriteBatch may be used for drawing.");
+            
+            if (texture == null)
+                throw new ArgumentNullException(nameof(texture));
+            
             unsafe
             {
+                bool flushed = false;
+                
                 if (_lastTexture == null)
                 {
                     _lastTexture = texture;
@@ -88,12 +104,15 @@ namespace Mana.Graphics
                 else if (_lastTexture != texture)
                 {
                     Flush();
+                    flushed = true;
                     _lastTexture = texture;                
                 }
                 
                 if (Shader != _lastShader)
                 {
-                    Flush();
+                    if (!flushed)
+                        Flush();
+                    
                     _lastShader = Shader;
                 }
             
@@ -110,41 +129,50 @@ namespace Mana.Graphics
                 
                 fixed (VertexPosition2DTextureColor* dest = &_vertexData[firstVertexIndex])
                 {
-                    dest[0].Position.X = rectangle.Left;
-                    dest[0].Position.Y = rectangle.Bottom;
-                    dest[0].TexCoord.X = 0;
-                    dest[0].TexCoord.Y = 0;
-                    dest[0].Color.R = byte.MaxValue;
-                    dest[0].Color.G = byte.MaxValue;
-                    dest[0].Color.B = byte.MaxValue;
-                    dest[0].Color.A = byte.MaxValue;
+                    float l = source.X / (float)texture.Width;
+                    float r = source.Right / (float)texture.Width;
+                    float t = source.Y / (float)texture.Height;
+                    float b = source.Bottom / (float)texture.Height;
                     
-                    dest[1].Position.X = rectangle.Right;
-                    dest[1].Position.Y = rectangle.Bottom;
-                    dest[1].TexCoord.X = 1;
-                    dest[1].TexCoord.Y = 0;
-                    dest[1].Color.R = byte.MaxValue;
-                    dest[1].Color.G = byte.MaxValue;
-                    dest[1].Color.B = byte.MaxValue;
-                    dest[1].Color.A = byte.MaxValue;
+                    dest[0].Position.X = destination.Left;
+                    dest[0].Position.Y = destination.Bottom;
+                    dest[0].TexCoord.X = l;
+                    dest[0].TexCoord.Y = t;
+                    dest[0].Color.R = color.R;
+                    dest[0].Color.G = color.G;
+                    dest[0].Color.B = color.B;
+                    dest[0].Color.A = color.A;
+                    // dest[0].Color = color;
                     
-                    dest[2].Position.X = rectangle.Right;
-                    dest[2].Position.Y = rectangle.Top;
-                    dest[2].TexCoord.X = 1;
-                    dest[2].TexCoord.Y = 1;
-                    dest[2].Color.R = byte.MaxValue;
-                    dest[2].Color.G = byte.MaxValue;
-                    dest[2].Color.B = byte.MaxValue;
-                    dest[2].Color.A = byte.MaxValue;
+                    dest[1].Position.X = destination.Right;
+                    dest[1].Position.Y = destination.Bottom;
+                    dest[1].TexCoord.X = r;
+                    dest[1].TexCoord.Y = t;
+                    dest[1].Color.R = color.R;
+                    dest[1].Color.G = color.G;
+                    dest[1].Color.B = color.B;
+                    dest[1].Color.A = color.A;
+                    // dest[1].Color = color;
                     
-                    dest[3].Position.X = rectangle.Left;
-                    dest[3].Position.Y = rectangle.Top;
-                    dest[3].TexCoord.X = 0;
-                    dest[3].TexCoord.Y = 1;
-                    dest[3].Color.R = byte.MaxValue;
-                    dest[3].Color.G = byte.MaxValue;
-                    dest[3].Color.B = byte.MaxValue;
-                    dest[3].Color.A = byte.MaxValue;
+                    dest[2].Position.X = destination.Right;
+                    dest[2].Position.Y = destination.Top;
+                    dest[2].TexCoord.X = r;
+                    dest[2].TexCoord.Y = b;
+                    dest[2].Color.R = color.R;
+                    dest[2].Color.G = color.G;
+                    dest[2].Color.B = color.B;
+                    dest[2].Color.A = color.A;
+                    // dest[2].Color = color;
+                    
+                    dest[3].Position.X = destination.Left;
+                    dest[3].Position.Y = destination.Top;
+                    dest[3].TexCoord.X = l;
+                    dest[3].TexCoord.Y = b;
+                    dest[3].Color.R = color.R;
+                    dest[3].Color.G = color.G;
+                    dest[3].Color.B = color.B;
+                    dest[3].Color.A = color.A;
+                    // dest[3].Color = color;
                 }
                 
                 fixed (ushort* dest = &_indexData[firstIndexIndex])
@@ -162,6 +190,9 @@ namespace Mana.Graphics
         public void Dispose()
         {
             GraphicsDevice.Resources.Remove(this);
+            
+            _vertexBuffer.Dispose();
+            _indexBuffer.Dispose();
         }
 
         private void Flush(bool inEnd = false)
@@ -174,11 +205,11 @@ namespace Mana.Graphics
                 fixed (VertexPosition2DTextureColor* vertexPtr = &_vertexData[0])
                 fixed (ushort* indexPtr = &_indexData[0])
                 {
-                    _vertexBuffer.DiscardData();
-                    _vertexBuffer.SetDataPointer((IntPtr)vertexPtr, _storedItems * 4 * sizeof(VertexPosition2DTextureColor));
+                    //_vertexBuffer.DiscardData();
+                    _vertexBuffer.SubData<VertexPosition2DTextureColor>((IntPtr)vertexPtr, 0, _storedItems * 4);
                     
-                    _indexBuffer.DiscardData();
-                    _indexBuffer.SetDataPointer((IntPtr)indexPtr, _storedItems * 6 * sizeof(ushort));
+                    //_indexBuffer.DiscardData();
+                    _indexBuffer.SubData<ushort>((IntPtr)indexPtr, 0, _storedItems * 6);
                 }
             }
 
@@ -196,6 +227,12 @@ namespace Mana.Graphics
                                  DrawElementsType.UnsignedShort,
                                  IntPtr.Zero);
             GLHelper.CheckLastError();
+
+            unchecked
+            {
+                Metrics._drawCalls++;
+                Metrics._primitiveCount += _storedItems * 6;
+            }
             
             _storedItems = 0;
         }
@@ -204,7 +241,7 @@ namespace Mana.Graphics
         {
             if (_storedItems * 4 > _vertexBufferSize)
             {
-                _log.Debug("SpriteBatch capacity increased from " + _vertexBufferSize + " to " + (int)(_vertexBufferSize * 1.5f));
+                // _log.Debug("SpriteBatch capacity increased from " + _vertexBufferSize + " to " + (int)(_vertexBufferSize * 1.5f));
                 _vertexBufferSize = (int)(_vertexBufferSize * 1.5f);    // To increase capacity
                 _indexBufferSize = (int)(_vertexBufferSize * 1.5f);     // To have 2:3 ratio from vertex to index
 
@@ -261,22 +298,29 @@ namespace Mana.Graphics
                                       tempIndexData.Length * sizeof(ushort));
                 }
 
-                _vertexBuffer = VertexBuffer.Create(GraphicsDevice,
-                                                    _vertexBufferSize * sizeof(VertexPosition2DTextureColor),
-                                                    VertexTypeInfo.Get<VertexPosition2DTextureColor>(),
-                                                    BufferUsage.DynamicDraw,
-                                                    clear: false,
-                                                    dynamic: true,
-                                                    mutable: true);
-                
-                _indexBuffer = IndexBuffer.Create(GraphicsDevice,
-                                                  _indexBufferSize,
-                                                  sizeof(ushort),
-                                                  DrawElementsType.UnsignedShort,
-                                                  BufferUsage.DynamicDraw,
-                                                  clear: false,
-                                                  mutable: true);
+                CreateVertexBuffer();
+                CreateIndexBuffer();
             }
+        }
+
+        private void CreateVertexBuffer()
+        {
+            _vertexBuffer?.Dispose();
+            _vertexBuffer = VertexBuffer.Create<VertexPosition2DTextureColor>(GraphicsDevice,
+                                                                              _vertexBufferSize,
+                                                                              BufferUsage.StaticDraw,
+                                                                              immutable: true,
+                                                                              dynamic: true);
+        }
+
+        private void CreateIndexBuffer()
+        {
+            _indexBuffer?.Dispose();
+            _indexBuffer = IndexBuffer.Create<ushort>(GraphicsDevice,
+                                                      _indexBufferSize,
+                                                      BufferUsage.StaticDraw,
+                                                      immutable: true,
+                                                      dynamic: true);
         }
     }
 }

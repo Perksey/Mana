@@ -1,8 +1,9 @@
+using System;
 using Mana.Graphics;
 
 namespace Mana
 {
-    public class GameComponent
+    public class GameComponent : IDisposable
     {
         public bool Enabled = true;
         
@@ -42,6 +43,10 @@ namespace Mana
         }
 
         public virtual void LateRender(float time, float deltaTime)
+        {
+        }
+
+        public virtual void Dispose()
         {
         }
     }

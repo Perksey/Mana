@@ -21,7 +21,7 @@ namespace Mana.Graphics
         internal readonly GraphicsResourceCollection Resources;
         internal GraphicsDeviceBindings Bindings;
 
-        internal readonly bool NamedBuffersSupported;
+        internal readonly bool DirectStateAccessSupported;
         internal readonly bool ImmutableStorageSupported;
 
         private Color _clearColor;
@@ -42,12 +42,9 @@ namespace Mana.Graphics
             _instance = this;
             
             Extensions = new GLExtensions();
-            NamedBuffersSupported = Extensions.ARB_DirectStateAccess || IsVersionAtLeast(4, 5);
-            ImmutableStorageSupported = Extensions.ARB_DirectStateAccess || IsVersionAtLeast(4, 5);
+            DirectStateAccessSupported = Extensions.ARB_DirectStateAccess || IsVersionAtLeast(4, 5);
+            ImmutableStorageSupported = Extensions.ARB_BufferStorage || IsVersionAtLeast(4, 4);
 
-            NamedBuffersSupported = true;
-            ImmutableStorageSupported = true;
-            
             Resources = new GraphicsResourceCollection();
             Bindings = new GraphicsDeviceBindings();
 
@@ -459,7 +456,7 @@ namespace Mana.Graphics
                            ShaderProgram shaderProgram,
                            PrimitiveType primitiveType = PrimitiveType.Triangles)
         {
-            if (vertexBuffer.VertexCount == 0)
+            if (vertexBuffer.Count == 0)
                 return;
             
             BindVertexBuffer(vertexBuffer);
@@ -468,13 +465,13 @@ namespace Mana.Graphics
 
             vertexBuffer.VertexTypeInfo.Apply(shaderProgram);
 
-            GL.DrawArrays(primitiveType, 0, vertexBuffer.VertexCount);
+            GL.DrawArrays(primitiveType, 0, vertexBuffer.Count);
             GLHelper.CheckLastError();
 
             unchecked
             {
                 Metrics._drawCalls++;
-                Metrics._primitiveCount += vertexBuffer.VertexCount;
+                Metrics._primitiveCount += vertexBuffer.Count;
             }
         }
 
@@ -483,7 +480,7 @@ namespace Mana.Graphics
                            ShaderProgram shaderProgram,
                            PrimitiveType primitiveType = PrimitiveType.Triangles)
         {
-            if (vertexBuffer.VertexCount == 0 || indexBuffer.IndexCount == 0)
+            if (vertexBuffer.Count == 0 || indexBuffer.Count == 0)
                 return;
 
             BindVertexBuffer(vertexBuffer);
@@ -492,12 +489,13 @@ namespace Mana.Graphics
             
             vertexBuffer.VertexTypeInfo.Apply(shaderProgram);
             
-            GL.DrawElements(primitiveType, indexBuffer.IndexCount, indexBuffer.DataType, 0);
+            GL.DrawElements(primitiveType, indexBuffer.Count, indexBuffer.DataType, 0);
+            GLHelper.CheckLastError();
             
             unchecked
             {
                 Metrics._drawCalls++;
-                Metrics._primitiveCount += indexBuffer.IndexCount;
+                Metrics._primitiveCount += indexBuffer.Count;
             }
         }
         

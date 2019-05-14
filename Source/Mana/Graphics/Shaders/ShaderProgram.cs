@@ -28,6 +28,13 @@ namespace Mana.Graphics.Shaders
             GLHelper.CheckLastError();
         }
 
+#if DEBUG
+        ~ShaderProgram()
+        {
+            _log.Error("ShaderProgram leaked.");
+        }
+#endif
+
         public GLHandle Handle { get; private set; }
 
         public GraphicsDevice GraphicsDevice { get; }
@@ -433,6 +440,8 @@ namespace Mana.Graphics.Shaders
             GLHelper.CheckLastError();
            
             Disposed = true;
+
+            GC.SuppressFinalize(this);
         }
 
         internal override void OnAssetLoaded(AssetManager assetManager)

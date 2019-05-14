@@ -7,9 +7,7 @@ namespace Mana.Asset.Loaders
     {
         public Texture2D Load(AssetManager manager, Stream sourceStream, string sourcePath)
         {
-            Texture2D texture = new Texture2D(manager.GraphicsDevice);
-            texture.SetDataFromStream(sourceStream);
-            return texture;
+            return Texture2D.CreateFromStream(manager.GraphicsDevice, sourceStream);
         }
     }
 }

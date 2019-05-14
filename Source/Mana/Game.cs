@@ -8,6 +8,8 @@ namespace Mana
 {
     public abstract class Game : IDisposable
     {
+        private bool _disposed = false;
+        
         private float _fpsAccumulator = 0;
         private int _fpsFrameCounter = 0;
 
@@ -25,13 +27,14 @@ namespace Mana
         
         public GameComponentCollection Components { get; }
         
-        public void Dispose()
-        {
-        }
-
         public void Quit()
         {
             Window.Close();
+        }
+        
+        public virtual void Dispose()
+        {
+            Components.Dispose();
         }
 
         /// <summary>
@@ -88,6 +91,7 @@ namespace Mana
         }
 
         protected abstract void Initialize();
+        
         protected abstract void Update(float time, float deltaTime);
         protected abstract void Render(float time, float deltaTime);
 

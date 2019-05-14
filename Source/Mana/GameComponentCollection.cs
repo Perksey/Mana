@@ -1,11 +1,13 @@
+using System;
 using System.Collections.Generic;
 
 namespace Mana
 {
-    public class GameComponentCollection
+    public class GameComponentCollection : IDisposable
     {
         private List<GameComponent> _components = new List<GameComponent>();
-
+        private bool _disposed = false;
+        
         public GameComponentCollection(Game game)
         {
             Game = game;
@@ -78,6 +80,19 @@ namespace Mana
             for (int i = 0; i < _components.Count; i++)
                 if (_components[i].Visible)
                     _components[i].LateRender(time, deltaTime);
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            for (int i = 0; i < _components.Count; i++)
+                _components[i].Dispose();
+            
+            _components.Clear();
+            
+            _disposed = true;
         }
     }
 }

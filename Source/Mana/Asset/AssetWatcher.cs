@@ -76,8 +76,6 @@ namespace Mana.Asset
 
             _watchers.Add(watcher);
             _fileNames.Add(fileName);
-            
-            Console.WriteLine($"Watching Path: {path} [{fileName}]");
         }
 
         private void RequestReload()

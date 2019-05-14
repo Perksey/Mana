@@ -106,7 +106,6 @@ namespace Mana.Graphics
         public void Dispose()
         {
             _windowWrapper?.Dispose();
-            Game?.Dispose();
         }
 
         private sealed class GameWindowWrapper : GameWindow
@@ -215,6 +214,11 @@ namespace Mana.Graphics
                 base.OnMouseWheel(e);
 
                 Input.OnMouseScroll(e.Delta, e.Value);
+            }
+
+            protected override void OnClosed(EventArgs e)
+            {
+                _game.Dispose();
             }
 
             private MouseButton GetMouseButton(MouseButtonTK buttonTK)

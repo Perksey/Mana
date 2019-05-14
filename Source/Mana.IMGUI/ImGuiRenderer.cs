@@ -25,11 +25,11 @@ namespace Mana.IMGUI
         private Dictionary<IntPtr, Texture2D> _boundTextures = new Dictionary<IntPtr, Texture2D>();
         private List<int> _keys = new List<int>();
 
-        private byte[] _vertexData;
+        private VertexPosition2DTextureColor[] _vertexData;
         private VertexBuffer _vertexBuffer;
         private int _vertexBufferSize;
 
-        private byte[] _indexData;
+        private ushort[] _indexData;
         private IndexBuffer _indexBuffer;
         private int _indexBufferSize;
         
@@ -59,12 +59,23 @@ namespace Mana.IMGUI
             _shaderProgram = CreateShaderProgram();
         }
 
+        public override void Dispose()
+        {
+            foreach (var kvp in _boundTextures)
+            {
+                kvp.Value.Dispose();
+            }
+            
+            _vertexBuffer.Dispose();
+            _indexBuffer.Dispose();
+            _shaderProgram.Dispose();
+        }
+
         private unsafe void RebuildFontAtlas()
         {
             _io.Fonts.GetTexDataAsRGBA32(out byte* pixelData, out int width, out int height, out _);
-            
-            Texture2D fontTexture = new Texture2D(GraphicsDevice);
-            fontTexture.SetDataFromRgba(pixelData, width, height);
+
+            Texture2D fontTexture = Texture2D.CreateFromRGBAPointer(GraphicsDevice, width, height, pixelData);
 
             _io.Fonts.SetTexID(BindTexture(fontTexture));
             _io.Fonts.ClearTexData();
@@ -217,14 +228,12 @@ namespace Mana.IMGUI
                 _vertexBuffer?.Dispose();
 
                 _vertexBufferSize = (int)(drawData.TotalVtxCount * 1.5f);
-                _vertexBuffer = VertexBuffer.Create(GraphicsDevice, 
-                                                    _vertexBufferSize * sizeof(ImDrawVert),
-                                                    VertexTypeInfo.Get<VertexPosition2DTextureColor>(),
-                                                    BufferUsage.DynamicDraw,
-                                                    clear: false,
-                                                    dynamic: true,
-                                                    mutable: true);
-                _vertexData = new byte[_vertexBufferSize * sizeof(ImDrawVert)];
+                _vertexBuffer = VertexBuffer.Create<VertexPosition2DTextureColor>(GraphicsDevice,
+                                                                                  _vertexBufferSize,
+                                                                                  BufferUsage.DynamicDraw,
+                                                                                  immutable: true,
+                                                                                  dynamic: true);
+                _vertexData = new VertexPosition2DTextureColor[_vertexBufferSize];
             }
 
             if (drawData.TotalIdxCount > _indexBufferSize)
@@ -232,16 +241,12 @@ namespace Mana.IMGUI
                 _indexBuffer?.Dispose();
 
                 _indexBufferSize = (int)(drawData.TotalIdxCount * 1.5f);
-                _indexBuffer = IndexBuffer.Create(GraphicsDevice,
-                                                  _indexBufferSize,
-                                                  sizeof(ushort),
-                                                  DrawElementsType.UnsignedShort,
-                                                  BufferUsage.DynamicDraw,
-                                                  clear: false,
-                                                  dynamic: true,
-                                                  mutable: true);
-                                                  
-                _indexData = new byte[_indexBufferSize * sizeof(ushort)];
+                _indexBuffer = IndexBuffer.Create<ushort>(GraphicsDevice,
+                                                          _indexBufferSize,
+                                                          BufferUsage.DynamicDraw,
+                                                          immutable: true,
+                                                          dynamic: true);
+                _indexData = new ushort[_indexBufferSize];
             }
             
             // Copy ImGui's vertices and indices to a set of managed byte arrays
@@ -252,16 +257,16 @@ namespace Mana.IMGUI
             {
                 ImDrawListPtr cmdList = drawData.CmdListsRange[n];
 
-                fixed (void* vtxDstPtr = &_vertexData[vtxOffset * sizeof(ImDrawVert)])
-                fixed (void* idxDstPtr = &_indexData[idxOffset * sizeof(ushort)])
+                fixed (void* vtxDstPtr = &_vertexData[vtxOffset])
+                fixed (void* idxDstPtr = &_indexData[idxOffset])
                 {
                     Buffer.MemoryCopy((void*)cmdList.VtxBuffer.Data, 
                                       vtxDstPtr, 
-                                      _vertexData.Length, 
+                                      _vertexData.Length * sizeof(ImDrawVert), 
                                       cmdList.VtxBuffer.Size * sizeof(ImDrawVert));
                     Buffer.MemoryCopy((void*)cmdList.IdxBuffer.Data, 
                                       idxDstPtr, 
-                                      _indexData.Length, 
+                                      _indexData.Length  * sizeof(ushort), 
                                       cmdList.IdxBuffer.Size * sizeof(ushort));
                 }
 
@@ -270,8 +275,8 @@ namespace Mana.IMGUI
             }
             
             // Copy the managed byte arrays to the gpu vertex and index buffers
-            _vertexBuffer.SetData(_vertexData, drawData.TotalVtxCount * sizeof(ImDrawVert));
-            _indexBuffer.SetData(_indexData, drawData.TotalIdxCount * sizeof(ushort));
+            _vertexBuffer.SubData(_vertexData, 0, drawData.TotalVtxCount);
+            _indexBuffer.SubData(_indexData, 0, drawData.TotalIdxCount);
         }
 
         private void RenderCommandLists(ImDrawDataPtr drawData)

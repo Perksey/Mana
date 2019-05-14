@@ -1,2 +1,2 @@
 # Mana
-A C# library for creating powerful 2D &amp; 3D games.
+🕹️ A library for creating 2D & 3D games with C#.

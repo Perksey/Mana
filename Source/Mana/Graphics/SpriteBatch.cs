@@ -73,6 +73,39 @@ namespace Mana.Graphics
             _began = false;
         }
 
+        public void DrawRawQuad(Texture2D texture,
+                                VertexPosition2DTextureColor bl,
+                                VertexPosition2DTextureColor br,
+                                VertexPosition2DTextureColor tr,
+                                VertexPosition2DTextureColor tl)
+        {
+            if (!_began)
+                throw new InvalidOperationException("Begin() must be called before SpriteBatch may be used for drawing.");
+
+            unsafe
+            {
+                FlushIfNeeded(null);
+                
+                _storedItems++;
+                EnsureBufferLargeEnough();
+
+                int vertexOffset = (_storedItems - 1) * 4;
+                int indexOffset = (_storedItems - 1) * 6;
+                
+                _vertexData[vertexOffset + 0] = bl;
+                _vertexData[vertexOffset + 1] = br;
+                _vertexData[vertexOffset + 2] = tr;
+                _vertexData[vertexOffset + 3] = tl;
+                
+                _indexData[indexOffset + 0] = (ushort)(vertexOffset + 0);
+                _indexData[indexOffset + 1] = (ushort)(vertexOffset + 1);
+                _indexData[indexOffset + 2] = (ushort)(vertexOffset + 2);
+                _indexData[indexOffset + 3] = (ushort)(vertexOffset + 0);
+                _indexData[indexOffset + 4] = (ushort)(vertexOffset + 2);
+                _indexData[indexOffset + 5] = (ushort)(vertexOffset + 3);
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Draw(Texture2D texture, Rectangle destination)
         {
@@ -84,7 +117,7 @@ namespace Mana.Graphics
         {
             Draw(texture, destination, source, Color.White);
         }
-
+        
         public void Draw(Texture2D texture, Rectangle destination, Rectangle source, Color color)
         {
             if (!_began)
@@ -92,99 +125,50 @@ namespace Mana.Graphics
             
             if (texture == null)
                 throw new ArgumentNullException(nameof(texture));
-            
-            unsafe
-            {
-                bool flushed = false;
-                
-                if (_lastTexture == null)
-                {
-                    _lastTexture = texture;
-                }
-                else if (_lastTexture != texture)
-                {
-                    Flush();
-                    flushed = true;
-                    _lastTexture = texture;                
-                }
-                
-                if (Shader != _lastShader)
-                {
-                    if (!flushed)
-                        Flush();
-                    
-                    _lastShader = Shader;
-                }
-            
-                if (((_storedItems ) * 4) + 3 > ushort.MaxValue || _storedItems >= MAX_BATCH_SIZE)
-                {
-                    Flush();
-                }
 
-                _storedItems++;
-                EnsureBufferLargeEnough();
+            FlushIfNeeded(texture);
 
-                int firstVertexIndex = (_storedItems - 1) * 4;
-                int firstIndexIndex = (_storedItems - 1) * 6;
+            _storedItems++;
+            EnsureBufferLargeEnough();
+
+            int vertexOffset = (_storedItems - 1) * 4;
+            int indexOffset = (_storedItems - 1) * 6;
+
+            float l = source.X / (float)texture.Width;
+            float r = source.Right / (float)texture.Width;
+            float t = source.Y / (float)texture.Height;
+            float b = source.Bottom / (float)texture.Height;
                 
-                fixed (VertexPosition2DTextureColor* dest = &_vertexData[firstVertexIndex])
-                {
-                    float l = source.X / (float)texture.Width;
-                    float r = source.Right / (float)texture.Width;
-                    float t = source.Y / (float)texture.Height;
-                    float b = source.Bottom / (float)texture.Height;
-                    
-                    dest[0].Position.X = destination.Left;
-                    dest[0].Position.Y = destination.Bottom;
-                    dest[0].TexCoord.X = l;
-                    dest[0].TexCoord.Y = t;
-                    dest[0].Color.R = color.R;
-                    dest[0].Color.G = color.G;
-                    dest[0].Color.B = color.B;
-                    dest[0].Color.A = color.A;
-                    // dest[0].Color = color;
-                    
-                    dest[1].Position.X = destination.Right;
-                    dest[1].Position.Y = destination.Bottom;
-                    dest[1].TexCoord.X = r;
-                    dest[1].TexCoord.Y = t;
-                    dest[1].Color.R = color.R;
-                    dest[1].Color.G = color.G;
-                    dest[1].Color.B = color.B;
-                    dest[1].Color.A = color.A;
-                    // dest[1].Color = color;
-                    
-                    dest[2].Position.X = destination.Right;
-                    dest[2].Position.Y = destination.Top;
-                    dest[2].TexCoord.X = r;
-                    dest[2].TexCoord.Y = b;
-                    dest[2].Color.R = color.R;
-                    dest[2].Color.G = color.G;
-                    dest[2].Color.B = color.B;
-                    dest[2].Color.A = color.A;
-                    // dest[2].Color = color;
-                    
-                    dest[3].Position.X = destination.Left;
-                    dest[3].Position.Y = destination.Top;
-                    dest[3].TexCoord.X = l;
-                    dest[3].TexCoord.Y = b;
-                    dest[3].Color.R = color.R;
-                    dest[3].Color.G = color.G;
-                    dest[3].Color.B = color.B;
-                    dest[3].Color.A = color.A;
-                    // dest[3].Color = color;
-                }
+            _vertexData[vertexOffset + 0].Position.X = destination.Left;     // Bottom Left
+            _vertexData[vertexOffset + 0].Position.Y = destination.Bottom;
+            _vertexData[vertexOffset + 0].TexCoord.X = l;
+            _vertexData[vertexOffset + 0].TexCoord.Y = t;
+            _vertexData[vertexOffset + 0].Color = color;
                 
-                fixed (ushort* dest = &_indexData[firstIndexIndex])
-                {
-                    dest[0 + 0] = (ushort)(firstVertexIndex + 0);
-                    dest[0 + 1] = (ushort)(firstVertexIndex + 1);
-                    dest[0 + 2] = (ushort)(firstVertexIndex + 2);
-                    dest[0 + 3] = (ushort)(firstVertexIndex + 0);
-                    dest[0 + 4] = (ushort)(firstVertexIndex + 2);
-                    dest[0 + 5] = (ushort)(firstVertexIndex + 3);
-                }
-            }
+            _vertexData[vertexOffset + 1].Position.X = destination.Right;    // Bottom Right
+            _vertexData[vertexOffset + 1].Position.Y = destination.Bottom;
+            _vertexData[vertexOffset + 1].TexCoord.X = r;
+            _vertexData[vertexOffset + 1].TexCoord.Y = t;
+            _vertexData[vertexOffset + 1].Color = color;
+                
+            _vertexData[vertexOffset + 2].Position.X = destination.Right;    // Top Right
+            _vertexData[vertexOffset + 2].Position.Y = destination.Top;
+            _vertexData[vertexOffset + 2].TexCoord.X = r;
+            _vertexData[vertexOffset + 2].TexCoord.Y = b;
+            _vertexData[vertexOffset + 2].Color = color;
+                
+            _vertexData[vertexOffset + 3].Position.X = destination.Left;     // Top Left
+            _vertexData[vertexOffset + 3].Position.Y = destination.Top;        
+            _vertexData[vertexOffset + 3].TexCoord.X = l;
+            _vertexData[vertexOffset + 3].TexCoord.Y = b;                    
+            _vertexData[vertexOffset + 3].Color = color;
+                
+            _indexData[indexOffset + 0] = (ushort)(vertexOffset + 0);        // Bottom Left
+            _indexData[indexOffset + 1] = (ushort)(vertexOffset + 1);        // Bottom Right    
+            _indexData[indexOffset + 2] = (ushort)(vertexOffset + 2);        // Top Right
+            _indexData[indexOffset + 3] = (ushort)(vertexOffset + 0);        // Bottom Left
+            _indexData[indexOffset + 4] = (ushort)(vertexOffset + 2);        // Top Right
+            _indexData[indexOffset + 5] = (ushort)(vertexOffset + 3);        // Top Left
         }
         
         public void Dispose()
@@ -193,6 +177,35 @@ namespace Mana.Graphics
             
             _vertexBuffer.Dispose();
             _indexBuffer.Dispose();
+        }
+
+        private void FlushIfNeeded(Texture2D texture)
+        {
+            bool flushed = false;
+                
+            if (_lastTexture == null)
+            {
+                _lastTexture = texture;
+            }
+            else if (_lastTexture != texture)
+            {
+                Flush();
+                flushed = true;
+                _lastTexture = texture;                
+            }
+                
+            if (Shader != _lastShader)
+            {
+                if (!flushed)
+                    Flush();
+                    
+                _lastShader = Shader;
+            }
+            
+            if (((_storedItems ) * 4) + 3 > ushort.MaxValue || _storedItems >= MAX_BATCH_SIZE)
+            {
+                Flush();
+            }
         }
 
         private void Flush(bool inEnd = false)

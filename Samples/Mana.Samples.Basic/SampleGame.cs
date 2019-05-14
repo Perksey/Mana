@@ -36,7 +36,8 @@ namespace Mana.Samples.Basic
         private bool _metricsWindowOpen = true;
         private bool _check = true;
 
-        private int _count = 2000;
+        private int _count = 170000;
+        private int _size = 20;
 
         protected override void Initialize()
         {
@@ -97,7 +98,7 @@ namespace Mana.Samples.Basic
                     float x = (float)((Math.Sin((time + (i / 1000.012f)) * 4.5f) * 100) + 250);
                     float y = (float)((Math.Cos((time + (i / 1000.012f)) * 4.5f) * 100) + 250);
                     
-                    _spriteBatch.Draw(_texture, new Rectangle((int)x, (int)y, 200, 200));
+                    _spriteBatch.Draw(_texture, new Rectangle((int)x, (int)y, _size, _size));
                 }
                 
                 _spriteBatch.End();
@@ -151,6 +152,7 @@ namespace Mana.Samples.Basic
                 ImGui.Checkbox("Draw with SpriteBatch", ref _check);
 
                 ImGui.DragInt("Sprites", ref _count);
+                ImGui.DragInt("Size", ref _size);
                 
                 ImGui.Separator();
 

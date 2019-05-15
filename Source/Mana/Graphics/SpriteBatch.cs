@@ -82,28 +82,25 @@ namespace Mana.Graphics
             if (!_began)
                 throw new InvalidOperationException("Begin() must be called before SpriteBatch may be used for drawing.");
 
-            unsafe
-            {
-                FlushIfNeeded(null);
+            FlushIfNeeded(null);
                 
-                _storedItems++;
-                EnsureBufferLargeEnough();
+            _storedItems++;
+            EnsureBufferLargeEnough();
 
-                int vertexOffset = (_storedItems - 1) * 4;
-                int indexOffset = (_storedItems - 1) * 6;
+            int vertexOffset = (_storedItems - 1) * 4;
+            int indexOffset = (_storedItems - 1) * 6;
                 
-                _vertexData[vertexOffset + 0] = bl;
-                _vertexData[vertexOffset + 1] = br;
-                _vertexData[vertexOffset + 2] = tr;
-                _vertexData[vertexOffset + 3] = tl;
+            _vertexData[vertexOffset + 0] = bl;
+            _vertexData[vertexOffset + 1] = br;
+            _vertexData[vertexOffset + 2] = tr;
+            _vertexData[vertexOffset + 3] = tl;
                 
-                _indexData[indexOffset + 0] = (ushort)(vertexOffset + 0);
-                _indexData[indexOffset + 1] = (ushort)(vertexOffset + 1);
-                _indexData[indexOffset + 2] = (ushort)(vertexOffset + 2);
-                _indexData[indexOffset + 3] = (ushort)(vertexOffset + 0);
-                _indexData[indexOffset + 4] = (ushort)(vertexOffset + 2);
-                _indexData[indexOffset + 5] = (ushort)(vertexOffset + 3);
-            }
+            _indexData[indexOffset + 0] = (ushort)(vertexOffset + 0);
+            _indexData[indexOffset + 1] = (ushort)(vertexOffset + 1);
+            _indexData[indexOffset + 2] = (ushort)(vertexOffset + 2);
+            _indexData[indexOffset + 3] = (ushort)(vertexOffset + 0);
+            _indexData[indexOffset + 4] = (ushort)(vertexOffset + 2);
+            _indexData[indexOffset + 5] = (ushort)(vertexOffset + 3);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

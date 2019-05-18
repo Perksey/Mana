@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using System.Threading.Tasks;
 using ImGuiNET;
 using Mana.Graphics;
 using Mana.Graphics.Buffers;
@@ -29,6 +30,7 @@ namespace Mana.Samples.Basic
         private IndexBuffer _indexBuffer;
         
         private Texture2D _texture;
+        private Texture2D _bigImage;
 
         private SpriteBatch _spriteBatch;
         private ShaderProgram _spriteShader;
@@ -36,8 +38,12 @@ namespace Mana.Samples.Basic
         private bool _metricsWindowOpen = true;
         private bool _check = true;
 
+        private bool _useLargeImage = false;
+
         private int _count = 170000;
         private int _size = 20;
+
+        private float _maxDeltaTime = 0f;
 
         protected override void Initialize()
         {
@@ -46,6 +52,11 @@ namespace Mana.Samples.Basic
             _shader = AssetManager.Load<ShaderProgram>("./Assets/Shaders/shader1.json");
             _spriteShader = AssetManager.Load<ShaderProgram>("./Assets/Shaders/sprite.json");
             _texture = AssetManager.Load<Texture2D>("./Assets/Textures/mittens.png");
+            //
+          // AssetManager.CreateAsyncBatch()
+          //             .Load(() => _shader, "./Assets/Shaders/shader1.json")
+          //             .OnCompleted(() => { })
+          //             .Run();
             
             Components.Add(new ImGuiRenderer());
 
@@ -59,6 +70,8 @@ namespace Mana.Samples.Basic
             
             var proj = Matrix4x4.CreateOrthographicOffCenter(0f, Window.Width, Window.Height, 0, -1f, 1f);
             _spriteShader.SetUniform("projection", ref proj);
+
+            Task task;
 
             ImGui.GetStyle().Alpha = 0.78f;
         }
@@ -81,11 +94,16 @@ namespace Mana.Samples.Basic
             {
                 Quit();
             }
+
+            if (deltaTime > _maxDeltaTime)
+            {
+                _maxDeltaTime = deltaTime;
+            }
         }
 
         protected override void Render(float time, float deltaTime)
         {
-            GraphicsDevice.Clear(Color.Cyan);
+            GraphicsDevice.Clear(Color.DarkSlateGray);
             //GraphicsDevice.BindTexture(0, _texture);
             //GraphicsDevice.Render(_vertexBuffer, _indexBuffer, _shader);
 
@@ -97,8 +115,8 @@ namespace Mana.Samples.Basic
                 {
                     float x = (float)((Math.Sin((time + (i / 1000.012f)) * 4.5f) * 100) + 250);
                     float y = (float)((Math.Cos((time + (i / 1000.012f)) * 4.5f) * 100) + 250);
-                    
-                    _spriteBatch.Draw(_texture, new Rectangle((int)x, (int)y, _size, _size));
+
+                    _spriteBatch.Draw(_useLargeImage ? _bigImage : _texture, new Rectangle((int)x, (int)y, _size, _size));
                 }
                 
                 _spriteBatch.End();
@@ -149,10 +167,31 @@ namespace Mana.Samples.Basic
                 
                 ImGui.Separator();
                 
+                ImGui.Text($"Max deltaTime:    {_maxDeltaTime:F3}");
+                
                 ImGui.Checkbox("Draw with SpriteBatch", ref _check);
 
                 ImGui.DragInt("Sprites", ref _count);
                 ImGui.DragInt("Size", ref _size);
+                
+                ImGui.Separator();
+
+                ImGui.Checkbox("Use large image", ref _useLargeImage);
+                
+                if (ImGui.Button("Load large image"))
+                {
+                    AssetManager.CreateAsyncBatch()
+                                .Load(() => _bigImage, "./Assets/Textures/big-image.jpg")
+                                .Load(() => _shader, "./Assets/Shaders/shader1.json")
+                                .Load(() => _texture, "./Assets/Textures/mittens.png")
+                                .Run();
+                    
+                    // AssetManager.CreateAsyncBatch()
+                    //             .Load<Texture2D>(r => _bigImage = r, "./Assets/Textures/big-image.jpg")
+                    //             .Load<ShaderProgram>(r => _shader = r, "./Assets/Shaders/shader1.json")
+                    //             .Load<Texture2D>(r => _texture = r, "./Assets/Textures/mittens.png")
+                    //             .Run();
+                }
                 
                 ImGui.Separator();
 

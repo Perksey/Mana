@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Mana.Graphics.Buffers;
 using Mana.Graphics.Shaders;
 using Mana.Graphics.Vertex;
@@ -17,6 +18,7 @@ namespace Mana.Graphics
         private static GraphicsDevice _instance;
         private static int _maxTextureImageUnits;
 
+        internal readonly OpenTKWindow Window;
         internal readonly GLExtensions Extensions;
         internal readonly GraphicsResourceCollection Resources;
         internal GraphicsDeviceBindings Bindings;
@@ -34,13 +36,16 @@ namespace Mana.Graphics
         private Rectangle _scissorRectangle;
         private Rectangle _viewportRectangle;
         
-        public GraphicsDevice()
+        private DebugProc _debugProcCallback;
+        
+        public GraphicsDevice(OpenTKWindow window)
         {
             if (_instance != null)
                 throw new InvalidOperationException("An instance of GraphicsDevice already exists.");
             
             _instance = this;
-            
+
+            Window = window;
             Extensions = new GLExtensions();
             DirectStateAccessSupported = Extensions.ARB_DirectStateAccess || IsVersionAtLeast(4, 5);
             ImmutableStorageSupported = Extensions.ARB_BufferStorage || IsVersionAtLeast(4, 4);
@@ -77,6 +82,18 @@ namespace Mana.Graphics
             
             GL.BindVertexArray(vao);
             GLHelper.CheckLastError();
+
+            _debugProcCallback = DebugCallback;
+            
+            GL.DebugMessageCallback(_debugProcCallback, IntPtr.Zero);
+            unsafe
+            {
+                GL.DebugMessageControl(DebugSourceControl.DontCare, DebugTypeControl.DontCare,
+                                       DebugSeverityControl.DontCare, 0, (int*)0, true);
+                
+            }
+            GL.Enable(EnableCap.DebugOutput);
+            GL.Enable(EnableCap.DebugOutputSynchronous);
         }
 
         
@@ -546,5 +563,18 @@ namespace Mana.Graphics
         }
         
         #endregion
+
+        private void DebugCallback(
+            DebugSource source,
+            DebugType type,
+            int id,
+            DebugSeverity severity,
+            int length,
+            IntPtr message,
+            IntPtr userParam)
+        {
+            var msg = Marshal.PtrToStringAnsi(message, length);
+            _log.Info($"{severity} {type} {msg}");
+        }
     }
 }

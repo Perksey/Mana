@@ -104,18 +104,26 @@ namespace Mana.Graphics
         public static unsafe Texture2D CreateFromStream(GraphicsDevice graphicsDevice, Stream stream)
         {
             Texture2D texture;
+
+            var sw1 = Stopwatch.StartNew();
             
             using (Image<Rgba32> image = Image.Load(stream))
             {
                 image.Mutate(x => x.Flip(FlipMode.Vertical));
+                
+                sw1.Stop();
+                
+                _log.Debug("Texture Load CPU: " + sw1.Elapsed.TotalMilliseconds + "ms");
 
+                sw1.Restart();
+                
                 texture = new Texture2D(graphicsDevice, image.Width, image.Height);
                 
                 fixed (void* data = &MemoryMarshal.GetReference(image.GetPixelSpan()))
                 {
                     if (graphicsDevice.DirectStateAccessSupported)
                     {
-                        GL.TextureSubImage2D(texture.Handle, 
+                        GL.TextureSubImage2D(texture.Handle,
                                              0,
                                              0,
                                              0,
@@ -142,6 +150,10 @@ namespace Mana.Graphics
                         GLHelper.CheckLastError();
                     }
                 }
+                
+                sw1.Stop();
+                
+                _log.Debug("Texture Load GPU: " + sw1.Elapsed.TotalMilliseconds + "ms");
             }
             
             texture.FilterMode = TextureFilterMode.Nearest;
@@ -188,44 +200,45 @@ namespace Mana.Graphics
 
             return texture;
         }
-
-        public Color GetPixel(int x, int y)
-        {
-            throw new NotImplementedException();
-            
-            var data = new Color[1];
-            
-            GetPixels(0, new Rectangle(x, y, 1, 1), data, 0);
-            
-            return data[0];
-        }
-
-        public unsafe void GetPixels(int mipLevel, Rectangle rect, Color[] data, int startIndex)
-        {
-            throw new NotImplementedException();
-            
-            GraphicsDevice.BindTexture(0, this);
-            
-            var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
-
-            var intPtr = handle.AddrOfPinnedObject();
-            
-            GL.GetTextureSubImage(Handle,
-                                  0,
-                                  rect.X,
-                                  rect.Y,
-                                  0,
-                                  rect.Width,
-                                  rect.Height,
-                                  1,
-                                  PixelFormat.Rgba,
-                                  PixelType.UnsignedByte,
-                                  data.Length * sizeof(Color),
-                                  ref intPtr);
-            GLHelper.CheckLastError();
-            
-            handle.Free();
-        }
+        
+        //
+        // public Color GetPixel(int x, int y)
+        // {
+        //     throw new NotImplementedException();
+        //     
+        //     var data = new Color[1];
+        //     
+        //     GetPixels(0, new Rectangle(x, y, 1, 1), data, 0);
+        //     
+        //     return data[0];
+        // }
+        //
+        // public unsafe void GetPixels(int mipLevel, Rectangle rect, Color[] data, int startIndex)
+        // {
+        //     throw new NotImplementedException();
+        //     
+        //     GraphicsDevice.BindTexture(0, this);
+        //     
+        //     var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+        //
+        //     var intPtr = handle.AddrOfPinnedObject();
+        //     
+        //     GL.GetTextureSubImage(Handle,
+        //                           0,
+        //                           rect.X,
+        //                           rect.Y,
+        //                           0,
+        //                           rect.Width,
+        //                           rect.Height,
+        //                           1,
+        //                           PixelFormat.Rgba,
+        //                           PixelType.UnsignedByte,
+        //                           data.Length * sizeof(Color),
+        //                           ref intPtr);
+        //     GLHelper.CheckLastError();
+        //     
+        //     handle.Free();
+        // }
 
         public override void Dispose()
         {

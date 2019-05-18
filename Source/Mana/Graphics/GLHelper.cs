@@ -15,11 +15,11 @@ namespace Mana.Graphics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CheckLastError()
         {
-            ErrorCode errorCode = GL.GetError();
+            //ErrorCode errorCode = GL.GetError();
 
-            if (errorCode != ErrorCode.NoError)
+            //if (errorCode != ErrorCode.NoError)
             {
-                throw new GLException(errorCode);
+                //throw new GLException(errorCode);
             }
         }
         

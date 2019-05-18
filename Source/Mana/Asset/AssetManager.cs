@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
+using Mana.Asset.Async;
 using Mana.Asset.Loaders;
 using Mana.Graphics;
 using Mana.Graphics.Shaders;
 using Mana.Logging;
 using Mana.Utilities;
+using OpenTK.Graphics;
 
 namespace Mana.Asset
 {
@@ -26,11 +29,22 @@ namespace Mana.Asset
         };
 
         private Dictionary<string, ManaAsset> _assetCache = new Dictionary<string, ManaAsset>();
-        
+
         public AssetManager(GraphicsDevice graphicsDevice)
         {
             GraphicsDevice = graphicsDevice;
             GraphicsDevice.Resources.Add(this);
+
+            // Create the context that will be used for asynchronous asset loading.
+            AsyncContext = new GraphicsContext(new GraphicsMode(32, 16, 0, 8),
+                                               GraphicsDevice.Window.GameWindow.WindowInfo,
+                                               GraphicsDevice.Window.GameWindow.Context,
+                                               4,
+                                               3,
+                                               GraphicsContextFlags.ForwardCompatible | GraphicsContextFlags.Debug);
+            
+            // Make the main thread's context current, since calling the GraphicsContext ctor switches the context.
+            GraphicsDevice.Window.GameWindow.Context.MakeCurrent(GraphicsDevice.Window.GameWindow.WindowInfo);
         }
         
         /// <summary>
@@ -42,7 +56,12 @@ namespace Mana.Asset
         /// Gets or sets a value that indicates whether Assets should be reloaded when updated.
         /// </summary>
         public bool ReloadOnUpdate { get; set; } = true;
-        
+
+        /// <summary>
+        /// Gets the <see cref="GraphicsContext"/> that will be used for asynchonous asset loading.
+        /// </summary>
+        public GraphicsContext AsyncContext { get; }
+
         public void Dispose()
         {
             GraphicsDevice.Resources.Remove(this);
@@ -112,6 +131,11 @@ namespace Mana.Asset
             
             OnAssetUnloaded(asset);
             asset.Dispose();
+        }
+
+        public AsyncAssetBatch CreateAsyncBatch()
+        {
+            return new AsyncAssetBatch(this);
         }
 
         private void OnAssetLoaded(ManaAsset asset)

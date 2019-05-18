@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using Mana.Utilities;
 using OpenTK;
 
@@ -78,6 +79,9 @@ namespace Mana.Logging
         {
             ConsoleHelper.Write(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"), ConsoleColor.Gray);
             Console.Write(" - ");
+            string threadName = Thread.CurrentThread.Name ?? $"Thread:{Thread.CurrentThread.ManagedThreadId.ToString()}";
+            ConsoleHelper.Write($"[{threadName}]", ConsoleColor.Gray);
+            Console.Write(" - ");
             ConsoleHelper.Write(_name, ConsoleColor.White);
             Console.Write(" - ");
             ConsoleHelper.Write($"{_displayNames[logLevel]}", _foregroundColors[logLevel], _backgroundColors[logLevel]);
@@ -89,6 +93,9 @@ namespace Mana.Logging
         public void LogMessage(string message, LogLevel logLevel, ConsoleColor foregroundColor)
         {
             ConsoleHelper.Write(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"), ConsoleColor.Gray);
+            Console.Write(" - ");
+            string threadName = Thread.CurrentThread.Name ?? $"Thread:{Thread.CurrentThread.ManagedThreadId.ToString()}";
+            ConsoleHelper.Write($"[{threadName}]", ConsoleColor.Gray);
             Console.Write(" - ");
             ConsoleHelper.Write(_name, ConsoleColor.White);
             Console.Write(" - ");

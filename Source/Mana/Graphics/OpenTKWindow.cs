@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Threading;
 using Mana.Logging;
 using OpenTK;
 using OpenTK.Graphics;
@@ -22,7 +23,7 @@ namespace Mana.Graphics
         
         public OpenTKWindow()
         {
-            
+            Thread.CurrentThread.Name = "Main Thread";
         }
         
         #region IGameWindow Implementation
@@ -82,12 +83,14 @@ namespace Mana.Graphics
         }
 
         #endregion
+
+        internal GameWindow GameWindow => _windowWrapper;
         
         public void Run(Game game)
         {
             _windowWrapper = new GameWindowWrapper(this, game);
 
-            GraphicsDevice = new GraphicsDevice();
+            GraphicsDevice = new GraphicsDevice(this);
             
             Game = game;
             
@@ -125,8 +128,8 @@ namespace Mana.Graphics
                        GameWindowFlags.Default,
                        DisplayDevice.Default,
                        4,
-                       0,
-                       GraphicsContextFlags.Default)
+                       3,
+                       GraphicsContextFlags.ForwardCompatible | GraphicsContextFlags.Debug)
             {
                 _openTKWindow = openTKWindow;
                 _game = game;

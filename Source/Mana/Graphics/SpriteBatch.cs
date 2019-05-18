@@ -68,7 +68,7 @@ namespace Mana.Graphics
                 throw new InvalidOperationException("End() must be called before Begin() may be called.");
             
             if (_storedItems != 0)
-                Flush(true);
+                Flush();
             
             _began = false;
         }
@@ -122,9 +122,9 @@ namespace Mana.Graphics
             
             if (texture == null)
                 throw new ArgumentNullException(nameof(texture));
-
+            
             FlushIfNeeded(texture);
-
+            
             _storedItems++;
             EnsureBufferLargeEnough();
 
@@ -205,7 +205,7 @@ namespace Mana.Graphics
             }
         }
 
-        private void Flush(bool inEnd = false)
+        private void Flush()
         {
             Debug.Assert(Shader != null);
             Debug.Assert(_lastTexture != null);

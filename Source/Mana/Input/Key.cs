@@ -378,6 +378,11 @@ namespace Mana
         F12,
 
         /// <summary>
+        /// The Print Screen key.
+        /// </summary>
+        PrintScreen,
+        
+        /// <summary>
         /// The Scroll Lock key.
         /// </summary>
         ScrollLock,
@@ -597,6 +602,8 @@ namespace Mana
                     return Key.CapsLock;
                 case 61:
                     return Key.ScrollLock;
+                case 62:
+                    return Key.PrintScreen;
                 case 63:
                     return Key.PauseBreak;
                 case 64:

@@ -12,6 +12,21 @@ namespace Mana.Graphics.Shaders
     public class ShaderProgram : ReloadableAsset, IGraphicsResource
     {
         private static Logger _log = Logger.Create();
+
+        private string _label;
+        public string Label
+        {
+            get => _label;
+            set
+            {
+                if (GraphicsDevice.IsVersionAtLeast(4, 3) || GraphicsDevice.Extensions.KHR_Debug)
+                {
+                    GL.ObjectLabel(ObjectLabelIdentifier.Program, Handle, value.Length, value);    
+                }
+
+                _label = value;
+            }
+        }
         
         internal bool Disposed = false;
         internal bool Linked = false;
@@ -25,7 +40,6 @@ namespace Mana.Graphics.Shaders
             GraphicsDevice.Resources.Add(this);
 
             Handle = (GLHandle)GL.CreateProgram();
-            GLHelper.CheckLastError();
         }
 
 #if DEBUG
@@ -60,7 +74,6 @@ namespace Mana.Graphics.Shaders
                 throw new ArgumentException($"Shader uniform with name \"{name}\" was not found.", nameof(name));
             
             GL.Uniform1(info.Location, value ? 1 : 0);
-            GLHelper.CheckLastError();
 #else
             GL.Uniform1(Uniforms[name].Location, value ? 1 : 0);
 #endif
@@ -76,7 +89,6 @@ namespace Mana.Graphics.Shaders
                 throw new ArgumentException($"Shader uniform with name \"{name}\" was not found.", nameof(name));
             
             GL.Uniform1(info.Location, value);
-            GLHelper.CheckLastError();
 #else
             GL.Uniform1(Uniforms[name].Location, value);
 #endif
@@ -92,7 +104,6 @@ namespace Mana.Graphics.Shaders
                 throw new ArgumentException($"Shader uniform with name \"{name}\" was not found.", nameof(name));
             
             GL.Uniform1(info.Location, value);
-            GLHelper.CheckLastError();
 #else
             GL.Uniform1(Uniforms[name].Location, value);
 #endif
@@ -108,7 +119,6 @@ namespace Mana.Graphics.Shaders
                 throw new ArgumentException($"Shader uniform with name \"{name}\" was not found.", nameof(name));
             
             GL.Uniform1(info.Location, value);
-            GLHelper.CheckLastError();
 #else
             GL.Uniform1(Uniforms[name].Location, value);
 #endif
@@ -124,7 +134,6 @@ namespace Mana.Graphics.Shaders
                 throw new ArgumentException($"Shader uniform with name \"{name}\" was not found.", nameof(name));
 
             GL.Uniform2(info.Location, Unsafe.As<Vector2, OpenTK.Vector2>(ref value));
-            GLHelper.CheckLastError();
 #else
             GL.Uniform2(Uniforms[name].Location, Unsafe.As<Vector2, OpenTK.Vector2>(ref value));
 #endif
@@ -140,7 +149,6 @@ namespace Mana.Graphics.Shaders
                 throw new ArgumentException($"Shader uniform with name \"{name}\" was not found.", nameof(name));
 
             GL.Uniform2(info.Location, 1, ref value.X);
-            GLHelper.CheckLastError();
 #else
             GL.Uniform2(Uniforms[name].Location, 1, ref value.X);
 #endif
@@ -156,7 +164,6 @@ namespace Mana.Graphics.Shaders
                 throw new ArgumentException($"Shader uniform with name \"{name}\" was not found.", nameof(name));
 
             GL.Uniform3(info.Location, Unsafe.As<Vector3, OpenTK.Vector3>(ref value));
-            GLHelper.CheckLastError();
 #else
             GL.Uniform3(Uniforms[name].Location, Unsafe.As<Vector3, OpenTK.Vector3>(ref value));
 #endif
@@ -172,7 +179,6 @@ namespace Mana.Graphics.Shaders
                 throw new ArgumentException($"Shader uniform with name \"{name}\" was not found.", nameof(name));
 
             GL.Uniform3(info.Location, 1, ref value.X);
-            GLHelper.CheckLastError();
 #else
             GL.Uniform3(Uniforms[name].Location, 1, ref value.X);
 #endif
@@ -188,7 +194,6 @@ namespace Mana.Graphics.Shaders
                 throw new ArgumentException($"Shader uniform with name \"{name}\" was not found.", nameof(name));
 
             GL.Uniform4(info.Location, Unsafe.As<Vector4, OpenTK.Vector4>(ref value));
-            GLHelper.CheckLastError();
 #else
             GL.Uniform4(Uniforms[name].Location, Unsafe.As<Vector4, OpenTK.Vector4>(ref value));
 #endif
@@ -204,7 +209,6 @@ namespace Mana.Graphics.Shaders
                 throw new ArgumentException($"Shader uniform with name \"{name}\" was not found.", nameof(name));
 
             GL.Uniform4(info.Location, 1, ref value.X);
-            GLHelper.CheckLastError();
 #else
             GL.Uniform4(Uniforms[name].Location, 1, ref value.X);
 #endif
@@ -220,7 +224,6 @@ namespace Mana.Graphics.Shaders
                 throw new ArgumentException($"Shader uniform with name \"{name}\" was not found.", nameof(name));
 
             GL.UniformMatrix4(info.Location, 1, false, ref value.M11);
-            GLHelper.CheckLastError();
 #else
             GL.UniformMatrix4(Uniforms[name].Location, 1, false, ref value.M11);
 #endif
@@ -241,7 +244,6 @@ namespace Mana.Graphics.Shaders
             if (success)
             {
                 GL.Uniform1(info.Location, value ? 1 : 0);
-                GLHelper.CheckLastError();
             }
             
             return success;
@@ -258,7 +260,6 @@ namespace Mana.Graphics.Shaders
             if (success)
             {
                 GL.Uniform1(info.Location, value);
-                GLHelper.CheckLastError();
             }
             
             return success;
@@ -275,7 +276,6 @@ namespace Mana.Graphics.Shaders
             if (success)
             {
                 GL.Uniform1(info.Location, value);
-                GLHelper.CheckLastError();
             }
             
             return success;
@@ -292,7 +292,6 @@ namespace Mana.Graphics.Shaders
             if (success)
             {
                 GL.Uniform1(info.Location, value);
-                GLHelper.CheckLastError();
             }
             
             return success;
@@ -309,7 +308,6 @@ namespace Mana.Graphics.Shaders
             if (success)
             {
                 GL.Uniform2(info.Location, Unsafe.As<Vector2, OpenTK.Vector2>(ref value));
-                GLHelper.CheckLastError();
             }
             
             return success;
@@ -326,7 +324,6 @@ namespace Mana.Graphics.Shaders
             if (success)
             {
                 GL.Uniform2(info.Location, 1, ref value.X);
-                GLHelper.CheckLastError();
             }
             
             return success;
@@ -343,7 +340,6 @@ namespace Mana.Graphics.Shaders
             if (success)
             {
                 GL.Uniform3(info.Location, Unsafe.As<Vector3, OpenTK.Vector3>(ref value));
-                GLHelper.CheckLastError();
             }
             
             return success;
@@ -360,7 +356,6 @@ namespace Mana.Graphics.Shaders
             if (success)
             {
                 GL.Uniform3(info.Location, 1, ref value.X);
-                GLHelper.CheckLastError();
             }
             
             return success;
@@ -377,7 +372,6 @@ namespace Mana.Graphics.Shaders
             if (success)
             {
                 GL.Uniform4(info.Location, Unsafe.As<Vector4, OpenTK.Vector4>(ref value));
-                GLHelper.CheckLastError();
             }
             
             return success;
@@ -394,7 +388,6 @@ namespace Mana.Graphics.Shaders
             if (success)
             {
                 GL.Uniform4(info.Location, 1, ref value.X);
-                GLHelper.CheckLastError();
             }
             
             return success;
@@ -411,7 +404,6 @@ namespace Mana.Graphics.Shaders
             if (success)
             {
                 GL.UniformMatrix4(info.Location, 1, false, ref value.M11);
-                GLHelper.CheckLastError();
             }
             
             return success;
@@ -437,7 +429,6 @@ namespace Mana.Graphics.Shaders
             GraphicsDevice.UnbindShaderProgram(this);
             
             GL.DeleteProgram(Handle);
-            GLHelper.CheckLastError();
            
             Disposed = true;
 
@@ -482,7 +473,6 @@ namespace Mana.Graphics.Shaders
             }
             
             GLHandle handle = (GLHandle)GL.CreateProgram();
-            GLHelper.CheckLastError();
 
             ShaderHelper.AttachShaders(handle, vertexShader, fragmentShader);
             
@@ -500,7 +490,6 @@ namespace Mana.Graphics.Shaders
                 assetManager.Unload(vertexShader);
                 
                 GL.DeleteProgram(handle);
-                GLHelper.CheckLastError();
                 
                 return false;
             }
@@ -512,7 +501,6 @@ namespace Mana.Graphics.Shaders
             GraphicsDevice.UnbindShaderProgram(this);
 
             GL.DeleteProgram(Handle);
-            GLHelper.CheckLastError();
 
             Handle = handle;
 

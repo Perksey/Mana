@@ -8,13 +8,9 @@ namespace Mana.Graphics
     /// </summary>
     public class GLException : Exception
     {
-        public readonly ErrorCode Error;
-
-        public GLException(ErrorCode error)
-            // ReSharper disable once HeapView.BoxingAllocation
-            : base($"OpenGL Internal Error:{error.ToString()}")
+        public GLException(string message)
+            : base(message)
         {
-            Error = error;
         }
     }
 }

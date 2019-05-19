@@ -8,6 +8,7 @@ using Mana.Graphics.Buffers;
 using Mana.Graphics.Shaders;
 using Mana.Graphics.Vertex;
 using Mana.Logging;
+using Mana.Utilities.Extensions;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics
@@ -15,6 +16,7 @@ namespace Mana.Graphics
     public class GraphicsDevice
     {
         private static Logger _log = Logger.Create();
+        private static Logger _glDebugLogger = new Logger("OpenGL");
         private static GraphicsDevice _instance;
         private static int _maxTextureImageUnits;
 
@@ -35,8 +37,8 @@ namespace Mana.Graphics
         private bool _cullBackfaces;
         private Rectangle _scissorRectangle;
         private Rectangle _viewportRectangle;
-        
-        private DebugProc _debugProcCallback;
+
+        private static DebugProc _debugProcCallback; 
         
         public GraphicsDevice(OpenTKWindow window)
         {
@@ -61,35 +63,32 @@ namespace Mana.Graphics
             ScissorTest = true;
             
             _log.Info("--------- OpenGL Context Information ---------");
-            _log.Info($"Vendor: {GLHelper.GetString(StringName.Vendor)}");
-            _log.Info($"Renderer: {GLHelper.GetString(StringName.Renderer)}");
-            _log.Info($"Version: {GLHelper.GetString(StringName.Version)}");
-            _log.Info($"ShadingLanguageVersion: {GLHelper.GetString(StringName.ShadingLanguageVersion)}");
+            _log.Info($"Vendor: {GL.GetString(StringName.Vendor)}");
+            _log.Info($"Renderer: {GL.GetString(StringName.Renderer)}");
+            _log.Info($"Version: {GL.GetString(StringName.Version)}");
+            _log.Info($"ShadingLanguageVersion: {GL.GetString(StringName.ShadingLanguageVersion)}");
             
-            _log.Info($"Number of Available Extensions: {GLHelper.GetInteger(GetPName.NumExtensions).ToString()}");
+            _log.Info($"Number of Available Extensions: {GL.GetInteger(GetPName.NumExtensions).ToString()}");
 
-            _log.Info($"Max Texture Size: {GLHelper.GetInteger((GetPName.MaxTextureSize))}");
-            
-            //_log.Warn("Some random warning.");
-            //_log.Error("An error occured.");
-            //_log.Fatal("Fatal error occured.");
+            _log.Info($"Max Texture Size: {GL.GetInteger((GetPName.MaxTextureSize)).ToString()}");
 
-            _maxTextureImageUnits = GLHelper.GetInteger(GetPName.MaxTextureImageUnits);
+            _maxTextureImageUnits = GL.GetInteger(GetPName.MaxTextureImageUnits);
             Bindings.TextureUnits = new GLHandle[_maxTextureImageUnits];
             
             int vao = GL.GenVertexArray();
-            GLHelper.CheckLastError();
             
             GL.BindVertexArray(vao);
-            GLHelper.CheckLastError();
 
             _debugProcCallback = DebugCallback;
-            
             GL.DebugMessageCallback(_debugProcCallback, IntPtr.Zero);
             unsafe
             {
-                GL.DebugMessageControl(DebugSourceControl.DontCare, DebugTypeControl.DontCare,
-                                       DebugSeverityControl.DontCare, 0, (int*)0, true);
+                GL.DebugMessageControl(DebugSourceControl.DontCare, 
+                                       DebugTypeControl.DontCare,
+                                       DebugSeverityControl.DontCare, 
+                                       0, 
+                                       (int*)0, 
+                                       true);
                 
             }
             GL.Enable(EnableCap.DebugOutput);
@@ -145,7 +144,6 @@ namespace Mana.Graphics
                 if (value)
                 {
                     GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-                    GLHelper.CheckLastError();
                 }
             }
         }
@@ -166,10 +164,7 @@ namespace Mana.Graphics
                 if (value)
                 {
                     GL.FrontFace(FrontFaceDirection.Ccw);
-                    GLHelper.CheckLastError();
-                    
                     GL.CullFace(CullFaceMode.Back);
-                    GLHelper.CheckLastError();
                 }
             }
         }
@@ -189,7 +184,6 @@ namespace Mana.Graphics
                            value.Y,
                            value.Width,
                            value.Height);
-                GLHelper.CheckLastError();
 
                 _scissorRectangle = value;
             }
@@ -210,7 +204,6 @@ namespace Mana.Graphics
                             value.Y,
                             value.Width,
                             value.Height);
-                GLHelper.CheckLastError();
 
                 _viewportRectangle = value;
             }
@@ -306,8 +299,6 @@ namespace Mana.Graphics
             if (program == null)
             {
                 GL.UseProgram(0);
-                GLHelper.CheckLastError();
-
                 Bindings.ShaderProgram = GLHandle.Zero;
                 return;
             }
@@ -318,7 +309,6 @@ namespace Mana.Graphics
                 return;
 
             GL.UseProgram(program.Handle);
-            GLHelper.CheckLastError();
             Bindings.ShaderProgram = program.Handle;
         }
 
@@ -335,7 +325,6 @@ namespace Mana.Graphics
                 return;
 
             GL.UseProgram(0);
-            GLHelper.CheckLastError();
 
             Bindings.ShaderProgram = GLHandle.Zero;
         }
@@ -355,7 +344,6 @@ namespace Mana.Graphics
             if (texture == null)
             {
                 GL.BindTexture(TextureTarget.Texture2D, 0);
-                GLHelper.CheckLastError();
 
                 Bindings.Texture = GLHandle.Zero;
                 return;
@@ -367,7 +355,6 @@ namespace Mana.Graphics
                 return;
 
             GL.BindTexture(TextureTarget.Texture2D, texture.Handle);
-            GLHelper.CheckLastError();
             Bindings.Texture = texture.Handle;
         }
 
@@ -384,7 +371,6 @@ namespace Mana.Graphics
                     SetActiveTexture(i);
 
                     GL.BindTexture(TextureTarget.Texture2D, 0);
-                    GLHelper.CheckLastError();
 
                     Bindings.Texture = GLHandle.Zero;
                 }
@@ -408,13 +394,11 @@ namespace Mana.Graphics
                               color.G / (float)byte.MaxValue, 
                               color.B / (float)byte.MaxValue, 
                               color.A / (float)byte.MaxValue);
-                GLHelper.CheckLastError();
 
                 _clearColor = color;
             }
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            GLHelper.CheckLastError();
 
             unchecked
             {
@@ -428,7 +412,6 @@ namespace Mana.Graphics
         public void ClearDepth()
         {
             GL.Clear(ClearBufferMask.DepthBufferBit);
-            GLHelper.CheckLastError();
             
             unchecked
             {
@@ -458,7 +441,6 @@ namespace Mana.Graphics
             VertexTypeInfo.Get<T>().Apply(shaderProgram, pinned.AddrOfPinnedObject());
             
             GL.DrawArrays(primitiveType, 0, vertexData.Length);
-            GLHelper.CheckLastError();
 
             pinned.Free();
 
@@ -483,7 +465,6 @@ namespace Mana.Graphics
             vertexBuffer.VertexTypeInfo.Apply(shaderProgram);
 
             GL.DrawArrays(primitiveType, 0, vertexBuffer.Count);
-            GLHelper.CheckLastError();
 
             unchecked
             {
@@ -507,7 +488,6 @@ namespace Mana.Graphics
             vertexBuffer.VertexTypeInfo.Apply(shaderProgram);
             
             GL.DrawElements(primitiveType, indexBuffer.Count, indexBuffer.DataType, 0);
-            GLHelper.CheckLastError();
             
             unchecked
             {
@@ -539,8 +519,6 @@ namespace Mana.Graphics
             {
                 GL.Disable(enableCap);
             }
-
-            GLHelper.CheckLastError();
         }
         
         
@@ -548,7 +526,6 @@ namespace Mana.Graphics
         internal void BindBuffer(BufferTarget buffer, GLHandle handle)
         {
             GL.BindBuffer(buffer, handle);
-            GLHelper.CheckLastError();
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -558,23 +535,28 @@ namespace Mana.Graphics
             {
                 Bindings.ActiveTexture = activeTexture;
                 GL.ActiveTexture((TextureUnit)(activeTexture + (int)TextureUnit.Texture0));
-                GLHelper.CheckLastError();
             }
         }
         
         #endregion
 
-        private void DebugCallback(
-            DebugSource source,
-            DebugType type,
-            int id,
-            DebugSeverity severity,
-            int length,
-            IntPtr message,
-            IntPtr userParam)
+        private void DebugCallback(DebugSource source, 
+                                   DebugType type,
+                                   int id,
+                                   DebugSeverity severity,
+                                   int length,
+                                   IntPtr message,
+                                   IntPtr userParam)
         {
-            var msg = Marshal.PtrToStringAnsi(message, length);
-            _log.Info($"{severity} {type} {msg}");
+            string msg = Marshal.PtrToStringAnsi(message, length);
+            var color = type == DebugType.DebugTypeError ? ConsoleColor.Red : ConsoleColor.Gray;
+            
+            _glDebugLogger.WriteLine($"{severity.GetName()} {type.GetName()} {msg}", color);
+            
+            if (type == DebugType.DebugTypeError && severity == DebugSeverity.DebugSeverityHigh)
+            {
+                throw new GLException(msg);
+            }
         }
     }
 }

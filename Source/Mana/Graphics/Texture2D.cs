@@ -20,6 +20,21 @@ namespace Mana.Graphics
         private static Logger _log = Logger.Create();
         
         internal bool Disposed = false;
+        
+        private string _label;
+        public string Label
+        {
+            get => _label;
+            set
+            {
+                if (GraphicsDevice.IsVersionAtLeast(4, 3) || GraphicsDevice.Extensions.KHR_Debug)
+                {
+                    GL.ObjectLabel(ObjectLabelIdentifier.Texture, Handle, value.Length, value);    
+                }
+
+                _label = value;
+            }
+        }
 
         private TextureFilterMode _filterMode = TextureFilterMode.Nearest;
         private TextureWrapMode _wrapMode = TextureWrapMode.Repeat;
@@ -32,13 +47,11 @@ namespace Mana.Graphics
             if (graphicsDevice.DirectStateAccessSupported)
             {
                 GL.CreateTextures(TextureTarget.Texture2D, 1, out int textureInt);
-                GLHelper.CheckLastError();
                 Handle = (GLHandle)textureInt;
             }
             else
             {
                 Handle = (GLHandle)GL.GenTexture();
-                GLHelper.CheckLastError();
             }
 
             Width = width;
@@ -47,7 +60,6 @@ namespace Mana.Graphics
             if (graphicsDevice.DirectStateAccessSupported)
             {
                 GL.TextureStorage2D(Handle, 1, SizedInternalFormat.Rgba8, Width, Height);
-                GLHelper.CheckLastError();
             }
         }
 
@@ -75,10 +87,7 @@ namespace Mana.Graphics
                 GraphicsDevice.BindTexture(0, this);
                 
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)value);
-                GLHelper.CheckLastError();
-                
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)value);
-                GLHelper.CheckLastError();
                 
                 _filterMode = value;
             }
@@ -92,10 +101,7 @@ namespace Mana.Graphics
                 GraphicsDevice.BindTexture(0, this);
                 
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)value);
-                GLHelper.CheckLastError();
-                
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)value);
-                GLHelper.CheckLastError();
 
                 _wrapMode = value;
             }
@@ -132,7 +138,6 @@ namespace Mana.Graphics
                                              PixelFormat.Rgba,
                                              PixelType.UnsignedByte,
                                              new IntPtr(data));
-                        GLHelper.CheckLastError();
                     }
                     else
                     {
@@ -147,7 +152,6 @@ namespace Mana.Graphics
                                       PixelFormat.Rgba,
                                       PixelType.UnsignedByte,
                                       new IntPtr(data));
-                        GLHelper.CheckLastError();
                     }
                 }
                 
@@ -177,7 +181,6 @@ namespace Mana.Graphics
                                      PixelFormat.Rgba,
                                      PixelType.UnsignedByte,
                                      new IntPtr(data));
-                GLHelper.CheckLastError();
             }
             else
             {
@@ -192,7 +195,6 @@ namespace Mana.Graphics
                               PixelFormat.Rgba,
                               PixelType.UnsignedByte,
                               new IntPtr(data));
-                GLHelper.CheckLastError();
             }
             
             texture.FilterMode = TextureFilterMode.Nearest;
@@ -247,7 +249,6 @@ namespace Mana.Graphics
             GraphicsDevice.Resources.Remove(this);
 
             GL.DeleteTexture(Handle);
-            GLHelper.CheckLastError();
             
             GC.SuppressFinalize(this);
 
@@ -260,7 +261,6 @@ namespace Mana.Graphics
                 return false;
 
             GLHandle handle = (GLHandle)GL.GenTexture();
-            GLHelper.CheckLastError();
 
             int newWidth = 0;
             int newHeight = 0;
@@ -273,7 +273,6 @@ namespace Mana.Graphics
                 GraphicsDevice.SetActiveTexture(0);
 
                 GL.BindTexture(TextureTarget.Texture2D, handle);
-                GLHelper.CheckLastError();
                 GraphicsDevice.Bindings.Texture = handle;
 
                 image.Mutate(x => x.Flip(FlipMode.Vertical));
@@ -294,13 +293,11 @@ namespace Mana.Graphics
                                       PixelFormat.Rgba,
                                       PixelType.UnsignedByte,
                                       new IntPtr(data));
-                        GLHelper.CheckLastError();
                     }
                 }
             }
             
             GL.DeleteTexture(Handle);
-            GLHelper.CheckLastError();
 
             Handle = handle;
             Width = newWidth;

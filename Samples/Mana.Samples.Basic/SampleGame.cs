@@ -1,33 +1,17 @@
 using System;
+using System.Globalization;
 using System.Numerics;
-using System.Threading.Tasks;
 using ImGuiNET;
 using Mana.Graphics;
-using Mana.Graphics.Buffers;
 using Mana.Graphics.Shaders;
-using Mana.Graphics.Vertex.Types;
 using Mana.IMGUI;
+using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Samples.Basic
 {
     public class SampleGame : Game
     {
-        private VertexPositionTexture[] _vertices = 
-        {
-            new VertexPositionTexture(new Vector3(-0.3f, -0.5f, 0f), new Vector2(0.0f, 0.0f)),    // BL
-            new VertexPositionTexture(new Vector3( 0.3f, -0.5f, 0f), new Vector2(1.0f, 0.0f)),    // BR
-            new VertexPositionTexture(new Vector3( 0.3f,  0.5f, 0f), new Vector2(1.0f, 1.0f)),    // TR
-            new VertexPositionTexture(new Vector3(-0.3f,  0.5f, 0f), new Vector2(0.0f, 1.0f)),    // TL
-        };
-        
-        private ushort[] _indices = 
-        {
-            0, 1, 2, 0, 2, 3, 
-        };
-
         private ShaderProgram _shader;
-        private VertexBuffer _vertexBuffer;
-        private IndexBuffer _indexBuffer;
         
         private Texture2D _texture;
         private Texture2D _bigImage;
@@ -40,8 +24,8 @@ namespace Mana.Samples.Basic
 
         private bool _useLargeImage = false;
 
-        private int _count = 170000;
-        private int _size = 20;
+        private int _count = 5000;
+        private int _size = 100;
 
         private float _maxDeltaTime = 0f;
 
@@ -50,18 +34,15 @@ namespace Mana.Samples.Basic
             Window.Title = "Mana | Basic Sample Game";
 
             _shader = AssetManager.Load<ShaderProgram>("./Assets/Shaders/shader1.json");
+            _shader.Label = "Shader1";
+            
             _spriteShader = AssetManager.Load<ShaderProgram>("./Assets/Shaders/sprite.json");
+            _spriteShader.Label = "SpriteBatch ShaderProgram";
+            
             _texture = AssetManager.Load<Texture2D>("./Assets/Textures/mittens.png");
-            //
-          // AssetManager.CreateAsyncBatch()
-          //             .Load(() => _shader, "./Assets/Shaders/shader1.json")
-          //             .OnCompleted(() => { })
-          //             .Run();
+            _texture.Label = "Mittens";
             
             Components.Add(new ImGuiRenderer());
-
-            _vertexBuffer = VertexBuffer.Create(GraphicsDevice, _vertices, BufferUsage.StaticDraw, dynamic: true);
-            _indexBuffer = IndexBuffer.Create(GraphicsDevice, _indices, BufferUsage.StaticDraw, dynamic: true);
 
             _spriteBatch = new SpriteBatch(GraphicsDevice)
             {
@@ -71,8 +52,6 @@ namespace Mana.Samples.Basic
             var proj = Matrix4x4.CreateOrthographicOffCenter(0f, Window.Width, Window.Height, 0, -1f, 1f);
             _spriteShader.SetUniform("projection", ref proj);
 
-            Task task;
-
             ImGui.GetStyle().Alpha = 0.78f;
         }
 
@@ -80,8 +59,6 @@ namespace Mana.Samples.Basic
         {
             _shader.Dispose();
             _spriteShader.Dispose();
-            _vertexBuffer.Dispose();
-            _indexBuffer.Dispose();
             _spriteBatch.Dispose();
             _texture.Dispose();
             
@@ -104,8 +81,6 @@ namespace Mana.Samples.Basic
         protected override void Render(float time, float deltaTime)
         {
             GraphicsDevice.Clear(Color.DarkSlateGray);
-            //GraphicsDevice.BindTexture(0, _texture);
-            //GraphicsDevice.Render(_vertexBuffer, _indexBuffer, _shader);
 
             if (_check)
             {
@@ -155,19 +130,19 @@ namespace Mana.Samples.Basic
 
             if (_metricsWindowOpen && ImGui.Begin("Metrics", ref _metricsWindowOpen))
             {
-                ImGui.Text($"FPS:          {Metrics.FramesPerSecond} fps");
-                ImGui.Text($"Frame Time:   {Metrics.MillisecondsPerFrame:F3} ms");
-                ImGui.Text($"Memory:       {Metrics.TotalMegabytes} MB");
+                ImGui.Text($"FPS:          {Metrics.FramesPerSecond.ToString()} fps");
+                ImGui.Text($"Frame Time:   {Metrics.MillisecondsPerFrame.ToString(CultureInfo.InvariantCulture)} ms");
+                ImGui.Text($"Memory:       {Metrics.TotalMegabytes.ToString(CultureInfo.InvariantCulture)} MB");
                 
                 ImGui.Separator();
                 
-                ImGui.Text($"Clears:       {Metrics.ClearCount}");
-                ImGui.Text($"Draw Calls:   {Metrics.DrawCalls}");
-                ImGui.Text($"Triangles:    {Metrics.PrimitiveCount / 3}");
+                ImGui.Text($"Clears:       {Metrics.ClearCount.ToString(CultureInfo.InvariantCulture)}");
+                ImGui.Text($"Draw Calls:   {Metrics.DrawCalls.ToString(CultureInfo.InvariantCulture)}");
+                ImGui.Text($"Triangles:    {(Metrics.PrimitiveCount / 3).ToString()}");
                 
                 ImGui.Separator();
                 
-                ImGui.Text($"Max deltaTime:    {_maxDeltaTime:F3}");
+                ImGui.Text($"Max deltaTime:    {_maxDeltaTime.ToString(CultureInfo.InvariantCulture)}");
                 
                 ImGui.Checkbox("Draw with SpriteBatch", ref _check);
 
@@ -192,8 +167,13 @@ namespace Mana.Samples.Basic
                     //             .Load<Texture2D>(r => _texture = r, "./Assets/Textures/mittens.png")
                     //             .Run();
                 }
-                
+
                 ImGui.Separator();
+                
+                if (ImGui.Button("Perform invalid GL call"))
+                {
+                    GL.Enable((EnableCap)(-20));
+                }
 
                 ImGui.End();
             }

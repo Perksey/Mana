@@ -16,12 +16,12 @@ namespace Mana.Graphics
         {
             var extensions = new HashSet<string>();
             
-            Major = GLHelper.GetInteger(GetPName.MajorVersion);
-            Minor = GLHelper.GetInteger(GetPName.MinorVersion);
+            Major = GL.GetInteger(GetPName.MajorVersion);
+            Minor = GL.GetInteger(GetPName.MinorVersion);
 
-            for (uint i = 0; i < GLHelper.GetInteger(GetPName.NumExtensions); i++)
+            for (uint i = 0; i < GL.GetInteger(GetPName.NumExtensions); i++)
             {
-                string extension = GLHelper.GetString(StringNameIndexed.Extensions, i);
+                string extension = GL.GetString(StringNameIndexed.Extensions, i);
 
                 if (!string.IsNullOrWhiteSpace(extension))
                 {

@@ -15,10 +15,7 @@ namespace Mana.Graphics.Shaders
             GraphicsDevice.Resources.Add(this);
 
             Handle = (GLHandle)GL.CreateShader(shaderType);
-            GLHelper.CheckLastError();
-            
             GL.ShaderSource(Handle, shaderSource);
-            GLHelper.CheckLastError();
 
             ShaderHelper.CompileShader(Handle);
         }
@@ -32,7 +29,6 @@ namespace Mana.Graphics.Shaders
             GraphicsDevice.Resources.Remove(this);
 
             GL.DeleteShader(Handle);
-            GLHelper.CheckLastError();
 
             Disposed = true;
         }

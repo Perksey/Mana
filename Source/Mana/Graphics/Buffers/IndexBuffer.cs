@@ -18,8 +18,7 @@ namespace Mana.Graphics.Buffers
         public static unsafe IndexBuffer Create<T>(GraphicsDevice graphicsDevice,
                                             T[] data,
                                             BufferUsage bufferUsage,
-                                            bool immutable = true,
-                                            bool dynamic = false)
+                                            bool immutable = true)
             where T : unmanaged
         {
             if (!IsElementType<T>())
@@ -32,15 +31,14 @@ namespace Mana.Graphics.Buffers
             };
 
 
-            ibo.Allocate<T>(data, bufferUsage, immutable, dynamic);
+            ibo.Allocate<T>(data, bufferUsage, immutable);
             return ibo;
         }
 
         public static unsafe IndexBuffer Create<T>(GraphicsDevice graphicsDevice,
                                             int capacity,
                                             BufferUsage bufferUsage,
-                                            bool immutable = true,
-                                            bool dynamic = false)
+                                            bool immutable = true)
             where T : unmanaged
         {
             if (!IsElementType<T>())
@@ -52,7 +50,7 @@ namespace Mana.Graphics.Buffers
                 DataTypeSizeInBytes = sizeof(T)
             };
             
-            ibo.Allocate<T>(capacity * sizeof(T), bufferUsage, immutable, dynamic);
+            ibo.Allocate<T>(capacity * sizeof(T), bufferUsage, immutable);
             return ibo;
         }
 

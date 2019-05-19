@@ -19,24 +19,22 @@ namespace Mana.Graphics.Buffers
         public static VertexBuffer Create<T>(GraphicsDevice graphicsDevice, 
                                              T[] data, 
                                              BufferUsage bufferUsage,
-                                             bool immutable = true,
-                                             bool dynamic = false)
+                                             bool immutable = true)
             where T : unmanaged
         {
             var vbo = new VertexBuffer(graphicsDevice, VertexTypeInfo.Get<T>());
-            vbo.Allocate<T>(data, bufferUsage, immutable, dynamic);
+            vbo.Allocate<T>(data, bufferUsage, immutable);
             return vbo;
         }
         
         public static unsafe VertexBuffer Create<T>(GraphicsDevice graphicsDevice, 
                                                     int capacity, 
                                                     BufferUsage bufferUsage,
-                                                    bool immutable = true,
-                                                    bool dynamic = false)
+                                                    bool immutable = true)
             where T : unmanaged
         {
             var vbo = new VertexBuffer(graphicsDevice, VertexTypeInfo.Get<T>());
-            vbo.Allocate<T>(capacity * sizeof(T), bufferUsage, immutable, dynamic);
+            vbo.Allocate<T>(capacity * sizeof(T), bufferUsage, immutable);
             return vbo;
         }
         

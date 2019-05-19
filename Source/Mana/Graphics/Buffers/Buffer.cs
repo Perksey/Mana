@@ -7,6 +7,22 @@ namespace Mana.Graphics.Buffers
     public abstract class Buffer : IGraphicsResource
     {
         private static Logger _log = Logger.Create();
+
+        private string _label;
+
+        public string Label
+        {
+            get => _label;
+            set
+            {
+                if (GraphicsDevice.IsVersionAtLeast(4, 3) || GraphicsDevice.Extensions.KHR_Debug)
+                {
+                    GL.ObjectLabel(ObjectLabelIdentifier.Buffer, Handle, value.Length, value);    
+                }
+
+                _label = value;
+            }
+        }
         
         public readonly GLHandle Handle;
         internal readonly BufferTarget BufferTarget;
@@ -17,7 +33,6 @@ namespace Mana.Graphics.Buffers
         internal int Count = -1;
         
         internal bool IsImmutable = false;
-        internal bool IsDynamic = false;
 
         protected Buffer(GraphicsDevice graphicsDevice, BufferTarget bufferTarget)
         {
@@ -29,14 +44,11 @@ namespace Mana.Graphics.Buffers
             if (graphicsDevice.DirectStateAccessSupported)
             {
                 GL.CreateBuffers(1, out int buffer);
-                GLHelper.CheckLastError();
-
                 Handle = (GLHandle)buffer;
             }
             else
             {
                 Handle = (GLHandle)GL.GenBuffer();
-                GLHelper.CheckLastError();
             }
         }
 
@@ -53,8 +65,7 @@ namespace Mana.Graphics.Buffers
 
         protected void Allocate<T>(T[] data,
                                    BufferUsage bufferUsage,
-                                   bool immutable = true,
-                                   bool dynamic = true)
+                                   bool immutable = true)
             where T : unmanaged
         {
             unsafe
@@ -64,7 +75,6 @@ namespace Mana.Graphics.Buffers
 
             Count = data.Length;
             IsImmutable = immutable;
-            IsDynamic = dynamic;
             
             if (GraphicsDevice.DirectStateAccessSupported)
             {
@@ -73,10 +83,7 @@ namespace Mana.Graphics.Buffers
                     GL.NamedBufferStorage(Handle,
                                           SizeInBytes,
                                           data,
-                                          IsDynamic
-                                            ? BufferStorageFlags.DynamicStorageBit
-                                            : BufferStorageFlags.None);
-                    GLHelper.CheckLastError();
+                                          bufferUsage.GetBufferStorageFlags());
                 }
                 else
                 {
@@ -84,7 +91,6 @@ namespace Mana.Graphics.Buffers
                                        SizeInBytes,
                                        data,
                                        (BufferUsageHint)bufferUsage);
-                    GLHelper.CheckLastError();
                 }
             }
             else
@@ -96,10 +102,7 @@ namespace Mana.Graphics.Buffers
                     GL.BufferStorage(BufferTarget.ArrayBuffer,
                                      SizeInBytes,
                                      data,
-                                     IsDynamic
-                                         ? BufferStorageFlags.DynamicStorageBit
-                                         : BufferStorageFlags.None);
-                    GLHelper.CheckLastError();
+                                     bufferUsage.GetBufferStorageFlags());
                 }
                 else
                 {
@@ -107,15 +110,13 @@ namespace Mana.Graphics.Buffers
                                   SizeInBytes,
                                   data,
                                   (BufferUsageHint)bufferUsage);
-                    GLHelper.CheckLastError();
                 }
             }
         }
 
         protected void Allocate<T>(int sizeInBytes,
                                    BufferUsage bufferUsage,
-                                   bool immutable = true,
-                                   bool dynamic = true)
+                                   bool immutable = true)
             where T : unmanaged
         {
             unsafe
@@ -129,7 +130,6 @@ namespace Mana.Graphics.Buffers
             }
             
             IsImmutable = immutable;
-            IsDynamic = dynamic;
             
             if (GraphicsDevice.DirectStateAccessSupported)
             {
@@ -138,10 +138,7 @@ namespace Mana.Graphics.Buffers
                     GL.NamedBufferStorage(Handle,
                                           SizeInBytes,
                                           new byte[SizeInBytes],
-                                          IsDynamic
-                                            ? BufferStorageFlags.DynamicStorageBit
-                                            : BufferStorageFlags.None);
-                    GLHelper.CheckLastError();
+                                          bufferUsage.GetBufferStorageFlags());
                 }
                 else
                 {
@@ -149,7 +146,6 @@ namespace Mana.Graphics.Buffers
                                        SizeInBytes,
                                        new byte[SizeInBytes],
                                        (BufferUsageHint)bufferUsage);
-                    GLHelper.CheckLastError();
                 }
             }
             else
@@ -161,10 +157,7 @@ namespace Mana.Graphics.Buffers
                     GL.BufferStorage(BufferTarget.ArrayBuffer,
                                      SizeInBytes,
                                      new byte[SizeInBytes],
-                                     IsDynamic
-                                         ? BufferStorageFlags.DynamicStorageBit
-                                         : BufferStorageFlags.None);
-                    GLHelper.CheckLastError();
+                                     bufferUsage.GetBufferStorageFlags());
                 }
                 else
                 {
@@ -172,7 +165,6 @@ namespace Mana.Graphics.Buffers
                                   SizeInBytes,
                                   new byte[SizeInBytes],
                                   (BufferUsageHint)bufferUsage);
-                    GLHelper.CheckLastError();
                 }
             }
         }
@@ -194,13 +186,11 @@ namespace Mana.Graphics.Buffers
             if (GraphicsDevice.DirectStateAccessSupported)
             {
                 GL.NamedBufferData(Handle, new IntPtr(SizeInBytes), data, (BufferUsageHint)bufferUsage);
-                GLHelper.CheckLastError();
             }
             else
             {
                 Bind();
                 GL.BufferData(BufferTarget, new IntPtr(SizeInBytes), data, (BufferUsageHint)bufferUsage);
-                GLHelper.CheckLastError();
             }
         }
         
@@ -216,13 +206,11 @@ namespace Mana.Graphics.Buffers
             if (GraphicsDevice.DirectStateAccessSupported)
             {
                 GL.NamedBufferData(Handle, new IntPtr(SizeInBytes), data, (BufferUsageHint)bufferUsage);
-                GLHelper.CheckLastError();
             }
             else
             {
                 Bind();
                 GL.BufferData(BufferTarget, new IntPtr(SizeInBytes), data, (BufferUsageHint)bufferUsage);
-                GLHelper.CheckLastError();
             }
         }
         
@@ -239,13 +227,11 @@ namespace Mana.Graphics.Buffers
             if (GraphicsDevice.DirectStateAccessSupported)
             {
                 GL.NamedBufferSubData(Handle, new IntPtr(offset * sizeof(T)), new IntPtr(length * sizeof(T)), data);
-                GLHelper.CheckLastError();
             }
             else
             {
                 Bind();
                 GL.BufferSubData(BufferTarget, new IntPtr(offset * sizeof(T)), new IntPtr(length * sizeof(T)), data);
-                GLHelper.CheckLastError();
             }
         }
 
@@ -258,13 +244,11 @@ namespace Mana.Graphics.Buffers
             if (GraphicsDevice.DirectStateAccessSupported)
             {
                 GL.NamedBufferSubData(Handle, new IntPtr(offset * sizeof(T)), new IntPtr(length * sizeof(T)), data);
-                GLHelper.CheckLastError();
             }
             else
             {
                 Bind();
                 GL.BufferSubData(BufferTarget, new IntPtr(offset * sizeof(T)), new IntPtr(length * sizeof(T)), data);
-                GLHelper.CheckLastError();
             }
         }
         
@@ -285,7 +269,6 @@ namespace Mana.Graphics.Buffers
             Unbind();
             
             GL.DeleteBuffer(Handle);
-            GLHelper.CheckLastError();
 
             Disposed = true;
         }

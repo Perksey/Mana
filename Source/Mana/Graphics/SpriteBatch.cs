@@ -236,7 +236,6 @@ namespace Mana.Graphics
                                  _storedItems * 6,
                                  DrawElementsType.UnsignedShort,
                                  IntPtr.Zero);
-            GLHelper.CheckLastError();
 
             unchecked
             {
@@ -318,9 +317,9 @@ namespace Mana.Graphics
             _vertexBuffer?.Dispose();
             _vertexBuffer = VertexBuffer.Create<VertexPosition2DTextureColor>(GraphicsDevice,
                                                                               _vertexBufferSize,
-                                                                              BufferUsage.StaticDraw,
-                                                                              immutable: true,
-                                                                              dynamic: true);
+                                                                              BufferUsage.StreamDraw,
+                                                                              immutable: true);
+            _vertexBuffer.Label = "SpriteBatch VertexBuffer";
         }
 
         private void CreateIndexBuffer()
@@ -328,9 +327,9 @@ namespace Mana.Graphics
             _indexBuffer?.Dispose();
             _indexBuffer = IndexBuffer.Create<ushort>(GraphicsDevice,
                                                       _indexBufferSize,
-                                                      BufferUsage.StaticDraw,
-                                                      immutable: true,
-                                                      dynamic: true);
+                                                      BufferUsage.StreamDraw,
+                                                      immutable: true);
+            _indexBuffer.Label = "SpriteBatch IndexBuffer";
         }
     }
 }

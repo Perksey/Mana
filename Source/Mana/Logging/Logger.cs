@@ -40,6 +40,8 @@ namespace Mana.Logging
         
         private string _name;
 
+        public static bool WriteTimestamps = false;
+
         public Logger(string name)
         {
             _name = name;
@@ -77,8 +79,12 @@ namespace Mana.Logging
 
         public void LogMessage(string message, LogLevel logLevel)
         {
-            ConsoleHelper.Write(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"), ConsoleColor.Gray);
-            Console.Write(" - ");
+            if (WriteTimestamps)
+            {
+                ConsoleHelper.Write(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"), ConsoleColor.Gray);
+                Console.Write(" - ");
+            }
+
             string threadName = Thread.CurrentThread.Name ?? $"Thread:{Thread.CurrentThread.ManagedThreadId.ToString()}";
             ConsoleHelper.Write($"[{threadName}]", ConsoleColor.Gray);
             Console.Write(" - ");
@@ -92,14 +98,35 @@ namespace Mana.Logging
         
         public void LogMessage(string message, LogLevel logLevel, ConsoleColor foregroundColor)
         {
-            ConsoleHelper.Write(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"), ConsoleColor.Gray);
-            Console.Write(" - ");
+            if (WriteTimestamps)
+            {
+                ConsoleHelper.Write(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"), ConsoleColor.Gray);
+                Console.Write(" - ");    
+            }
+            
             string threadName = Thread.CurrentThread.Name ?? $"Thread:{Thread.CurrentThread.ManagedThreadId.ToString()}";
             ConsoleHelper.Write($"[{threadName}]", ConsoleColor.Gray);
             Console.Write(" - ");
             ConsoleHelper.Write(_name, ConsoleColor.White);
             Console.Write(" - ");
             ConsoleHelper.Write($"{_displayNames[logLevel]}", foregroundColor);
+            Console.Write(" - ");
+            ConsoleHelper.Write(message, foregroundColor);
+            Console.WriteLine();
+        }
+        
+        public void WriteLine(string message, ConsoleColor foregroundColor)
+        {
+            if (WriteTimestamps)
+            {
+                ConsoleHelper.Write(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"), ConsoleColor.Gray);
+                Console.Write(" - ");    
+            }
+            
+            string threadName = Thread.CurrentThread.Name ?? $"Thread:{Thread.CurrentThread.ManagedThreadId.ToString()}";
+            ConsoleHelper.Write($"[{threadName}]", ConsoleColor.Gray);
+            Console.Write(" - ");
+            ConsoleHelper.Write(_name, ConsoleColor.White);
             Console.Write(" - ");
             ConsoleHelper.Write(message, foregroundColor);
             Console.WriteLine();

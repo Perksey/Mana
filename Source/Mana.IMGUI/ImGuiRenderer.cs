@@ -76,6 +76,7 @@ namespace Mana.IMGUI
             _io.Fonts.GetTexDataAsRGBA32(out byte* pixelData, out int width, out int height, out _);
 
             Texture2D fontTexture = Texture2D.CreateFromRGBAPointer(GraphicsDevice, width, height, pixelData);
+            fontTexture.Label = "IMGUI Font Texture";
 
             _io.Fonts.SetTexID(BindTexture(fontTexture));
             _io.Fonts.ClearTexData();
@@ -230,9 +231,9 @@ namespace Mana.IMGUI
                 _vertexBufferSize = (int)(drawData.TotalVtxCount * 1.5f);
                 _vertexBuffer = VertexBuffer.Create<VertexPosition2DTextureColor>(GraphicsDevice,
                                                                                   _vertexBufferSize,
-                                                                                  BufferUsage.DynamicDraw,
-                                                                                  immutable: true,
-                                                                                  dynamic: true);
+                                                                                  BufferUsage.StreamDraw,
+                                                                                  immutable: true);
+                _vertexBuffer.Label = "IMGUI VertexBuffer";
                 _vertexData = new VertexPosition2DTextureColor[_vertexBufferSize];
             }
 
@@ -243,9 +244,9 @@ namespace Mana.IMGUI
                 _indexBufferSize = (int)(drawData.TotalIdxCount * 1.5f);
                 _indexBuffer = IndexBuffer.Create<ushort>(GraphicsDevice,
                                                           _indexBufferSize,
-                                                          BufferUsage.DynamicDraw,
-                                                          immutable: true,
-                                                          dynamic: true);
+                                                          BufferUsage.StreamDraw,
+                                                          immutable: true);
+                _indexBuffer.Label = "IMGUI IndexBuffer";
                 _indexData = new ushort[_indexBufferSize];
             }
             
@@ -325,7 +326,6 @@ namespace Mana.IMGUI
                                                    DrawElementsType.UnsignedShort,
                                                    (IntPtr)(startIndex * sizeof(ushort)),
                                                    baseVertex);
-                    GLHelper.CheckLastError();
                     
                     unchecked
                     {
@@ -408,6 +408,8 @@ namespace Mana.IMGUI
             
             ShaderHelper.BuildShaderInfo(shaderProgram);
 
+            shaderProgram.Label = "IMGUI ShaderProgram";
+            
             return shaderProgram;
         }
 
@@ -415,13 +417,13 @@ namespace Mana.IMGUI
         {
             ImGuiStylePtr style = ImGui.GetStyle();
 
-            style.WindowRounding = 0.0f;
-            style.ChildRounding = 0.0f;
-            style.FrameRounding = 0.0f;
-            style.GrabRounding = 0.0f;
-            style.PopupRounding = 0.0f;
-            style.ScrollbarRounding = 0.0f;
-            style.TabRounding = 0.0f;
+            // style.WindowRounding = 0.0f;
+            // style.ChildRounding = 0.0f;
+            // style.FrameRounding = 0.0f;
+            // style.GrabRounding = 0.0f;
+            // style.PopupRounding = 0.0f;
+            // style.ScrollbarRounding = 0.0f;
+            // style.TabRounding = 0.0f;
         }
     }
 }

@@ -16,6 +16,7 @@
   -->
   
   <ItemGroup>
+    <PackageReference Include="OpenTK" Version="3.0.1" />
     <ProjectReference Include="..\..\Source\Mana.Engine\Mana.Engine.csproj" />
     <ProjectReference Include="..\..\Source\Mana.IMGUI\Mana.IMGUI.csproj" />
     <ProjectReference Include="..\..\Source\Mana\Mana.csproj" />

@@ -1,13 +1,11 @@
 using System;
-using System.Diagnostics;
-using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Threading;
 using Mana.Graphics.Buffers;
 using Mana.Graphics.Shaders;
 using Mana.Graphics.Vertex;
 using Mana.Logging;
+using Mana.Utilities;
 using Mana.Utilities.Extensions;
 using OpenTK.Graphics.OpenGL4;
 
@@ -230,7 +228,7 @@ namespace Mana.Graphics
                 return;
             }
             
-            Debug.Assert(!vbo.Disposed);
+            Assert.That(!vbo.Disposed);
 
             if (Bindings.VertexBuffer == vbo.Handle)
                 return;
@@ -268,7 +266,7 @@ namespace Mana.Graphics
                 return;
             }
 
-            Debug.Assert(!ebo.Disposed);
+            Assert.That(!ebo.Disposed);
 
             if (Bindings.IndexBuffer == ebo.Handle)
                 return;
@@ -306,7 +304,7 @@ namespace Mana.Graphics
                 return;
             }
 
-            Debug.Assert(!pbo.Disposed);
+            Assert.That(!pbo.Disposed);
 
             if (Bindings.PixelBuffer == pbo.Handle)
                 return;
@@ -344,7 +342,7 @@ namespace Mana.Graphics
                 return;
             }
 
-            Debug.Assert(!program.Disposed && program.Linked);
+            Assert.That(!program.Disposed && program.Linked);
 
             if (Bindings.ShaderProgram == program.Handle)
                 return;
@@ -390,7 +388,7 @@ namespace Mana.Graphics
                 return;
             }
             
-            Debug.Assert(!texture.Disposed);
+            Assert.That(!texture.Disposed);
 
             if (Bindings.Texture == texture.Handle)
                 return;

@@ -30,7 +30,6 @@ namespace Mana.Graphics.Buffers
                 DataTypeSizeInBytes = sizeof(T)
             };
 
-
             ibo.Allocate<T>(data, bufferUsage, immutable);
             return ibo;
         }

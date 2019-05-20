@@ -10,7 +10,4 @@
       <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0006" />
       <PackageReference Include="System.Reactive" Version="4.2.0-preview.102" />
     </ItemGroup>
-    <ItemGroup>
-      <Reference Include="System.Runtime.Caching" />
-    </ItemGroup>
 </Project>

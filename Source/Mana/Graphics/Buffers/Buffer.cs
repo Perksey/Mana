@@ -1,5 +1,6 @@
 using System;
 using Mana.Logging;
+using Mana.Utilities;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics.Buffers
@@ -50,6 +51,8 @@ namespace Mana.Graphics.Buffers
             {
                 Handle = (GLHandle)GL.GenBuffer();
             }
+
+            Assert.That(Handle != GLHandle.Zero);
         }
 
 #if DEBUG

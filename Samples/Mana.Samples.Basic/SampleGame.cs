@@ -16,6 +16,7 @@ namespace Mana.Samples.Basic
         private ShaderProgram _shader;
         
         private Texture2D _texture;
+        private Texture2D _image;
         private Texture2D _bigImage;
         private Texture2D _bigImage2;
         private Texture2D _bigImage3;
@@ -175,13 +176,13 @@ namespace Mana.Samples.Basic
                     
                     if (ImGui.Button("Load single bigimage"))
                     {
-                        if (_bigImage != null)
+                        if (_image != null)
                         {
-                            AssetManager.Unload(_bigImage);
+                            AssetManager.Unload(_image);
                         }
 
                         _task = AssetManager.CreateAsyncBatch()
-                                            .Load(() => _bigImage, "./Assets/Textures/big-image.jpg")
+                                            .Load(() => _image, "./Assets/Textures/image.png")
                                             .OnCompleted(() => { _log.Debug("Batch loading job completed!"); })
                                             .Start();
                     }

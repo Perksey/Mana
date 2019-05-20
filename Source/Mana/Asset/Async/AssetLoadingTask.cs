@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Mana.Utilities;
+using OpenTK.Graphics;
 
 namespace Mana.Asset.Async
 {
@@ -14,7 +15,7 @@ namespace Mana.Asset.Async
     public class AssetLoadingTask
     {
         private List<IPendingAsyncAsset> _queue = new List<IPendingAsyncAsset>();
-        private object _mutex = new object();
+        private object _contextLock = new object();
         private int _amountCompleted = 0;
         private bool _closed = false;
         private LinkedList<Action> _onCompletedCallbacks = new LinkedList<Action>();
@@ -80,7 +81,7 @@ namespace Mana.Asset.Async
 
             new Thread(() =>
             {
-                lock (_mutex)
+                lock (_contextLock)
                 {
                     AssetManager.AsyncContext.MakeCurrent(AssetManager.GraphicsDevice.Window.GameWindow.WindowInfo);
                     
@@ -89,6 +90,8 @@ namespace Mana.Asset.Async
                         pending.Load(AssetManager);
                         Interlocked.Increment(ref _amountCompleted);
                     }
+                    
+                    AssetManager.AsyncContext.MakeCurrent(null);
                     
                     Dispatcher.RunOnMainThread(() =>
                     {

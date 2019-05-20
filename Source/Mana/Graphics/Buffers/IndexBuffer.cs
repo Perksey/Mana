@@ -18,7 +18,7 @@ namespace Mana.Graphics.Buffers
         public static unsafe IndexBuffer Create<T>(GraphicsDevice graphicsDevice,
                                             T[] data,
                                             BufferUsage bufferUsage,
-                                            bool immutable = true)
+                                            bool immutable)
             where T : unmanaged
         {
             if (!IsElementType<T>())
@@ -38,7 +38,7 @@ namespace Mana.Graphics.Buffers
         public static unsafe IndexBuffer Create<T>(GraphicsDevice graphicsDevice,
                                             int capacity,
                                             BufferUsage bufferUsage,
-                                            bool immutable = true)
+                                            bool immutable)
             where T : unmanaged
         {
             if (!IsElementType<T>())

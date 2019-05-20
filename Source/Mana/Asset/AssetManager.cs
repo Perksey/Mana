@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
+using System.Threading.Tasks;
 using Mana.Asset.Async;
 using Mana.Asset.Loaders;
 using Mana.Graphics;
@@ -28,13 +28,14 @@ namespace Mana.Asset
             [typeof(ShaderProgram)] = new ShaderProgramLoader(),
         };
 
+        private object _lock = new object();
         private Dictionary<string, ManaAsset> _assetCache = new Dictionary<string, ManaAsset>();
 
         public AssetManager(GraphicsDevice graphicsDevice)
         {
             GraphicsDevice = graphicsDevice;
             GraphicsDevice.Resources.Add(this);
-
+            
             // Create the context that will be used for asynchronous asset loading.
             AsyncContext = new GraphicsContext(new GraphicsMode(32, 16, 0, 8),
                                                GraphicsDevice.Window.GameWindow.WindowInfo,
@@ -56,7 +57,7 @@ namespace Mana.Asset
         /// Gets or sets a value that indicates whether Assets should be reloaded when updated.
         /// </summary>
         public bool ReloadOnUpdate { get; set; } = true;
-
+        
         /// <summary>
         /// Gets the <see cref="GraphicsContext"/> that will be used for asynchonous asset loading.
         /// </summary>
@@ -66,14 +67,22 @@ namespace Mana.Asset
         {
             GraphicsDevice.Resources.Remove(this);
 
-            foreach (var kvp in _assetCache)
+            lock (_lock)
             {
-                bool removed = _assetCache.Remove(kvp.Key);
-                Debug.Assert(removed);
+                foreach (var kvp in _assetCache)
+                {
+                    bool removed = _assetCache.Remove(kvp.Key);
+                    Debug.Assert(removed);
                 
-                OnAssetUnloaded(kvp.Value);
-                kvp.Value.Dispose();
+                    OnAssetUnloaded(kvp.Value);
+                    kvp.Value.Dispose();
+                }
             }
+        }
+
+        public AssetLoadingTask CreateAsyncBatch()
+        {
+            return new AssetLoadingTask(this);
         }
 
         /// <summary>
@@ -88,15 +97,19 @@ namespace Mana.Asset
         {
             path = path.Replace('\\', '/')
                        .Replace('/', Path.DirectorySeparatorChar);
-            
-            // Return asset if it's cached.
-            if (_assetCache.TryGetValue(path, out ManaAsset cachedAsset))
-            {
-                if (!(cachedAsset is T typedCachedAsset))
-                    throw new InvalidOperationException($"Cached asset of type \"{cachedAsset.GetType().FullName}\" cannot be loaded as type \"{typeof(T).FullName}\".");
 
-                return typedCachedAsset;
+            lock (_lock)
+            {
+                // Return asset if it's cached.
+                if (_assetCache.TryGetValue(path, out ManaAsset cachedAsset))
+                {
+                    if (!(cachedAsset is T typedCachedAsset))
+                        throw new InvalidOperationException($"Cached asset of type \"{cachedAsset.GetType().FullName}\" cannot be loaded as type \"{typeof(T).FullName}\".");
+
+                    return typedCachedAsset;
+                }
             }
+            
                 
             if (!_assetLoaders.TryGetValue(typeof(T), out IAssetLoader loader))
                 throw new InvalidOperationException($"AssetManager does not contain a loader for asset type: \"{typeof(T).FullName}\".");
@@ -113,11 +126,77 @@ namespace Mana.Asset
                 throw new InvalidOperationException("Cannot load type that doesn't implement the IAsset interface.");
 
             manaAsset.SourcePath = path;
-            _assetCache.Add(path, manaAsset);
+
+            lock (_lock)
+            {
+                _assetCache.Add(path, manaAsset);
+            }
+
             OnAssetLoaded(manaAsset);
             
             return asset;
         }
+
+        // [DebuggerStepThrough]
+        // public Task<T> LoadAsync<T>(string path)
+        //     where T : ManaAsset
+        // {
+        //     return Task.Run(() =>
+        //     {
+        //         path = path.Replace('\\', '/')
+        //                    .Replace('/', Path.DirectorySeparatorChar);
+        //
+        //         IAssetLoader<T> assetLoader;
+        //         
+        //         lock (_lock)
+        //         {
+        //             // Return asset if it's cached.
+        //             if (_assetCache.TryGetValue(path, out ManaAsset cachedAsset))
+        //             {
+        //                 if (!(cachedAsset is T typedCachedAsset))
+        //                     throw new InvalidOperationException($"Cached asset of type \"{cachedAsset.GetType().FullName}\" cannot be loaded as type \"{typeof(T).FullName}\".");
+        //
+        //                 return typedCachedAsset;
+        //             }
+        //             
+        //             if (!_assetLoaders.TryGetValue(typeof(T), out IAssetLoader loader))
+        //                 throw new InvalidOperationException($"AssetManager does not contain a loader for asset type: \"{typeof(T).FullName}\".");
+        //
+        //             if (!(loader is IAssetLoader<T> typedLoader))
+        //             {
+        //                 throw new InvalidOperationException($"AssetManager contains an invalid registered loader: \"{loader.GetType().FullName}\".");
+        //             }
+        //
+        //             assetLoader = typedLoader;
+        //         }
+        //
+        //         // For now: Assume the path is a file path.
+        //         Stream fileStream = File.OpenRead(path);
+        //         
+        //         Task<T> task = null;
+        //         Dispatcher.RunOnMainThreadAndWait(() =>
+        //         {
+        //             task = assetLoader.LoadAsync(this, fileStream, path);
+        //         });
+        //
+        //         task.Wait();
+        //
+        //         var asset = task.Result;
+        //
+        //         if (!(asset is ManaAsset manaAsset)) 
+        //             throw new InvalidOperationException("Cannot load type that doesn't implement the IAsset interface.");
+        //
+        //         lock (_lock)
+        //         {
+        //             asset.SourcePath = path;
+        //             _assetCache.Add(path, asset);
+        //
+        //             OnAssetLoaded(asset);   
+        //         }
+        //
+        //         return asset;
+        //     });
+        // }
 
         /// <summary>
         /// Unloads a given <see cref="ManaAsset"/> from the AssetManager, and disposes it.
@@ -133,16 +212,9 @@ namespace Mana.Asset
             asset.Dispose();
         }
 
-        public AsyncAssetBatch CreateAsyncBatch()
-        {
-            return new AsyncAssetBatch(this);
-        }
-
         private void OnAssetLoaded(ManaAsset asset)
         {
             asset.OnAssetLoaded(this);
-            
-            //_log.Debug($"Loaded Asset: {asset.SourcePath} [{asset.GetType().Name}]");
         }
 
         private void OnAssetUnloaded(ManaAsset asset)

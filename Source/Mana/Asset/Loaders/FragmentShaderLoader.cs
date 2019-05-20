@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using Mana.Graphics.Shaders;
 
 namespace Mana.Asset.Loaders

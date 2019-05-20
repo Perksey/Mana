@@ -1,8 +1,12 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using Mana.Asset;
+using Mana.Graphics.Buffers;
 using Mana.Logging;
 using Mana.Utilities;
 using OpenTK.Graphics.OpenGL4;
@@ -10,6 +14,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using Buffer = System.Buffer;
 using Image = SixLabors.ImageSharp.Image;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
@@ -63,6 +68,22 @@ namespace Mana.Graphics
             }
         }
 
+        private Texture2D(GraphicsDevice graphicsDevice)
+        {
+            GraphicsDevice = graphicsDevice;
+            GraphicsDevice.Resources.Add(this);
+
+            if (graphicsDevice.DirectStateAccessSupported)
+            {
+                GL.CreateTextures(TextureTarget.Texture2D, 1, out int textureInt);
+                Handle = (GLHandle)textureInt;
+            }
+            else
+            {
+                Handle = (GLHandle)GL.GenTexture();
+            }
+        }
+
         ~Texture2D()
         {
             _log.Error("Texture2D Leaked");
@@ -107,26 +128,83 @@ namespace Mana.Graphics
             }
         }
 
+        private static int i = 0;
+
         public static unsafe Texture2D CreateFromStream(GraphicsDevice graphicsDevice, Stream stream)
         {
             Texture2D texture;
 
-            var sw1 = Stopwatch.StartNew();
-            
+            var sw = ManaStopwatch.StartNew();
+
             using (Image<Rgba32> image = Image.Load(stream))
             {
                 image.Mutate(x => x.Flip(FlipMode.Vertical));
                 
-                sw1.Stop();
+                sw.Tally("TextureLoading - Load into ram and flip done: ");
                 
-                _log.Debug("Texture Load CPU: " + sw1.Elapsed.TotalMilliseconds + "ms");
-
-                sw1.Restart();
+                sw.Restart();
                 
                 texture = new Texture2D(graphicsDevice, image.Width, image.Height);
+
+                var span = image.GetPixelSpan();
+                int size = span.Length * sizeof(Rgba32);
                 
-                fixed (void* data = &MemoryMarshal.GetReference(image.GetPixelSpan()))
+                fixed (void* data = &MemoryMarshal.GetReference(span))
                 {
+                    var start = new IntPtr(data);
+                    sw.Tally("Fix memory");
+
+                    sw.Restart();
+                    
+                    var pixelBuffer = PixelBuffer.Create<Rgba32>(graphicsDevice, size, true);
+                    
+                    sw.Tally("Create PBO");
+
+                    sw.Restart();
+                    
+                    //graphicsDevice.UnbindPixelBuffer(pixelBuffer);
+                    graphicsDevice.BindPixelBuffer(pixelBuffer);
+                    
+                    sw.Restart();
+                    
+                    sw.Restart();
+                    
+                    IntPtr pixelPointer = GL.MapBufferRange(BufferTarget.PixelUnpackBuffer, 
+                                                      IntPtr.Zero, 
+                                                      size, 
+                                                      BufferAccessMask.MapWriteBit
+                                                      | BufferAccessMask.MapUnsynchronizedBit
+                                                      | BufferAccessMask.MapInvalidateRangeBit);
+
+                    sw.Tally("Map buffer");
+                    
+                    sw.Restart();
+
+                    int remaining = size;
+                    const int step = 2048;
+                    while (remaining > 0)
+                    {
+                        int currentStep = Math.Min(remaining, step);
+                        int point = size - remaining;
+                        void* dest = (void*)IntPtr.Add(pixelPointer, point);
+                        void* src = (void*)IntPtr.Add(start, point);
+                        Unsafe.CopyBlock(dest, src, (uint)currentStep);
+                    
+                        remaining -= step;
+                    }
+                    
+                    // Unsafe.CopyBlock((void*)pixelPointer, (void*)start, (uint)size);
+                    
+                    sw.Tally("Copy buffer");
+
+                    GL.UnmapBuffer(BufferTarget.PixelUnpackBuffer);
+                    
+                    sw.Tally("Unmap buffer");
+                    
+                    //pixelBuffer.SubData<Rgba32>(new IntPtr(data), 0, image.Width * image.Height);
+                    
+                    graphicsDevice.BindPixelBuffer(pixelBuffer);
+                    
                     if (graphicsDevice.DirectStateAccessSupported)
                     {
                         GL.TextureSubImage2D(texture.Handle,
@@ -137,12 +215,14 @@ namespace Mana.Graphics
                                              texture.Height,
                                              PixelFormat.Rgba,
                                              PixelType.UnsignedByte,
-                                             new IntPtr(data));
+                                             //new IntPtr(data));
+                                             IntPtr.Zero);
+                        sw.Tally("TextureLoading - Send to tex with TextureSubImage2D: ");
                     }
                     else
                     {
-                        graphicsDevice.BindTexture(0, texture);
                         
+                        graphicsDevice.BindTexture(0, texture);
                         GL.TexImage2D(TextureTarget.Texture2D,
                                       0,
                                       PixelInternalFormat.Rgba,
@@ -151,13 +231,14 @@ namespace Mana.Graphics
                                       0,
                                       PixelFormat.Rgba,
                                       PixelType.UnsignedByte,
-                                      new IntPtr(data));
+                                      //new IntPtr(data));
+                                      IntPtr.Zero);
+                        
+                        sw.Tally("TextureLoading - Send to tex with TexImage2D: ");
                     }
+                    
+                    pixelBuffer.Dispose();
                 }
-                
-                sw1.Stop();
-                
-                _log.Debug("Texture Load GPU: " + sw1.Elapsed.TotalMilliseconds + "ms");
             }
             
             texture.FilterMode = TextureFilterMode.Nearest;
@@ -166,6 +247,85 @@ namespace Mana.Graphics
             return texture;
         }
         
+        // public static Task<Texture2D> CreateFromStreamAsync(GraphicsDevice graphicsDevice, Stream stream)
+        // {
+        //     Texture2D texture = null;
+        //     
+        //     return Task.Run(() =>
+        //     {
+        //         var image1 = Image.Load(stream);
+        //         image1.Mutate(x => x.Flip(FlipMode.Vertical));
+        //
+        //         Dispatcher.RunOnMainThreadAndWait(() =>
+        //         {
+        //             texture = new Texture2D(graphicsDevice)
+        //             {
+        //                 Width = image1.Width, 
+        //                 Height = image1.Height
+        //             };
+        //
+        //             var sw = ManaStopwatch.StartNew();
+        //             
+        //             if (graphicsDevice.DirectStateAccessSupported)
+        //             {
+        //                 _log.Info("GL.TextureStorage2D");
+        //                 GL.TextureStorage2D(texture.Handle, 1, SizedInternalFormat.Rgba8, texture.Width, texture.Height);
+        //
+        //                 sw.Tally("TextureStorage2D()");
+        //             }
+        //             
+        //             unsafe
+        //             {
+        //                 fixed (void* data = &MemoryMarshal.GetReference(image1.GetPixelSpan()))
+        //                 {
+        //                     if (graphicsDevice.DirectStateAccessSupported)
+        //                     {
+        //                         _log.Info("GL.TextureSubImage2D");
+        //                         GL.TextureSubImage2D(texture.Handle,
+        //                                              0,
+        //                                              0,
+        //                                              0,
+        //                                              texture.Width,
+        //                                              texture.Height,
+        //                                              PixelFormat.Rgba,
+        //                                              PixelType.UnsignedByte,
+        //                                              new IntPtr(data));
+        //                         
+        //                         sw.Tally("TextureSubImage2D()");
+        //                     }
+        //                     else
+        //                     {
+        //                         _log.Info("GL.TexImage2D");
+        //                         graphicsDevice.BindTexture(0, texture);
+        //                         GL.TexImage2D(TextureTarget.Texture2D,
+        //                                       0,
+        //                                       PixelInternalFormat.Rgba,
+        //                                       texture.Width,
+        //                                       texture.Height,
+        //                                       0,
+        //                                       PixelFormat.Rgba,
+        //                                       PixelType.UnsignedByte,
+        //                                       new IntPtr(data));
+        //                         sw.Tally("TexImage2D()");
+        //                     }
+        //                 }
+        //             }
+        //
+        //             
+        //             image1.Dispose();
+        //             
+        //             sw.Tally("Dispose()");
+        //             
+        //             texture.FilterMode = TextureFilterMode.Nearest;
+        //             texture.WrapMode = TextureWrapMode.Repeat;
+        //             
+        //             sw.Tally("StateSettings()");
+        //         });
+        //
+        //         return texture;
+        //     });
+        // }
+        //
         public static unsafe Texture2D CreateFromRGBAPointer(GraphicsDevice graphicsDevice, int width, int height, byte* data)
         {
             Texture2D texture = new Texture2D(graphicsDevice, width, height);
@@ -309,5 +469,7 @@ namespace Mana.Graphics
 
             return true;
         }
+
+        
     }
 }

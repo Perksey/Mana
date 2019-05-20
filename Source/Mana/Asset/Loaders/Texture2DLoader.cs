@@ -1,4 +1,5 @@
 using System.IO;
+using System.Threading.Tasks;
 using Mana.Graphics;
 
 namespace Mana.Asset.Loaders

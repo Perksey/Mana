@@ -4,8 +4,10 @@ using System.Drawing;
 using System.Linq;
 using System.Threading;
 using Mana.Logging;
+using Mana.Utilities;
 using OpenTK;
 using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Input;
 
 using MouseButtonTK = OpenTK.Input.MouseButton;
@@ -24,6 +26,7 @@ namespace Mana.Graphics
         public OpenTKWindow()
         {
             Thread.CurrentThread.Name = "Main Thread";
+            ThreadHelper.MainThreadID = Thread.CurrentThread.ManagedThreadId;
         }
         
         #region IGameWindow Implementation
@@ -84,7 +87,7 @@ namespace Mana.Graphics
 
         #endregion
 
-        internal GameWindow GameWindow => _windowWrapper;
+        public GameWindow GameWindow => _windowWrapper;
         
         public void Run(Game game)
         {
@@ -166,7 +169,9 @@ namespace Mana.Graphics
                 _openTKWindow.GraphicsDevice.ViewportRectangle = new Rectangle(0, 0, Width, Height);
                 _openTKWindow.GraphicsDevice.ScissorRectangle = new Rectangle(0, 0, Width, Height);
                 
-                _game.RenderBase(_elapsedRenderTime, 0f);
+                GL.Viewport(0, 0, Width, Height);
+                
+                _game.RenderBase(_elapsedRenderTime, float.Epsilon);
                 SwapBuffers();
             }
 

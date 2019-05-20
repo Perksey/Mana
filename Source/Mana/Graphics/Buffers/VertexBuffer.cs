@@ -19,7 +19,7 @@ namespace Mana.Graphics.Buffers
         public static VertexBuffer Create<T>(GraphicsDevice graphicsDevice, 
                                              T[] data, 
                                              BufferUsage bufferUsage,
-                                             bool immutable = true)
+                                             bool immutable)
             where T : unmanaged
         {
             var vbo = new VertexBuffer(graphicsDevice, VertexTypeInfo.Get<T>());
@@ -30,7 +30,7 @@ namespace Mana.Graphics.Buffers
         public static unsafe VertexBuffer Create<T>(GraphicsDevice graphicsDevice, 
                                                     int capacity, 
                                                     BufferUsage bufferUsage,
-                                                    bool immutable = true)
+                                                    bool immutable)
             where T : unmanaged
         {
             var vbo = new VertexBuffer(graphicsDevice, VertexTypeInfo.Get<T>());

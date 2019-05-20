@@ -9,8 +9,10 @@ using Mana.Graphics.Buffers;
 using Mana.Graphics.Shaders;
 using Mana.Graphics.Vertex;
 using Mana.Graphics.Vertex.Types;
+using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using Buffer = System.Buffer;
+using Vector2 = System.Numerics.Vector2;
 
 //
 // Modern OpenGL IMGUI Renderer adapted from Eric Mellino's IMGUI renderer for XNA: 
@@ -57,6 +59,8 @@ namespace Mana.IMGUI
             SetStyleDefaults();
 
             _shaderProgram = CreateShaderProgram();
+
+            _io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
         }
 
         public override void Dispose()
@@ -170,7 +174,7 @@ namespace Mana.IMGUI
             _io.KeyShift = Input.IsKeyDown(Key.LeftShift) || Input.IsKeyDown(Key.RightShift);
             _io.KeyCtrl = Input.IsKeyDown(Key.LeftControl) || Input.IsKeyDown(Key.RightControl);
             _io.KeyAlt = Input.IsKeyDown(Key.LeftAlt) || Input.IsKeyDown(Key.RightAlt);
-            // TODO: Windows key?
+            // TODO: Windows key.
             
             _io.DisplaySize = new Vector2(Game.Window.Width, Game.Window.Height);
             _io.DisplayFramebufferScale = Vector2.One;

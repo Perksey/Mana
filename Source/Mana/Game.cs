@@ -1,5 +1,6 @@
 using System;
 using Mana.Asset;
+using Mana.Asset.Async;
 using Mana.Graphics;
 using Mana.Graphics.Vertex;
 using Mana.Utilities;

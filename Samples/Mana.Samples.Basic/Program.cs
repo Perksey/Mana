@@ -13,12 +13,9 @@ namespace Mana.Samples.Basic
         {
             using (OpenTKWindow window = new OpenTKWindow())
             {
-#if RELEASE
                 try
                 {
-#endif
                     window.Run(new SampleGame());
-#if RELEASE
                 }
                 catch (Exception e)
                 {
@@ -26,7 +23,6 @@ namespace Mana.Samples.Basic
                     _log.Fatal("Press any key to continue...");
                     Console.ReadKey();
                 }
-#endif
             }
             
             GC.Collect();

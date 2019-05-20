@@ -1,10 +1,12 @@
 using System;
 using System.Diagnostics;
+using Mana.Logging;
 
 namespace Mana.Utilities
 {
     public class ManaStopwatch
     {
+        private static Logger _log = new Logger("Stopwatch");
         private Stopwatch _stopwatch;
         private string _name;
         
@@ -29,7 +31,7 @@ namespace Mana.Utilities
         public void Tally(string message)
         {
             _stopwatch.Stop();
-            ConsoleHelper.WriteLine($"[Stopwatch:{_name}]: {message} at {_stopwatch.Elapsed.TotalMilliseconds}ms", ConsoleColor.Green);
+            _log.Info($"{message} at {_stopwatch.Elapsed.TotalMilliseconds} ms");
             _stopwatch.Restart();
         }
 

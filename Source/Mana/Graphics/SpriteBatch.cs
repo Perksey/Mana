@@ -33,20 +33,17 @@ namespace Mana.Graphics
         
         public SpriteBatch(GraphicsDevice graphicsDevice)
         {
-            unsafe
-            {
-                GraphicsDevice = graphicsDevice;
-                GraphicsDevice.Resources.Add(this);
+            GraphicsDevice = graphicsDevice;
+            GraphicsDevice.Resources.Add(this);
 
-                _vertexBufferSize = 64;
-                _indexBufferSize = 96;
+            _vertexBufferSize = 64;
+            _indexBufferSize = 96;
 
-                CreateVertexBuffer();
-                _vertexData = new VertexPosition2DTextureColor[_vertexBufferSize];
+            CreateVertexBuffer();
+            _vertexData = new VertexPosition2DTextureColor[_vertexBufferSize];
 
-                CreateIndexBuffer();
-                _indexData = new ushort[_indexBufferSize];
-            }
+            CreateIndexBuffer();
+            _indexData = new ushort[_indexBufferSize];
         }
         
         public GraphicsDevice GraphicsDevice { get; }
@@ -318,7 +315,7 @@ namespace Mana.Graphics
             _vertexBuffer = VertexBuffer.Create<VertexPosition2DTextureColor>(GraphicsDevice,
                                                                               _vertexBufferSize,
                                                                               BufferUsage.StreamDraw,
-                                                                              immutable: true);
+                                                                              true);
             _vertexBuffer.Label = "SpriteBatch VertexBuffer";
         }
 
@@ -328,7 +325,7 @@ namespace Mana.Graphics
             _indexBuffer = IndexBuffer.Create<ushort>(GraphicsDevice,
                                                       _indexBufferSize,
                                                       BufferUsage.StreamDraw,
-                                                      immutable: true);
+                                                      true);
             _indexBuffer.Label = "SpriteBatch IndexBuffer";
         }
     }

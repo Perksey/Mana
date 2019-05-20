@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using Mana.Graphics.Shaders;
 
 namespace Mana.Asset.Loaders
@@ -9,10 +10,9 @@ namespace Mana.Asset.Loaders
         [DebuggerStepThrough]
         public VertexShader Load(AssetManager manager, Stream sourceStream, string sourcePath)
         {
-            using (StreamReader streamReader = new StreamReader(sourceStream))
-            {
-                return new VertexShader(manager.GraphicsDevice, streamReader.ReadToEnd());
-            }
+            using StreamReader streamReader = new StreamReader(sourceStream);
+            
+            return new VertexShader(manager.GraphicsDevice, streamReader.ReadToEnd());
         }
     }
 }

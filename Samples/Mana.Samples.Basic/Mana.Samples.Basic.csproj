@@ -21,4 +21,10 @@
     <ProjectReference Include="..\..\Source\Mana.IMGUI\Mana.IMGUI.csproj" />
     <ProjectReference Include="..\..\Source\Mana\Mana.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="ImGui.NET, Version=1.70.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\..\Libraries\ImGui.NET-docking\ImGui.NET.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

@@ -99,16 +99,59 @@ namespace Mana.Graphics.Buffers
 
                 if (IsImmutable && GraphicsDevice.ImmutableStorageSupported)
                 {
-                    GL.BufferStorage(BufferTarget.ArrayBuffer,
+                    GL.BufferStorage(BufferTarget,
                                      SizeInBytes,
                                      data,
                                      bufferUsage.GetBufferStorageFlags());
                 }
                 else
                 {
-                    GL.BufferData(BufferTarget.ArrayBuffer,
+                    GL.BufferData(BufferTarget,
                                   SizeInBytes,
                                   data,
+                                  (BufferUsageHint)bufferUsage);
+                }
+            }
+        }
+
+        protected void AllocateEmpty(int sizeInBytes, BufferUsage bufferUsage, bool immutable = true)
+        {
+            SizeInBytes = sizeInBytes;    
+            IsImmutable = immutable;
+            
+            if (GraphicsDevice.DirectStateAccessSupported)
+            {
+                if (IsImmutable && GraphicsDevice.ImmutableStorageSupported)
+                {
+                    GL.NamedBufferStorage(Handle,
+                                          SizeInBytes,
+                                          IntPtr.Zero,
+                                          bufferUsage.GetBufferStorageFlags());
+                }
+                else
+                {
+                    GL.NamedBufferData(Handle,
+                                       SizeInBytes,
+                                       IntPtr.Zero,
+                                       (BufferUsageHint)bufferUsage);
+                }
+            }
+            else
+            {
+                Bind();
+
+                if (IsImmutable && GraphicsDevice.ImmutableStorageSupported)
+                {
+                    GL.BufferStorage(BufferTarget,
+                                     SizeInBytes,
+                                     IntPtr.Zero,
+                                     bufferUsage.GetBufferStorageFlags());
+                }
+                else
+                {
+                    GL.BufferData(BufferTarget,
+                                  SizeInBytes,
+                                  IntPtr.Zero,
                                   (BufferUsageHint)bufferUsage);
                 }
             }
@@ -154,14 +197,14 @@ namespace Mana.Graphics.Buffers
 
                 if (IsImmutable && GraphicsDevice.ImmutableStorageSupported)
                 {
-                    GL.BufferStorage(BufferTarget.ArrayBuffer,
+                    GL.BufferStorage(BufferTarget,
                                      SizeInBytes,
                                      new byte[SizeInBytes],
                                      bufferUsage.GetBufferStorageFlags());
                 }
                 else
                 {
-                    GL.BufferData(BufferTarget.ArrayBuffer,
+                    GL.BufferData(BufferTarget,
                                   SizeInBytes,
                                   new byte[SizeInBytes],
                                   (BufferUsageHint)bufferUsage);

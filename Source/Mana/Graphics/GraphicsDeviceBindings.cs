@@ -5,6 +5,7 @@ namespace Mana.Graphics
         public GLHandle VertexBuffer;
         public GLHandle IndexBuffer;
         public GLHandle FrameBuffer;
+        public GLHandle PixelBuffer;
         public GLHandle ShaderProgram;
 
         public int ActiveTexture;

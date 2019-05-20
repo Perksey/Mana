@@ -149,14 +149,6 @@ namespace Mana.Graphics
                     // to wait for the GL call to complete, so we use a PBO and fill it with a mapped memory range to
                     // prevent OpenGL synchronization from causing frame drops on the main thread.
 
-                    int currentBoundPixelUnpack = GL.GetInteger(GetPName.PixelUnpackBufferBinding);
-
-                    _log.Info("Bound: " + currentBoundPixelUnpack);
-
-                    int otherBound = graphicsDevice.Bindings.PixelBuffer;
-                    
-                    Assert.That(currentBoundPixelUnpack == otherBound);
-                    
                     IntPtr pixelPointer = GL.MapBufferRange(BufferTarget.PixelUnpackBuffer, 
                                                       IntPtr.Zero, 
                                                       size, 

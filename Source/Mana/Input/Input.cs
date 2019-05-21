@@ -19,7 +19,6 @@ namespace Mana
         private static bool[] _keysDown;
         private static bool[] _lastKeysDown;
 
-        private static MouseState _mouseState;
         private static MouseButton[] _mouseButtonValues;
         private static bool[] _mouseButtonsDown;
         private static bool[] _lastMouseButtonsDown;
@@ -33,7 +32,7 @@ namespace Mana
         public static event Action<MouseButton> MouseButtonPressed;
         public static event Action<MouseButton> MouseButtonReleased;
 
-        public static Vector2 MousePosition { get; private set; } = Vector2.Zero;
+        public static Point MousePosition { get; private set; } = Point.Empty;
         public static int MouseWheel { get; private set; } = 0;
 
         public static int MouseWheelDelta { get; private set; } = 0;
@@ -308,7 +307,7 @@ namespace Mana
 
         public static void OnMouseMoved(Point position)
         {
-            MousePosition = new Vector2(position.X, position.Y);
+            MousePosition = position;
         }
 
         public static void OnMouseScroll(int delta, int value)

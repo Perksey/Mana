@@ -66,9 +66,7 @@ namespace Mana.Utilities
         public void InvokeAndWait(Action action)
         {
             var task = new Task(action);
-            
             _actions.Enqueue(() => { task.RunSynchronously(); });
-
             task.Wait();
         }
 

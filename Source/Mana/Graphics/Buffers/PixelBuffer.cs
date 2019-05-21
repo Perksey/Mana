@@ -11,11 +11,19 @@ namespace Mana.Graphics.Buffers
 
         public static PixelBuffer Create<T>(GraphicsDevice graphicsDevice, 
                                             int sizeInBytes,
-                                            bool immutable)
+                                            bool immutable,
+                                            bool mapWrite = true)
             where T : unmanaged
         {
             var pbo = new PixelBuffer(graphicsDevice);
-            pbo.AllocateEmpty(sizeInBytes, BufferUsage.DynamicCopy, false);
+            
+            pbo.AllocateEmpty(sizeInBytes,
+                              BufferUsage.DynamicCopy,
+                              immutable,
+                              mapWrite
+                                  ? BufferStorageFlags.MapWriteBit
+                                  : BufferStorageFlags.None);
+            
             return pbo;
         }
         

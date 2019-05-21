@@ -96,13 +96,6 @@ namespace Mana.Graphics
             GraphicsDevice = new GraphicsDevice(this);
             
             Game = game;
-            
-            // _log.Debug("Available Display Resolutions: ");
-            //
-            // foreach (var res in AvailableResolutions)
-            // {
-            //     _log.Debug(res.ToString());
-            // }
 
             Game.InitializeBase(this);
             
@@ -124,8 +117,8 @@ namespace Mana.Graphics
             private float _elapsedRenderTime;
 
             public GameWindowWrapper(OpenTKWindow openTKWindow, Game game)
-                : base(1280, 
-                       720, 
+                : base(1600, 
+                       900, 
                        new GraphicsMode(32, 16, 0, 8),
                        "Mana",
                        GameWindowFlags.Default,
@@ -137,7 +130,7 @@ namespace Mana.Graphics
                 _openTKWindow = openTKWindow;
                 _game = game;
                 VSync = VSyncMode.Off;
-                //WindowState = WindowState.Maximized;
+                WindowState = WindowState.Maximized;
             }
 
             protected override void OnUpdateFrame(FrameEventArgs e)

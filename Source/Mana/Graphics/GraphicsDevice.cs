@@ -11,7 +11,7 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics
 {
-    public class GraphicsDevice
+    public partial class GraphicsDevice
     {
         private static Logger _log = Logger.Create();
         private static Logger _glDebugLogger = new Logger("OpenGL");
@@ -20,24 +20,11 @@ namespace Mana.Graphics
 
         public readonly OpenTKWindow Window;
         internal readonly GLExtensions Extensions;
-        internal readonly GraphicsResourceCollection Resources;
-        internal GraphicsDeviceBindings Bindings;
-
+        internal readonly GraphicsResourceContainer Resources;
+        
         internal readonly bool DirectStateAccessSupported;
         internal readonly bool ImmutableStorageSupported;
 
-        private Color _clearColor;
-        
-        /* State */
-        private bool _depthTest;
-        private bool _scissorTest;
-        private bool _blend;
-        private bool _cullBackfaces;
-        private Rectangle _scissorRectangle;
-        private Rectangle _viewportRectangle;
-
-        private static DebugProc _debugProcCallback; 
-        
         public GraphicsDevice(OpenTKWindow window)
         {
             if (_instance != null)
@@ -50,11 +37,11 @@ namespace Mana.Graphics
             DirectStateAccessSupported = Extensions.ARB_DirectStateAccess || IsVersionAtLeast(4, 5);
             ImmutableStorageSupported = Extensions.ARB_BufferStorage || IsVersionAtLeast(4, 4);
 
-            // DirectStateAccessSupported = false;
-            // ImmutableStorageSupported = false;
+            DirectStateAccessSupported = false;
+            ImmutableStorageSupported = false;
             
-            Resources = new GraphicsResourceCollection();
-            Bindings = new GraphicsDeviceBindings();
+            Resources = new GraphicsResourceContainer();
+            Bindings = new BindingPoints();
 
             DepthTest = true;
             ScissorTest = true;
@@ -79,9 +66,10 @@ namespace Mana.Graphics
             int vao = GL.GenVertexArray();
             
             GL.BindVertexArray(vao);
-
+            
             _debugProcCallback = DebugCallback;
             GL.DebugMessageCallback(_debugProcCallback, IntPtr.Zero);
+            
             unsafe
             {
                 GL.DebugMessageControl(DebugSourceControl.DontCare, 
@@ -90,336 +78,11 @@ namespace Mana.Graphics
                                        0, 
                                        (int*)0, 
                                        true);
-                
             }
             
             GL.Enable(EnableCap.DebugOutput);
             GL.Enable(EnableCap.DebugOutputSynchronous);
         }
-        
-        #region State
-        
-        /// <summary>
-        /// Gets or sets a value that indicates whether depth testing is enabled on the GraphicsDevice.
-        /// </summary>
-        public bool DepthTest
-        {
-            get => _depthTest;
-            set
-            {
-                if (value == _depthTest)
-                    return;
-                
-                SetCapability(EnableCap.DepthTest, _depthTest = value);
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets a value that indicates whether scissor testing is enabled on the GraphicsDevice.
-        /// </summary>
-        public bool ScissorTest
-        {
-            get => _scissorTest;
-            set
-            {
-                if (value == _scissorTest)
-                    return;
-                
-                SetCapability(EnableCap.ScissorTest, _scissorTest = value);
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets a value that indicates whether blending is enabled on the GraphicsDevice.
-        /// </summary>
-        public bool Blend
-        {
-            get => _blend;
-            set
-            {
-                if (value == _blend)
-                    return;
-
-                SetCapability(EnableCap.Blend, _blend = value);
-                
-                if (value)
-                {
-                    GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets a value that indicates whether backface culling is enabled on the GraphicsDevice.
-        /// </summary>
-        public bool CullBackfaces
-        {
-            get => _cullBackfaces;
-            set
-            {
-                if (value == _cullBackfaces)
-                    return;
-
-                SetCapability(EnableCap.CullFace, _cullBackfaces = value);
-
-                if (value)
-                {
-                    GL.FrontFace(FrontFaceDirection.Ccw);
-                    GL.CullFace(CullFaceMode.Back);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets a value that represents the GraphicsDevice scissor rectangle.
-        /// </summary>
-        public Rectangle ScissorRectangle
-        {
-            get => _scissorRectangle;
-            set
-            {
-                if (value == _scissorRectangle)
-                    return;
-                
-                GL.Scissor(value.X,
-                           value.Y,
-                           value.Width,
-                           value.Height);
-
-                _scissorRectangle = value;
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets a value that represents the GraphicsDevice viewport rectangle.
-        /// </summary>
-        public Rectangle ViewportRectangle
-        {
-            get => _viewportRectangle;
-            set
-            {
-                if (value == _viewportRectangle)
-                    return;
-
-                GL.Viewport(value.X,
-                            value.Y,
-                            value.Width,
-                            value.Height);
-
-                _viewportRectangle = value;
-            }
-        }
-
-        #endregion
-        
-        
-        #region Bindings
-
-        /// <summary>
-        /// Binds the given <see cref="VertexBuffer"/> object to the GraphicsDevice.
-        /// </summary>
-        /// <param name="vbo">The <see cref="VertexBuffer"/> object to bind.</param>
-        public void BindVertexBuffer(VertexBuffer vbo)
-        {
-            if (vbo == null)
-            {
-                BindBuffer(BufferTarget.ArrayBuffer, GLHandle.Zero);
-                Bindings.VertexBuffer = GLHandle.Zero;
-                return;
-            }
-            
-            Assert.That(!vbo.Disposed);
-
-            if (Bindings.VertexBuffer == vbo.Handle)
-                return;
-
-            BindBuffer(BufferTarget.ArrayBuffer, vbo.Handle);
-            Bindings.VertexBuffer = vbo.Handle;
-        }
-        
-        /// <summary>
-        /// Ensures that the given <see cref="VertexBuffer"/> object is unbound.
-        /// </summary>
-        /// <param name="vbo">The <see cref="VertexBuffer"/> object to ensure is unbound.</param>
-        public void UnbindVertexBuffer(VertexBuffer vbo)
-        {
-            if (vbo == null)
-                throw new ArgumentNullException(nameof(vbo));
-
-            if (Bindings.VertexBuffer != vbo.Handle)
-                return;
-
-            BindBuffer(BufferTarget.ArrayBuffer, GLHandle.Zero);
-            Bindings.VertexBuffer = GLHandle.Zero;
-        }
-        
-        /// <summary>
-        /// Binds the given <see cref="IndexBuffer"/> object to the GraphicsDevice.
-        /// </summary>
-        /// <param name="ebo">The <see cref="IndexBuffer"/> object to bind.</param>
-        public void BindIndexBuffer(IndexBuffer ebo)
-        {
-            if (ebo == null)
-            {
-                BindBuffer(BufferTarget.ElementArrayBuffer, GLHandle.Zero);
-                Bindings.IndexBuffer = GLHandle.Zero;
-                return;
-            }
-
-            Assert.That(!ebo.Disposed);
-
-            if (Bindings.IndexBuffer == ebo.Handle)
-                return;
-
-            BindBuffer(BufferTarget.ElementArrayBuffer, ebo.Handle);
-            Bindings.IndexBuffer = ebo.Handle;
-        }
-
-        /// <summary>
-        /// Ensures that the given <see cref="IndexBuffer"/> object is unbound.
-        /// </summary>
-        /// <param name="ebo">The <see cref="IndexBuffer"/> object to ensure is unbound.</param>
-        public void UnbindIndexBuffer(IndexBuffer ebo)
-        {
-            if (ebo == null)
-                throw new ArgumentNullException(nameof(ebo));
-
-            if (Bindings.IndexBuffer != ebo.Handle)
-                return;
-
-            BindBuffer(BufferTarget.ElementArrayBuffer, GLHandle.Zero);
-            Bindings.IndexBuffer = GLHandle.Zero;
-        }
-        
-        /// <summary>
-        /// Binds the given <see cref="PixelBuffer"/> object to the GraphicsDevice.
-        /// </summary>
-        /// <param name="pbo">The <see cref="PixelBuffer"/> object to bind.</param>
-        public void BindPixelBuffer(PixelBuffer pbo)
-        {
-            if (pbo == null)
-            {
-                BindBuffer(BufferTarget.PixelUnpackBuffer, GLHandle.Zero);
-                Bindings.PixelBuffer = GLHandle.Zero;
-                return;
-            }
-
-            Assert.That(!pbo.Disposed);
-
-            if (Bindings.PixelBuffer == pbo.Handle)
-                return;
-
-            BindBuffer(BufferTarget.PixelUnpackBuffer, pbo.Handle);
-            Bindings.PixelBuffer = pbo.Handle;
-        }
-
-        /// <summary>
-        /// Ensures that the given <see cref="PixelBuffer"/> object is unbound.
-        /// </summary>
-        /// <param name="pbo">The <see cref="PixelBuffer"/> object to ensure is unbound.</param>
-        public void UnbindPixelBuffer(PixelBuffer pbo)
-        {
-            if (pbo == null)
-                throw new ArgumentNullException(nameof(pbo));
-
-            if (Bindings.PixelBuffer != pbo.Handle)
-                return;
-
-            BindBuffer(BufferTarget.PixelUnpackBuffer, GLHandle.Zero);
-            Bindings.PixelBuffer = GLHandle.Zero;
-        }
-        
-        /// <summary>
-        /// Binds the given <see cref="ShaderProgram"/> object to the GraphicsDevice.
-        /// </summary>
-        /// <param name="program">The <see cref="ShaderProgram"/> object to bind.</param>
-        public void BindShaderProgram(ShaderProgram program)
-        {
-            if (program == null)
-            {
-                GL.UseProgram(0);
-                Bindings.ShaderProgram = GLHandle.Zero;
-                return;
-            }
-
-            Assert.That(!program.Disposed && program.Linked);
-
-            if (Bindings.ShaderProgram == program.Handle)
-                return;
-
-            GL.UseProgram(program.Handle);
-            Bindings.ShaderProgram = program.Handle;
-        }
-
-        /// <summary>
-        /// Ensures that the given <see cref="ShaderProgram"/> object is unbound.
-        /// </summary>
-        /// <param name="program">The <see cref="ShaderProgram"/> object to ensure is unbound.</param>
-        public void UnbindShaderProgram(ShaderProgram program)
-        {
-            if (program == null)
-                throw new ArgumentNullException(nameof(program));
-
-            if (Bindings.ShaderProgram != program.Handle)
-                return;
-
-            GL.UseProgram(0);
-
-            Bindings.ShaderProgram = GLHandle.Zero;
-        }
-
-        /// <summary>
-        /// Binds the given <see cref="Texture2D"/> to the GraphicsDevice at the given texture unit location.
-        /// </summary>
-        /// <param name="textureUnit">The texture unit that the texture will be bound to.</param>
-        /// <param name="texture">The <see cref="Texture2D"/> to bind.</param>
-        public void BindTexture(int textureUnit, Texture2D texture)
-        {
-            if (textureUnit < 0 || textureUnit >= _maxTextureImageUnits)
-                throw new ArgumentOutOfRangeException();
-
-            SetActiveTexture(textureUnit);
-
-            if (texture == null)
-            {
-                GL.BindTexture(TextureTarget.Texture2D, 0);
-
-                Bindings.Texture = GLHandle.Zero;
-                return;
-            }
-            
-            Assert.That(!texture.Disposed);
-
-            if (Bindings.Texture == texture.Handle)
-                return;
-
-            GL.BindTexture(TextureTarget.Texture2D, texture.Handle);
-            Bindings.Texture = texture.Handle;
-        }
-
-        /// <summary>
-        /// Ensures that the given <see cref="Texture2D"/> object is unbound.
-        /// </summary>
-        /// <param name="texture">The <see cref="Texture2D"/> object to ensure is unbound.</param>
-        public void UnbindTexture(Texture2D texture)
-        {
-            for (int i = 0; i < _maxTextureImageUnits; i++)
-            {
-                if (Bindings.TextureUnits[i] == texture.Handle)
-                {
-                    SetActiveTexture(i);
-
-                    GL.BindTexture(TextureTarget.Texture2D, 0);
-
-                    Bindings.Texture = GLHandle.Zero;
-                }
-            }
-        }
-        
-        #endregion
-        
-        
-        #region Clear
         
         /// <summary>
         /// Clears the color buffer to the given color.
@@ -455,38 +118,6 @@ namespace Mana.Graphics
             unchecked
             {
                 Metrics._clearCount++;
-            }
-        }
-        
-        #endregion
-        
-        
-        #region Render
-
-        [Obsolete("This method is deprecated. Use VertexBuffer rendering instead.")]
-        public void Render<T>(T[] vertexData, 
-                              ShaderProgram shaderProgram, 
-                              PrimitiveType primitiveType = PrimitiveType.Triangles)
-            where T : unmanaged
-        {
-            if (vertexData.Length == 0)
-                return;
-            
-            BindVertexBuffer(null);
-            BindIndexBuffer(null);
-            BindShaderProgram(shaderProgram);
-
-            GCHandle pinned = GCHandle.Alloc(vertexData, GCHandleType.Pinned);
-            VertexTypeInfo.Get<T>().Apply(shaderProgram, pinned.AddrOfPinnedObject());
-            
-            GL.DrawArrays(primitiveType, 0, vertexData.Length);
-
-            pinned.Free();
-
-            unchecked
-            {
-                Metrics._primitiveCount += vertexData.Length;
-                Metrics._drawCalls++;
             }
         }
 
@@ -535,65 +166,10 @@ namespace Mana.Graphics
             }
         }
         
-        #endregion
-
-
         public bool IsVersionAtLeast(int major, int minor)
         {
             int version = (Extensions.Major * 10) + Extensions.Minor;
             return version >= (major * 10) + minor;
-        }
-        
-        #region Private Helpers
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetCapability(EnableCap enableCap, bool value)
-        {
-            if (value)
-            {
-                GL.Enable(enableCap);
-            }
-            else
-            {
-                GL.Disable(enableCap);
-            }
-        }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void BindBuffer(BufferTarget buffer, GLHandle handle)
-        {
-            GL.BindBuffer(buffer, handle);
-        }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetActiveTexture(int activeTexture)
-        {
-            if (Bindings.ActiveTexture != activeTexture)
-            {
-                Bindings.ActiveTexture = activeTexture;
-                GL.ActiveTexture((TextureUnit)(activeTexture + (int)TextureUnit.Texture0));
-            }
-        }
-        
-        #endregion
-
-        private void DebugCallback(DebugSource source, 
-                                   DebugType type,
-                                   int id,
-                                   DebugSeverity severity,
-                                   int length,
-                                   IntPtr message,
-                                   IntPtr userParam)
-        {
-            string msg = Marshal.PtrToStringAnsi(message, length);
-            var color = type == DebugType.DebugTypeError ? ConsoleColor.Red : ConsoleColor.Gray;
-            
-            _glDebugLogger.WriteLine($"{severity.GetName()} {type.GetName()} {msg}", color);
-            
-            if (type == DebugType.DebugTypeError && severity == DebugSeverity.DebugSeverityHigh)
-            {
-                throw new GLException(msg);
-            }
         }
     }
 }

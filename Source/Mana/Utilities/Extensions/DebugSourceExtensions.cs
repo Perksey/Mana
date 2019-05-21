@@ -15,6 +15,7 @@ namespace Mana.Utilities.Extensions
                 DebugSource.DebugSourceShaderCompiler => "Shader Compiler",
                 DebugSource.DebugSourceThirdParty => "Third Party",
                 DebugSource.DebugSourceWindowSystem => "Window System",
+                _ => "???",
             };
         }
     }

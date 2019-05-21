@@ -11,18 +11,20 @@ namespace Mana.Samples.Basic
         [STAThread]
         public static void Main(string[] args)
         {
+            _log.Info("Start of program.");
+            
             using (OpenTKWindow window = new OpenTKWindow())
             {
-                try
-                {
-                    window.Run(new SampleGame());
-                }
-                catch (Exception e)
-                {
-                    _log.Fatal($"{e.Message}{Environment.NewLine}{e.StackTrace}");
-                    _log.Fatal("Press any key to continue...");
-                    Console.ReadKey();
-                }
+                // try
+                // {
+                window.Run(new SampleGame());
+                // }
+                // catch (Exception e)
+                // {
+                //     _log.Fatal($"{e.Message}{Environment.NewLine}{e.StackTrace}");
+                //     _log.Fatal("Press any key to continue...");
+                //     Console.ReadKey();
+                // }
             }
             
             GC.Collect();

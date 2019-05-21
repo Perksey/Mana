@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -80,14 +79,6 @@ namespace Mana.Graphics
                 Handle = (GLHandle)GL.GenTexture();
             }
         }
-
-        ~Texture2D()
-        {
-            _log.Error("Texture2D Leaked");
-#if DEBUG
-            //throw new InvalidOperationException("Texture2D Leaked");
-#endif
-        }
         
         public GLHandle Handle { get; private set; }
 
@@ -124,11 +115,93 @@ namespace Mana.Graphics
                 _wrapMode = value;
             }
         }
+        
+        public static Texture2D CreateEmpty(GraphicsDevice graphicsDevice, int width, int height)
+        {
+            Texture2D texture = new Texture2D(graphicsDevice, width, height)
+            {
+                FilterMode = TextureFilterMode.Linear, 
+                WrapMode = TextureWrapMode.ClampToEdge,
+            };
+            
+            if (!graphicsDevice.DirectStateAccessSupported)
+            {
+                GL.TexImage2D(TextureTarget.Texture2D,
+                              0,
+                              PixelInternalFormat.Rgba,
+                              texture.Width,
+                              texture.Height,
+                              0,
+                              PixelFormat.Rgba,
+                              PixelType.UnsignedByte,
+                              IntPtr.Zero);
+            }
 
-        public static unsafe Texture2D CreateFromStream(GraphicsDevice graphicsDevice, Stream stream)
+            return texture;
+        }
+        
+        public static Texture2D CreateFromStream(GraphicsDevice graphicsDevice, Stream stream)
+        {
+            return ThreadHelper.IsMainThread 
+                       ? CreateFromStreamSynchronized(graphicsDevice, stream)
+                       : CreateFromStreamUnsynchronized(graphicsDevice, stream);
+        }
+
+        private static unsafe Texture2D CreateFromStreamSynchronized(GraphicsDevice graphicsDevice, Stream stream)
         {
             Texture2D texture;
+            
+            using (var image = Image.Load(stream))
+            {
+                image.Mutate(x => x.Flip(FlipMode.Vertical));
+                texture = new Texture2D(graphicsDevice, image.Width, image.Height);
+                
+                var span = image.GetPixelSpan();
+                
+                fixed (void* data = &MemoryMarshal.GetReference(span))
+                {
+                    if (graphicsDevice.DirectStateAccessSupported)
+                    {
+                        GL.TextureSubImage2D(texture.Handle,
+                                             0,
+                                             0,
+                                             0,
+                                             texture.Width,
+                                             texture.Height,
+                                             PixelFormat.Rgba,
+                                             PixelType.UnsignedByte,
+                                             new IntPtr(data));
+                    }
+                    else
+                    {
+                        GLHandle prevTexture = (GLHandle)GL.GetInteger(GetPName.TextureBinding2D);
+                        GL.BindTexture(TextureTarget.Texture2D, texture.Handle);
+                        
+                        GL.TexImage2D(TextureTarget.Texture2D,
+                                      0,
+                                      PixelInternalFormat.Rgba,
+                                      texture.Width,
+                                      texture.Height,
+                                      0,
+                                      PixelFormat.Rgba,
+                                      PixelType.UnsignedByte,
+                                      new IntPtr(data));
 
+                        GL.BindTexture(TextureTarget.Texture2D, prevTexture);
+                    }
+                }
+            }
+            
+            texture.FilterMode = TextureFilterMode.Nearest;
+            texture.WrapMode = TextureWrapMode.Repeat;
+
+            return texture;
+        }
+        
+        private static unsafe Texture2D CreateFromStreamUnsynchronized(GraphicsDevice graphicsDevice, Stream stream)
+        {
+            Texture2D texture;
+            
             using (var image = Image.Load(stream))
             {
                 image.Mutate(x => x.Flip(FlipMode.Vertical));
@@ -141,9 +214,10 @@ namespace Mana.Graphics
                 fixed (void* data = &MemoryMarshal.GetReference(span))
                 {
                     var start = new IntPtr(data);
-                    var pixelBuffer = PixelBuffer.Create<Rgba32>(graphicsDevice, size, true);
+                    var pixelBuffer = PixelBuffer.Create<Rgba32>(graphicsDevice, size, immutable: true, mapWrite: true);
 
-                    graphicsDevice.BindPixelBuffer(pixelBuffer);
+                    GLHandle previousPBO = (GLHandle)GL.GetInteger(GetPName.PixelUnpackBufferBinding);
+                    GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pixelBuffer.Handle);
                     
                     // When we load assets asynchronously, using SubData to set the data will cause the main thread
                     // to wait for the GL call to complete, so we use a PBO and fill it with a mapped memory range to
@@ -155,6 +229,8 @@ namespace Mana.Graphics
                                                       BufferAccessMask.MapWriteBit
                                                       | BufferAccessMask.MapUnsynchronizedBit
                                                       | BufferAccessMask.MapInvalidateRangeBit);
+
+                    Assert.That(pixelPointer != IntPtr.Zero);
 
                     // We send the data to mapped memory in multiple batches instead of one large one for the same
                     // reason.
@@ -174,8 +250,6 @@ namespace Mana.Graphics
                     
                     GL.UnmapBuffer(BufferTarget.PixelUnpackBuffer);
                     
-                    graphicsDevice.BindPixelBuffer(pixelBuffer);
-                    
                     if (graphicsDevice.DirectStateAccessSupported)
                     {
                         GL.TextureSubImage2D(texture.Handle,
@@ -190,8 +264,9 @@ namespace Mana.Graphics
                     }
                     else
                     {
+                        GLHandle prevTexture = (GLHandle)GL.GetInteger(GetPName.TextureBinding2D);
+                        GL.BindTexture(TextureTarget.Texture2D, texture.Handle);
                         
-                        graphicsDevice.BindTexture(0, texture);
                         GL.TexImage2D(TextureTarget.Texture2D,
                                       0,
                                       PixelInternalFormat.Rgba,
@@ -201,8 +276,11 @@ namespace Mana.Graphics
                                       PixelFormat.Rgba,
                                       PixelType.UnsignedByte,
                                       IntPtr.Zero);
+
+                        GL.BindTexture(TextureTarget.Texture2D, prevTexture);
                     }
-                    
+
+                    GL.BindBuffer(BufferTarget.PixelUnpackBuffer, previousPBO);
                     pixelBuffer.Dispose();
                 }
             }
@@ -249,51 +327,19 @@ namespace Mana.Graphics
 
             return texture;
         }
-        
-        //
-        // public Color GetPixel(int x, int y)
-        // {
-        //     throw new NotImplementedException();
-        //     
-        //     var data = new Color[1];
-        //     
-        //     GetPixels(0, new Rectangle(x, y, 1, 1), data, 0);
-        //     
-        //     return data[0];
-        // }
-        //
-        // public unsafe void GetPixels(int mipLevel, Rectangle rect, Color[] data, int startIndex)
-        // {
-        //     throw new NotImplementedException();
-        //     
-        //     GraphicsDevice.BindTexture(0, this);
-        //     
-        //     var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
-        //
-        //     var intPtr = handle.AddrOfPinnedObject();
-        //     
-        //     GL.GetTextureSubImage(Handle,
-        //                           0,
-        //                           rect.X,
-        //                           rect.Y,
-        //                           0,
-        //                           rect.Width,
-        //                           rect.Height,
-        //                           1,
-        //                           PixelFormat.Rgba,
-        //                           PixelType.UnsignedByte,
-        //                           data.Length * sizeof(Color),
-        //                           ref intPtr);
-        //     GLHelper.CheckLastError();
-        //     
-        //     handle.Free();
-        // }
 
         public override void Dispose()
         {
-            Debug.Assert(!Disposed);
+            Assert.That(!Disposed);
+
+            if (!IsUnloading && AssetManager != null)
+            {
+                AssetManager.Unload(this);
+                return;
+            }
             
             GraphicsDevice.Resources.Remove(this);
+            GraphicsDevice.UnbindTexture(this);
 
             GL.DeleteTexture(Handle);
             
@@ -317,11 +363,12 @@ namespace Mana.Graphics
             using (Stream stream = File.OpenRead(SourcePath))
             using (Image<Rgba32> image = Image.Load(stream))
             {
-                GraphicsDevice.SetActiveTexture(0);
+                int prevActiveTexture = GL.GetInteger(GetPName.ActiveTexture);
+                GL.ActiveTexture(0);
 
+                int prevTexture2D = GL.GetInteger(GetPName.TextureBinding2D);
                 GL.BindTexture(TextureTarget.Texture2D, handle);
-                GraphicsDevice.Bindings.Texture = handle;
-
+                
                 image.Mutate(x => x.Flip(FlipMode.Vertical));
 
                 newWidth = image.Width;
@@ -342,6 +389,9 @@ namespace Mana.Graphics
                                       new IntPtr(data));
                     }
                 }
+
+                GL.BindTexture(TextureTarget.Texture2D, prevTexture2D);
+                GL.ActiveTexture((TextureUnit)prevActiveTexture);
             }
             
             GL.DeleteTexture(Handle);

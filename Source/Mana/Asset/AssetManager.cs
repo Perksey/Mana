@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Threading.Tasks;
 using Mana.Asset.Async;
 using Mana.Asset.Loaders;
 using Mana.Graphics;
@@ -72,7 +71,7 @@ namespace Mana.Asset
                 foreach (var kvp in _assetCache)
                 {
                     bool removed = _assetCache.Remove(kvp.Key);
-                    Debug.Assert(removed);
+                    Assert.That(removed);
                 
                     OnAssetUnloaded(kvp.Value);
                     kvp.Value.Dispose();
@@ -95,6 +94,9 @@ namespace Mana.Asset
         public T Load<T>(string path)
             where T : ManaAsset
         {
+            if (path == null)
+                throw new ArgumentNullException(nameof(path));
+            
             path = path.Replace('\\', '/')
                        .Replace('/', Path.DirectorySeparatorChar);
 
@@ -109,7 +111,6 @@ namespace Mana.Asset
                     return typedCachedAsset;
                 }
             }
-            
                 
             if (!_assetLoaders.TryGetValue(typeof(T), out IAssetLoader loader))
                 throw new InvalidOperationException($"AssetManager does not contain a loader for asset type: \"{typeof(T).FullName}\".");
@@ -205,20 +206,25 @@ namespace Mana.Asset
         [DebuggerStepThrough]
         public void Unload(ManaAsset asset)
         {
-            if (!_assetCache.Remove(asset.SourcePath))
-                throw new ArgumentException("Asset was not found in AssetManager. Was the SourcePath modified?");
-            
+            lock (_lock)
+            {
+                if (!_assetCache.Remove(asset.SourcePath))
+                    throw new ArgumentException("Asset was not found in AssetManager. Was the SourcePath modified?");
+            }
+
             OnAssetUnloaded(asset);
             asset.Dispose();
         }
 
         private void OnAssetLoaded(ManaAsset asset)
         {
+            asset.AssetManager = this;
             asset.OnAssetLoaded(this);
         }
 
         private void OnAssetUnloaded(ManaAsset asset)
         {
+            asset.IsUnloading = true;
         }
         
         /// <summary>

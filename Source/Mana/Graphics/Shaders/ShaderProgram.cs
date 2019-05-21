@@ -425,6 +425,12 @@ namespace Mana.Graphics.Shaders
         {
             Debug.Assert(!Disposed);
             
+            if (!IsUnloading && AssetManager != null)
+            {
+                AssetManager.Unload(this);
+                return;
+            }
+            
             GraphicsDevice.Resources.Remove(this);
             GraphicsDevice.UnbindShaderProgram(this);
             

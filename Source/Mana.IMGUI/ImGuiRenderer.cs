@@ -23,10 +23,12 @@ namespace Mana.IMGUI
 {
     public class ImGuiRenderer : GameComponent
     {
-        private int _textureID;
-        private Dictionary<IntPtr, Texture2D> _boundTextures = new Dictionary<IntPtr, Texture2D>();
+        private ImGuiViewportManager _viewportManager;
         private List<int> _keys = new List<int>();
-
+        
+        private Dictionary<IntPtr, Texture2D> _boundTextures = new Dictionary<IntPtr, Texture2D>();
+        private int _textureID;
+        
         private VertexPosition2DTextureColor[] _vertexData;
         private VertexBuffer _vertexBuffer;
         private int _vertexBufferSize;
@@ -42,10 +44,19 @@ namespace Mana.IMGUI
         private float _displayY = float.MinValue;
         private ShaderProgram _shaderProgram;
         
+        private int _drawCalls;
+        private int _primitiveCount;
+        
         public ImGuiRenderer()
         {
+            ImGuiHelper._imguiRenderer = this;
+            
+            _viewportManager = new ImGuiViewportManager(this);
         }
 
+        public int DrawCalls => _drawCalls;
+        public int PrimitiveCount => _primitiveCount;
+        
         public override void OnAddedToGame(Game game)
         {
             base.OnAddedToGame(game);
@@ -61,6 +72,12 @@ namespace Mana.IMGUI
             _shaderProgram = CreateShaderProgram();
 
             _io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
+            _io.ConfigFlags |= ImGuiConfigFlags.ViewportsEnable;
+
+            _io.BackendFlags |= ImGuiBackendFlags.PlatformHasViewports;
+            _io.BackendFlags |= ImGuiBackendFlags.HasMouseHoveredViewport;
+
+            //_viewportManager.Initialize(game);
         }
 
         public override void Dispose()
@@ -160,6 +177,9 @@ namespace Mana.IMGUI
             ImGui.Render();
 
             RenderDrawData(ImGui.GetDrawData(), Game.Window.Width, Game.Window.Height);
+            
+            ImGui.UpdatePlatformWindows();
+            ImGui.RenderPlatformWindowsDefault();
         }
 
         private void UpdateInput()
@@ -298,6 +318,9 @@ namespace Mana.IMGUI
             
             _vertexBuffer.VertexTypeInfo.Apply(_shaderProgram);
 
+            int drawCalls = 0;
+            int primitiveCount = 0;
+            
             for (int n = 0; n < drawData.CmdListsCount; n++)
             {
                 ImDrawListPtr cmdList = drawData.CmdListsRange[n];
@@ -321,6 +344,7 @@ namespace Mana.IMGUI
                     int baseVertex = vtxOffset;
                     int minVertexIndex = 0;
                     int numVertices = cmdList.VtxBuffer.Size;
+                    int numIndices = cmdList.IdxBuffer.Size;
                     int startIndex = idxOffset;
                     
                     GL.DrawRangeElementsBaseVertex(PrimitiveType.Triangles,
@@ -333,8 +357,8 @@ namespace Mana.IMGUI
                     
                     unchecked
                     {
-                        //GraphicsMetrics._drawCalls++;
-                        //GraphicsMetrics._primitiveCount += numVertices;
+                        drawCalls++;
+                        primitiveCount += numIndices;
                     }
 
                     idxOffset += (int)drawCmd.ElemCount;
@@ -342,6 +366,9 @@ namespace Mana.IMGUI
 
                 vtxOffset += cmdList.VtxBuffer.Size;
             }
+            
+            _drawCalls = drawCalls;
+            _primitiveCount = primitiveCount;
         }
 
         private void UpdateShader(Texture2D texture)

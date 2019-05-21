@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Numerics;
 using ImGuiNET;
 
@@ -5,6 +6,8 @@ namespace Mana.IMGUI
 {
     public static class ImGuiHelper
     {
+        internal static ImGuiRenderer _imguiRenderer; 
+        
         public static bool ColorPicker(string label, ref Color color)
         {
             Vector4 cast = color.ToVector4();
@@ -36,6 +39,29 @@ namespace Mana.IMGUI
             uint dockspaceID = ImGui.GetID("default-dockspace");
             ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags.PassthruCentralNode;
             ImGui.DockSpace(dockspaceID, Vector2.Zero, dockspaceFlags);
+        }
+
+        public static void MetricsWindow()
+        {
+            if (ImGui.Begin("Metrics"))
+            {
+                ImGui.Text($"FPS:          {Metrics.FramesPerSecond.ToString()} fps");
+                ImGui.Text($"Frame Time:   {Metrics.MillisecondsPerFrame.ToString(CultureInfo.InvariantCulture)} ms");
+                ImGui.Text($"Memory:       {Metrics.TotalMegabytes.ToString(CultureInfo.InvariantCulture)} MB");
+
+                ImGui.Separator();
+
+                ImGui.Text($"Clears:       {Metrics.ClearCount.ToString(CultureInfo.InvariantCulture)}");
+                ImGui.Text($"Draw Calls:   {Metrics.DrawCalls.ToString(CultureInfo.InvariantCulture)}");
+                ImGui.Text($"Triangles:    {(Metrics.PrimitiveCount / 3).ToString()}");
+                
+                ImGui.Separator();
+                
+                ImGui.Text($"IMGUI Draw Calls: {_imguiRenderer.DrawCalls.ToString()}");
+                ImGui.Text($"IMGUI Triangles:  {(_imguiRenderer.PrimitiveCount / 3).ToString()}");
+            }
+
+            ImGui.End();
         }
     }
 }

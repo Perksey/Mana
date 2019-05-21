@@ -9,8 +9,6 @@ namespace Mana
 {
     public abstract class Game : IDisposable
     {
-        private bool _disposed = false;
-        
         private float _fpsAccumulator = 0;
         private int _fpsFrameCounter = 0;
 

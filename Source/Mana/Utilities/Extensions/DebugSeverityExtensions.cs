@@ -13,6 +13,7 @@ namespace Mana.Utilities.Extensions
                 DebugSeverity.DebugSeverityMedium => "Medium",
                 DebugSeverity.DebugSeverityLow => "Low",
                 DebugSeverity.DebugSeverityNotification => "Notification",
+                _ => "???",
             };
         }
     }

@@ -70,16 +70,19 @@ namespace Mana.Graphics
             _began = false;
         }
 
-        public void DrawRawQuad(Texture2D texture,
-                                VertexPosition2DTextureColor bl,
-                                VertexPosition2DTextureColor br,
-                                VertexPosition2DTextureColor tr,
-                                VertexPosition2DTextureColor tl)
+        public void DrawQuad(Texture2D texture,
+                             VertexPosition2DTextureColor bl,
+                             VertexPosition2DTextureColor br,
+                             VertexPosition2DTextureColor tr,
+                             VertexPosition2DTextureColor tl)
         {
             if (!_began)
                 throw new InvalidOperationException("Begin() must be called before SpriteBatch may be used for drawing.");
 
-            FlushIfNeeded(null);
+            if (texture == null)
+                throw new ArgumentNullException(nameof(texture));
+            
+            FlushIfNeeded(texture);
                 
             _storedItems++;
             EnsureBufferLargeEnough();
@@ -212,10 +215,7 @@ namespace Mana.Graphics
                 fixed (VertexPosition2DTextureColor* vertexPtr = &_vertexData[0])
                 fixed (ushort* indexPtr = &_indexData[0])
                 {
-                    //_vertexBuffer.DiscardData();
                     _vertexBuffer.SubData<VertexPosition2DTextureColor>((IntPtr)vertexPtr, 0, _storedItems * 4);
-                    
-                    //_indexBuffer.DiscardData();
                     _indexBuffer.SubData<ushort>((IntPtr)indexPtr, 0, _storedItems * 6);
                 }
             }

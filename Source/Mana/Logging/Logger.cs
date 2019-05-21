@@ -85,7 +85,7 @@ namespace Mana.Logging
                 Console.Write(" - ");
             }
 
-            string threadName = Thread.CurrentThread.Name ?? $"Thread:{Thread.CurrentThread.ManagedThreadId.ToString()}";
+            string threadName = $"{(Thread.CurrentThread.Name ?? "Thread")}:{Thread.CurrentThread.ManagedThreadId.ToString()}";
             ConsoleHelper.Write($"[{threadName}]", ConsoleColor.Gray);
             Console.Write(" - ");
             ConsoleHelper.Write(_name, ConsoleColor.White);
@@ -104,7 +104,7 @@ namespace Mana.Logging
                 Console.Write(" - ");    
             }
             
-            string threadName = Thread.CurrentThread.Name ?? $"Thread:{Thread.CurrentThread.ManagedThreadId.ToString()}";
+            string threadName = $"{(Thread.CurrentThread.Name ?? "Thread")}:{Thread.CurrentThread.ManagedThreadId.ToString()}";
             ConsoleHelper.Write($"[{threadName}]", ConsoleColor.Gray);
             Console.Write(" - ");
             ConsoleHelper.Write(_name, ConsoleColor.White);
@@ -123,7 +123,7 @@ namespace Mana.Logging
                 Console.Write(" - ");    
             }
             
-            string threadName = Thread.CurrentThread.Name ?? $"Thread:{Thread.CurrentThread.ManagedThreadId.ToString()}";
+            string threadName = $"{(Thread.CurrentThread.Name ?? "Thread")}:{Thread.CurrentThread.ManagedThreadId.ToString()}";
             ConsoleHelper.Write($"[{threadName}]", ConsoleColor.Gray);
             Console.Write(" - ");
             ConsoleHelper.Write(_name, ConsoleColor.White);

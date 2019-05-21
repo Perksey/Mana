@@ -117,7 +117,10 @@ namespace Mana.Graphics.Buffers
             }
         }
 
-        protected void AllocateEmpty(int sizeInBytes, BufferUsage bufferUsage, bool immutable = true)
+        protected void AllocateEmpty(int sizeInBytes,
+                                     BufferUsage bufferUsage,
+                                     bool immutable = true,
+                                     BufferStorageFlags extraStorageFlags = BufferStorageFlags.None)
         {
             SizeInBytes = sizeInBytes;    
             IsImmutable = immutable;
@@ -129,7 +132,7 @@ namespace Mana.Graphics.Buffers
                     GL.NamedBufferStorage(Handle,
                                           SizeInBytes,
                                           IntPtr.Zero,
-                                          bufferUsage.GetBufferStorageFlags());
+                                          bufferUsage.GetBufferStorageFlags() | extraStorageFlags);
                 }
                 else
                 {
@@ -148,7 +151,7 @@ namespace Mana.Graphics.Buffers
                     GL.BufferStorage(BufferTarget,
                                      SizeInBytes,
                                      IntPtr.Zero,
-                                     bufferUsage.GetBufferStorageFlags());
+                                     bufferUsage.GetBufferStorageFlags() | extraStorageFlags);
                 }
                 else
                 {

@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace Mana
 {
-    // Teo u legend
+    // Based on the article: 
     // https://blog.tchatzigiannakis.com/creating-a-ref-alternative-in-c-sharp/
 
     public interface IRef

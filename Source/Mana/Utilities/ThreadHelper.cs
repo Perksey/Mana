@@ -7,6 +7,9 @@ namespace Mana.Utilities
     {
         internal static int MainThreadID = -1;
 
+        /// <summary>
+        /// Gets a value that indicates whether the executing thread is the application's main thread.
+        /// </summary>
         public static bool IsMainThread
         {
             get

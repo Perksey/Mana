@@ -14,7 +14,7 @@ namespace Mana.Utilities
             
             Console.ForegroundColor = oldForegroundColor;
         }
-        
+
         public static void Write(string message, ConsoleColor foregroundColor, ConsoleColor backgroundColor)
         {
             ConsoleColor oldForegroundColor = Console.ForegroundColor;

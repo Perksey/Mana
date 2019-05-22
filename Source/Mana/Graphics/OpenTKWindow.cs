@@ -130,7 +130,7 @@ namespace Mana.Graphics
                 _openTKWindow = openTKWindow;
                 _game = game;
                 VSync = VSyncMode.Off;
-                WindowState = WindowState.Maximized;
+                //WindowState = WindowState.Maximized;gra
             }
 
             protected override void OnUpdateFrame(FrameEventArgs e)

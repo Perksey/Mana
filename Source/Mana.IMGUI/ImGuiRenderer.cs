@@ -23,6 +23,10 @@ namespace Mana.IMGUI
 {
     public class ImGuiRenderer : GameComponent
     {
+        public static ImGuiRenderer Instance => _instance;
+        
+        private static ImGuiRenderer _instance;
+        
         private ImGuiViewportManager _viewportManager;
         private List<int> _keys = new List<int>();
         
@@ -49,6 +53,7 @@ namespace Mana.IMGUI
         
         public ImGuiRenderer()
         {
+            _instance = this;
             ImGuiHelper._imguiRenderer = this;
             
             _viewportManager = new ImGuiViewportManager(this);

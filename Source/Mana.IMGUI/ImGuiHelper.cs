@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Numerics;
 using ImGuiNET;
@@ -62,6 +63,16 @@ namespace Mana.IMGUI
             }
 
             ImGui.End();
+        }
+
+        public static void Image(IntPtr texture, Vector2 size)
+        {
+            ImGui.Image(texture, size, new Vector2(0, 1), new Vector2(1, 0));
+        }
+        
+        public static void Image(IntPtr texture, float width, float height)
+        {
+            ImGui.Image(texture, new Vector2(width, height), new Vector2(0, 1), new Vector2(1, 0));
         }
     }
 }

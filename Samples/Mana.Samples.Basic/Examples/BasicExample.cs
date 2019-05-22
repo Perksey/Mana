@@ -1,4 +1,6 @@
+using System;
 using System.Numerics;
+using ImGuiNET;
 using Mana.Graphics;
 using Mana.Graphics.Buffers;
 using Mana.Graphics.Shaders;
@@ -13,6 +15,8 @@ namespace Mana.Samples.Basic.Examples
         private ShaderProgram _spriteShader;
 
         private FrameBuffer _frameBuffer;
+
+        private IntPtr _frameBufferHandle;
         
         public BasicExample(SampleGame game) : base(game)
         {
@@ -28,6 +32,8 @@ namespace Mana.Samples.Basic.Examples
             {
                 Shader = _spriteShader,
             };
+
+            _frameBufferHandle = ImGuiRenderer.Instance.BindTexture(_frameBuffer);
         }
 
         public override void Dispose()
@@ -37,6 +43,8 @@ namespace Mana.Samples.Basic.Examples
 
             _texture.Dispose();
             _spriteShader.Dispose();
+
+            ImGuiRenderer.Instance.UnbindTexture(_frameBufferHandle);
         }
 
         public override void Update(float time, float deltaTime)
@@ -75,6 +83,12 @@ namespace Mana.Samples.Basic.Examples
             _spriteBatch.End();
             
             ImGuiHelper.MetricsWindow();
+
+            ImGui.Begin("Viewport");
+            
+            ImGuiHelper.Image(_frameBufferHandle, 1280 / 3f, 720 / 3f);
+            
+            ImGui.End();
         }
     }
 }

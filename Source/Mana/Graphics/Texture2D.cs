@@ -195,6 +195,8 @@ namespace Mana.Graphics
             texture.FilterMode = TextureFilterMode.Nearest;
             texture.WrapMode = TextureWrapMode.Repeat;
 
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);            
+            
             return texture;
         }
         
@@ -287,6 +289,8 @@ namespace Mana.Graphics
             
             texture.FilterMode = TextureFilterMode.Nearest;
             texture.WrapMode = TextureWrapMode.Repeat;
+            
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);         
 
             return texture;
         }

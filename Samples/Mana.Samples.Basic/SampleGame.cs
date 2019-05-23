@@ -22,7 +22,8 @@ namespace Mana.Samples.Basic
             
             _exampleFactories.Add("Basic Example", () => new BasicExample(this));
 
-            SwitchToExample(new BasicExample(this));
+            //SwitchToExample(new BasicExample(this));
+            SwitchToExample(new ModelExample(this));
         }
 
         protected override void Update(float time, float deltaTime)

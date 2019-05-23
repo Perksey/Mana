@@ -23,6 +23,7 @@ namespace Mana
         private static bool[] _mouseButtonsDown;
         private static bool[] _lastMouseButtonsDown;
         private static int _lastMouseWheel;
+        private static Point _lastMousePosition;
         
 
         public static event Action<char> KeyTyped;
@@ -33,8 +34,9 @@ namespace Mana
         public static event Action<MouseButton> MouseButtonReleased;
 
         public static Point MousePosition { get; private set; } = Point.Empty;
+        public static Point MouseDelta { get; private set; } = Point.Empty;
+        
         public static int MouseWheel { get; private set; } = 0;
-
         public static int MouseWheelDelta { get; private set; } = 0;
         
         #region Keyboard
@@ -240,14 +242,12 @@ namespace Mana
 
         internal static void Update()
         {
-            // for (int i = 0; i < _keysDown.Length; i++)
-            // {
-            //     _lastKeysDown[i] = _keysDown[i];
-            // }
-
             Buffer.BlockCopy(_keysDown, 0, _lastKeysDown, 0, _keysDown.Length);
             Buffer.BlockCopy(_mouseButtonsDown, 0, _lastMouseButtonsDown, 0, _mouseButtonsDown.Length);
 
+            MouseDelta = new Point(MousePosition.X - _lastMousePosition.X, MousePosition.Y - _lastMousePosition.Y);
+            _lastMousePosition = MousePosition;
+            
             MouseWheelDelta = MouseWheel - _lastMouseWheel;
             _lastMouseWheel = MouseWheel;
         }

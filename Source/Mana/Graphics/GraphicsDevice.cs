@@ -37,8 +37,8 @@ namespace Mana.Graphics
             DirectStateAccessSupported = Extensions.ARB_DirectStateAccess || IsVersionAtLeast(4, 5);
             ImmutableStorageSupported = Extensions.ARB_BufferStorage || IsVersionAtLeast(4, 4);
 
-            DirectStateAccessSupported = false;
-            ImmutableStorageSupported = false;
+            // DirectStateAccessSupported = false;
+            // ImmutableStorageSupported = false;
             
             Resources = new GraphicsResourceContainer();
             Bindings = new BindingPoints();

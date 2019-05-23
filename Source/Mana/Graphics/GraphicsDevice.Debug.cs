@@ -19,9 +19,14 @@ namespace Mana.Graphics
                                    IntPtr userParam)
         {
             string msg = Marshal.PtrToStringAnsi(message, length);
-            var color = type == DebugType.DebugTypeError ? ConsoleColor.Red : ConsoleColor.Gray;
+
+            var color = type == DebugType.DebugTypeError
+                            ? ConsoleColor.Red
+                            : type == DebugType.DebugTypeOther
+                                ? ConsoleColor.DarkGray
+                                : ConsoleColor.Gray;
             
-            _glDebugLogger.WriteLine($"{severity.GetName()} {type.GetName()} {msg}", color);
+            _glDebugLogger.WriteLine($"{severity.GetName()} {type.GetName()} | {msg}", color);
             
             if (type == DebugType.DebugTypeError && severity == DebugSeverity.DebugSeverityHigh)
             {

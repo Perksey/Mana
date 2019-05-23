@@ -1092,6 +1092,17 @@ namespace Mana
             b = B;
         }
 
+        public unsafe uint ToUint()
+        {
+            uint a = 0;
+            var pointer = (byte*)&a;
+            pointer[0] = R;
+            pointer[1] = G;
+            pointer[2] = B;
+            pointer[3] = A;
+            return a;
+        }
+
         private static byte ClampToByte(float value)
         {
             return (byte)MathHelper.Clamp(value, byte.MinValue, byte.MaxValue);

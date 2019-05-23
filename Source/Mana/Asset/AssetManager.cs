@@ -5,6 +5,7 @@ using System.IO;
 using Mana.Asset.Async;
 using Mana.Asset.Loaders;
 using Mana.Graphics;
+using Mana.Graphics.Geometry;
 using Mana.Graphics.Shaders;
 using Mana.Logging;
 using Mana.Utilities;
@@ -18,13 +19,14 @@ namespace Mana.Asset
     public class AssetManager : IGraphicsResource
     {
         private static Logger _log = Logger.Create();
-        
+
         private static Dictionary<Type, IAssetLoader> _assetLoaders = new Dictionary<Type, IAssetLoader>
         {
             [typeof(Texture2D)] = new Texture2DLoader(),
             [typeof(VertexShader)] = new VertexShaderLoader(),
             [typeof(FragmentShader)] = new FragmentShaderLoader(),
             [typeof(ShaderProgram)] = new ShaderProgramLoader(),
+            [typeof(Model)] = new ModelLoader(),
         };
 
         private object _lock = new object();

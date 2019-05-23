@@ -56,6 +56,9 @@ namespace Mana.Samples.Basic.Examples
         }
 
         private bool _clear = true;
+        private bool _showToast = true;
+        private Vector2 _a;
+        private Vector2 _b;
         
         public override void Render(float time, float deltaTime)
         {
@@ -76,7 +79,7 @@ namespace Mana.Samples.Basic.Examples
             
             GraphicsDevice.BindFrameBuffer(null);
 
-            GraphicsDevice.Clear(Color.Black);
+            GraphicsDevice.Clear(Color.Gray);
 
             _spriteBatch.Begin();
             _spriteBatch.Draw(_frameBuffer, new Rectangle(50, 50, 1280 / 3, 720 / 3));
@@ -84,9 +87,7 @@ namespace Mana.Samples.Basic.Examples
             
             ImGuiHelper.MetricsWindow();
 
-            ImGui.Begin("Viewport");
-            
-            ImGuiHelper.Image(_frameBufferHandle, 1280 / 3f, 720 / 3f);
+            ImGui.Begin("Interface");
             
             ImGui.End();
         }

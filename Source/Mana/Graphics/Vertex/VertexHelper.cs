@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Numerics;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics.Vertex
 {
-    internal class VertexHelper
+    internal static class VertexHelper
     {
-        internal static Dictionary<Type, VertexAttributeInfo> vertexAttributeInfoByType;
+        internal static readonly Dictionary<Type, VertexAttributeInfo> vertexAttributeInfoByType;
 
         static VertexHelper()
         {

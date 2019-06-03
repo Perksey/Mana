@@ -1,22 +1,16 @@
 using System;
-using System.Globalization;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using ImGuiNET;
+using Mana.Graphics.Buffers;
+using Mana.Graphics.Textures;
 
 namespace Mana.IMGUI
 {
-    public static class ImGuiHelper
+    public class ImGuiHelper
     {
-        internal static ImGuiRenderer _imguiRenderer; 
+        internal static ImGuiSystem System;
         
-        public static bool ColorPicker(string label, ref Color color)
-        {
-            Vector4 cast = color.ToVector4();
-            bool ret = ImGui.ColorEdit4(label, ref cast);
-            color = Color.FromVector4(cast);
-            return ret;
-        }
-
         public static void BeginGlobalDocking()
         {
             ImGuiViewportPtr viewport = ImGui.GetMainViewport();
@@ -41,30 +35,7 @@ namespace Mana.IMGUI
             ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags.PassthruCentralNode;
             ImGui.DockSpace(dockspaceID, Vector2.Zero, dockspaceFlags);
         }
-
-        public static void MetricsWindow()
-        {
-            if (ImGui.Begin("Metrics"))
-            {
-                ImGui.Text($"FPS:          {Metrics.FramesPerSecond.ToString()} fps");
-                ImGui.Text($"Frame Time:   {Metrics.MillisecondsPerFrame.ToString(CultureInfo.InvariantCulture)} ms");
-                ImGui.Text($"Memory:       {Metrics.TotalMegabytes.ToString(CultureInfo.InvariantCulture)} MB");
-
-                ImGui.Separator();
-
-                ImGui.Text($"Clears:       {Metrics.ClearCount.ToString(CultureInfo.InvariantCulture)}");
-                ImGui.Text($"Draw Calls:   {Metrics.DrawCalls.ToString(CultureInfo.InvariantCulture)}");
-                ImGui.Text($"Triangles:    {(Metrics.PrimitiveCount / 3).ToString()}");
-                
-                ImGui.Separator();
-                
-                ImGui.Text($"IMGUI Draw Calls: {_imguiRenderer.DrawCalls.ToString()}");
-                ImGui.Text($"IMGUI Triangles:  {(_imguiRenderer.PrimitiveCount / 3).ToString()}");
-            }
-
-            ImGui.End();
-        }
-
+        
         public static void Image(IntPtr texture, Vector2 size)
         {
             ImGui.Image(texture, size, new Vector2(0, 1), new Vector2(1, 0));
@@ -74,5 +45,60 @@ namespace Mana.IMGUI
         {
             ImGui.Image(texture, new Vector2(width, height), new Vector2(0, 1), new Vector2(1, 0));
         }
+
+        public static void Button(string text, int width, int height, Color color)
+        {
+            ImGui.PushStyleColor(ImGuiCol.Button, color.ToUint());
+
+            ImGui.Button(text, new Vector2(width, height));
+
+            ImGui.PopStyleColor();
+        }
+
+        public static IntPtr BindTexture(Texture2D texture)
+        {
+            return System.BindTexture(texture);
+        }
+
+        public static void UnbindTexture(IntPtr handle)
+        {
+            System.UnbindTexture(handle);
+        }
+
+        public static Vector2 GetCursorScreenPos()
+        {
+            igGetCursorScreenPos(out var output);
+            return output;
+        }
+        
+        public static Vector2 GetContentRegionAvail()
+        {
+            igGetContentRegionAvail(out var output);
+            return output;
+        }
+        
+        public static Vector2 GetWindowPos()
+        {
+            igGetWindowPos(out var output);
+            return output;
+        }
+        
+        public static Vector2 GetWindowSize()
+        {
+            igGetWindowSize(out var output);
+            return output;
+        }
+        
+        [DllImport("cimgui", EntryPoint = "igGetCursorScreenPos_nonUDT", CallingConvention = CallingConvention.Cdecl)]
+        static extern void igGetCursorScreenPos(out Vector2 output);
+        
+        [DllImport("cimgui", EntryPoint = "igGetContentRegionAvail_nonUDT", CallingConvention = CallingConvention.Cdecl)]
+        static extern void igGetContentRegionAvail(out Vector2 output);
+        
+        [DllImport("cimgui", EntryPoint = "igGetWindowPos_nonUDT", CallingConvention = CallingConvention.Cdecl)]
+        static extern void igGetWindowPos(out Vector2 output);
+
+        [DllImport("cimgui", EntryPoint = "igGetWindowSize_nonUDT", CallingConvention = CallingConvention.Cdecl)]
+        static extern void igGetWindowSize(out Vector2 output);
     }
 }

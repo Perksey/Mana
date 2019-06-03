@@ -1,328 +1,283 @@
 using System;
-using Mana.Logging;
 using Mana.Utilities;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics.Buffers
 {
-    public abstract class Buffer : IGraphicsResource
+    /// <summary>
+    /// Represents a buffer graphics resource.
+    /// </summary>
+    public abstract class Buffer : GraphicsResource
     {
-        private static Logger _log = Logger.Create();
-
-        private string _label;
-
-        public string Label
-        {
-            get => _label;
-            set
-            {
-                if (GraphicsDevice.IsVersionAtLeast(4, 3) || GraphicsDevice.Extensions.KHR_Debug)
-                {
-                    GL.ObjectLabel(ObjectLabelIdentifier.Buffer, Handle, value.Length, value);    
-                }
-
-                _label = value;
-            }
-        }
-        
-        public readonly GLHandle Handle;
-        internal readonly BufferTarget BufferTarget;
-        
         internal int SizeInBytes = -1;
-        internal bool Disposed = false;
         
-        internal int Count = -1;
-        
-        internal bool IsImmutable = false;
-
-        protected Buffer(GraphicsDevice graphicsDevice, BufferTarget bufferTarget)
+        protected Buffer(ResourceManager resourceManager)
+            : base(resourceManager)
         {
-            GraphicsDevice = graphicsDevice;
-            BufferTarget = bufferTarget;
+            Handle = GLHelper.CreateBuffer();
             
-            GraphicsDevice.Resources.Add(this);
-            
-            if (graphicsDevice.DirectStateAccessSupported)
+            resourceManager.OnResourceCreated(this);
+        }
+
+        /// <summary>
+        /// Gets the count of values currently contained within the buffer.
+        /// </summary>
+        public int Count { get; private set; } = -1;
+        
+        /// <summary>
+        /// Gets a value that indicates whether the buffer set as immutable.
+        /// </summary>
+        public bool IsImmutable { get; private set; }
+        
+        internal abstract BufferTarget BufferTarget { get; }
+        
+        protected override ObjectLabelIdentifier? LabelType => ObjectLabelIdentifier.Buffer;
+
+        /// <summary>
+        /// Sets the buffer's internal data using the given <see cref="RenderContext"/>.
+        /// </summary>
+        /// <param name="renderContext">The <see cref="RenderContext"/> to perform this operation with.</param>
+        /// <param name="data">The data to be sent to the buffer.</param>
+        /// <param name="bufferUsageHint">The buffer usage hint.</param>
+        /// <typeparam name="T">The type of the buffer data.</typeparam>
+        public unsafe void SetData<T>(RenderContext renderContext, T[] data, BufferUsageHint bufferUsageHint)
+            where T : unmanaged
+        {
+            if (IsImmutable)
+                throw new InvalidOperationException("This operation cannot be performed " +
+                                                    "on an immutable Buffer object.");
+
+            SizeInBytes = data.Length * sizeof(T);
+            Count = data.Length;
+
+            if (GLInfo.HasDirectStateAccess)
             {
-                GL.CreateBuffers(1, out int buffer);
-                Handle = (GLHandle)buffer;
+                GL.NamedBufferData(Handle, new IntPtr(SizeInBytes), data, bufferUsageHint);
             }
             else
             {
-                Handle = (GLHandle)GL.GenBuffer();
+                Bind(renderContext);
+                GL.BufferData(BufferTarget, new IntPtr(SizeInBytes), data, bufferUsageHint);
             }
-
-            Assert.That(Handle != GLHandle.Zero);
         }
 
-#if DEBUG
-        ~Buffer()
-        {
-            _log.Error("Buffer leaked: " + GetType().Name);
-        }
-#endif
-
-        public GraphicsDevice GraphicsDevice { get; }
-
-        #region Create methods
-
-        protected void Allocate<T>(T[] data,
-                                   BufferUsage bufferUsage,
-                                   bool immutable = true)
+        /// <summary>
+        /// Sets the buffer's internal data using the given <see cref="RenderContext"/>.
+        /// </summary>
+        /// <param name="renderContext">The <see cref="RenderContext"/> to perform this operation with.</param>
+        /// <param name="data">An <see cref="IntPtr"/> to the start of the buffer data in memory.</param>
+        /// <param name="length">The length, in elements, to copy from the data pointer.</param>
+        /// <param name="bufferUsageHint">The buffer usage hint.</param>
+        /// <typeparam name="T">The type of the buffer data.</typeparam>
+        public unsafe void SetData<T>(RenderContext renderContext, IntPtr data, int length, BufferUsageHint bufferUsageHint)
             where T : unmanaged
         {
-            unsafe
-            {
-                SizeInBytes = data.Length * sizeof(T);    
-            }
+            if (IsImmutable)
+                throw new InvalidOperationException("This operation cannot be performed " +
+                                                    "on an immutable Buffer object.");
+            
+            SizeInBytes = length * sizeof(T);
+            Count = length;
 
+            if (GLInfo.HasDirectStateAccess)
+            {
+                GL.NamedBufferData(Handle, new IntPtr(SizeInBytes), data, bufferUsageHint);
+            }
+            else
+            {
+                Bind(renderContext);
+                GL.BufferData(BufferTarget, new IntPtr(SizeInBytes), data, bufferUsageHint);
+            }
+        }
+
+        /// <summary>
+        /// Sets a subset of the buffer's internal data store using the given <see cref="RenderContext"/>.
+        /// </summary>
+        /// <param name="renderContext">The <see cref="RenderContext"/> to perform this operation with.</param>
+        /// <param name="data">The data to be sent to the buffer.</param>
+        /// <param name="offset">The offset, in elements, from the start of the buffer data store.</param>
+        /// <param name="length">The length, in elements, to copy from the data array parameter.</param>
+        /// <typeparam name="T">The type of the buffer data.</typeparam>
+        public unsafe void SubData<T>(RenderContext renderContext, T[] data, int offset, int length)
+            where T : unmanaged
+        {
+            if ((offset + length) * sizeof(T) > SizeInBytes)
+                throw new IndexOutOfRangeException();
+
+            if (GLInfo.HasDirectStateAccess)
+            {
+                GL.NamedBufferSubData(Handle, new IntPtr(offset * sizeof(T)), new IntPtr(length * sizeof(T)), data);
+            }
+            else
+            {
+                Bind(renderContext);
+                GL.BufferSubData(BufferTarget, new IntPtr(offset * sizeof(T)), new IntPtr(length * sizeof(T)), data);
+            }
+        }
+        
+        /// <summary>
+        /// Sets a subset of the buffer's internal data store using the given <see cref="RenderContext"/>.
+        /// </summary>
+        /// <param name="renderContext">The <see cref="RenderContext"/> to perform this operation with.</param>
+        /// <param name="data">The data to be sent to the buffer.</param>
+        /// <param name="offset">The offset, in elements, from the start of the buffer data store.</param>
+        /// <typeparam name="T">The type of the buffer data.</typeparam>
+        public unsafe void SubData<T>(RenderContext renderContext, T[] data, int offset)
+            where T : unmanaged
+        {
+            if ((offset + data.Length) * sizeof(T) > SizeInBytes)
+                throw new IndexOutOfRangeException();
+
+            if (GLInfo.HasDirectStateAccess)
+            {
+                GL.NamedBufferSubData(Handle, new IntPtr(offset * sizeof(T)), new IntPtr(data.Length * sizeof(T)), data);
+            }
+            else
+            {
+                Bind(renderContext);
+                GL.BufferSubData(BufferTarget, new IntPtr(offset * sizeof(T)), new IntPtr(data.Length * sizeof(T)), data);
+            }
+        }
+        
+        /// <summary>
+        /// Sets a subset of the buffer's internal data store using the given <see cref="RenderContext"/>.
+        /// </summary>
+        /// <param name="renderContext">The <see cref="RenderContext"/> to perform this operation with.</param>
+        /// <param name="data">An <see cref="IntPtr"/> to the start of the buffer data in memory.</param>
+        /// <param name="offset">The offset, in elements, from the start of the buffer data store.</param>
+        /// <param name="length">The length, in elements, to copy from the data pointer.</param>
+        /// <typeparam name="T"></typeparam>
+        /// <exception cref="IndexOutOfRangeException"></exception>
+        public unsafe void SubData<T>(RenderContext renderContext, IntPtr data, int offset, int length)
+            where T : unmanaged
+        {
+            if ((offset + length) * sizeof(T) > SizeInBytes)
+                throw new IndexOutOfRangeException();
+
+            if (GLInfo.HasDirectStateAccess)
+            {
+                GL.NamedBufferSubData(Handle, new IntPtr(offset * sizeof(T)), new IntPtr(length * sizeof(T)), data);
+            }
+            else
+            {
+                Bind(renderContext);
+                GL.BufferSubData(BufferTarget, new IntPtr(offset * sizeof(T)), new IntPtr(length * sizeof(T)), data);
+            }
+        }
+        
+        protected unsafe void Allocate<T>(RenderContext renderContext,
+                                          T[] data,
+                                          BufferUsageHint bufferUsageHint,
+                                          bool immutable = true,
+                                          BufferStorageFlags extraFlags = BufferStorageFlags.None)
+            where T : unmanaged
+        {
+            if (renderContext == null)
+                throw new ArgumentNullException(nameof(renderContext));
+            
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+            
+            SizeInBytes = data.Length * sizeof(T);
             Count = data.Length;
             IsImmutable = immutable;
             
-            if (GraphicsDevice.DirectStateAccessSupported)
+            InitializeBuffer(renderContext, data, bufferUsageHint, extraFlags);
+        }
+
+        protected unsafe void Allocate<T>(RenderContext renderContext,
+                                          int sizeInBytes,
+                                          BufferUsageHint bufferUsageHint,
+                                          bool immutable = true,
+                                          BufferStorageFlags extraFlags = BufferStorageFlags.None)
+            where T : unmanaged
+        {
+            if (renderContext == null)
+                throw new ArgumentNullException(nameof(renderContext));
+
+            SizeInBytes = sizeInBytes;
+            IsImmutable = immutable;
+            
+            float capacity = sizeInBytes / (float)sizeof(T);
+            Assert.That(Math.Abs(capacity - (int)capacity) < float.Epsilon);
+            Count = (int)capacity;
+
+            InitializeBuffer<T>(renderContext, null, bufferUsageHint, extraFlags);
+        }
+        
+        protected abstract void Bind(RenderContext renderContext);
+        protected abstract void Unbind(RenderContext renderContext);
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+
+            if (BoundContext != null)
             {
-                if (IsImmutable && GraphicsDevice.ImmutableStorageSupported)
+                Unbind(BoundContext);
+                BoundContext = null;
+            }
+
+            GL.DeleteBuffer(Handle);
+        }
+
+        private void InitializeBuffer<T>(RenderContext renderContext,
+                                         T[] data,
+                                         BufferUsageHint bufferUsageHint,
+                                         BufferStorageFlags storageFlags)
+            where T : unmanaged
+        {
+            if (GLInfo.HasDirectStateAccess)
+            {
+                if (IsImmutable && GLInfo.HasBufferStorage)
                 {
                     GL.NamedBufferStorage(Handle,
                                           SizeInBytes,
                                           data,
-                                          bufferUsage.GetBufferStorageFlags());
+                                          // ReSharper disable once BitwiseOperatorOnEnumWithoutFlags
+                                          BufferUsageToStorageFlags(bufferUsageHint) | storageFlags);    
                 }
                 else
                 {
                     GL.NamedBufferData(Handle,
                                        SizeInBytes,
                                        data,
-                                       (BufferUsageHint)bufferUsage);
+                                       bufferUsageHint);
                 }
             }
             else
             {
-                Bind();
+                Bind(renderContext);
 
-                if (IsImmutable && GraphicsDevice.ImmutableStorageSupported)
+                if (IsImmutable && GLInfo.HasBufferStorage)
                 {
                     GL.BufferStorage(BufferTarget,
                                      SizeInBytes,
                                      data,
-                                     bufferUsage.GetBufferStorageFlags());
+                                     // ReSharper disable once BitwiseOperatorOnEnumWithoutFlags
+                                     BufferUsageToStorageFlags(bufferUsageHint) | storageFlags);
                 }
                 else
                 {
                     GL.BufferData(BufferTarget,
                                   SizeInBytes,
                                   data,
-                                  (BufferUsageHint)bufferUsage);
+                                  bufferUsageHint);
                 }
-            }
-        }
-
-        protected void AllocateEmpty(int sizeInBytes,
-                                     BufferUsage bufferUsage,
-                                     bool immutable = true,
-                                     BufferStorageFlags extraStorageFlags = BufferStorageFlags.None)
-        {
-            SizeInBytes = sizeInBytes;    
-            IsImmutable = immutable;
-            
-            if (GraphicsDevice.DirectStateAccessSupported)
-            {
-                if (IsImmutable && GraphicsDevice.ImmutableStorageSupported)
-                {
-                    GL.NamedBufferStorage(Handle,
-                                          SizeInBytes,
-                                          IntPtr.Zero,
-                                          bufferUsage.GetBufferStorageFlags() | extraStorageFlags);
-                }
-                else
-                {
-                    GL.NamedBufferData(Handle,
-                                       SizeInBytes,
-                                       IntPtr.Zero,
-                                       (BufferUsageHint)bufferUsage);
-                }
-            }
-            else
-            {
-                Bind();
-
-                if (IsImmutable && GraphicsDevice.ImmutableStorageSupported)
-                {
-                    GL.BufferStorage(BufferTarget,
-                                     SizeInBytes,
-                                     IntPtr.Zero,
-                                     bufferUsage.GetBufferStorageFlags() | extraStorageFlags);
-                }
-                else
-                {
-                    GL.BufferData(BufferTarget,
-                                  SizeInBytes,
-                                  IntPtr.Zero,
-                                  (BufferUsageHint)bufferUsage);
-                }
-            }
-        }
-
-        protected void Allocate<T>(int sizeInBytes,
-                                   BufferUsage bufferUsage,
-                                   bool immutable = true)
-            where T : unmanaged
-        {
-            unsafe
-            {
-                SizeInBytes = sizeInBytes;
-                
-                if (sizeInBytes % sizeof(T) != 0)
-                    throw new ArgumentException("Invalid value for parameter: SizeInBytes. Must be a multiple of sizeof(T)");
-                
-                Count = sizeInBytes / sizeof(T);
-            }
-            
-            IsImmutable = immutable;
-            
-            if (GraphicsDevice.DirectStateAccessSupported)
-            {
-                if (IsImmutable && GraphicsDevice.ImmutableStorageSupported)
-                {
-                    GL.NamedBufferStorage(Handle,
-                                          SizeInBytes,
-                                          new byte[SizeInBytes],
-                                          bufferUsage.GetBufferStorageFlags());
-                }
-                else
-                {
-                    GL.NamedBufferData(Handle,
-                                       SizeInBytes,
-                                       new byte[SizeInBytes],
-                                       (BufferUsageHint)bufferUsage);
-                }
-            }
-            else
-            {
-                Bind();
-
-                if (IsImmutable && GraphicsDevice.ImmutableStorageSupported)
-                {
-                    GL.BufferStorage(BufferTarget,
-                                     SizeInBytes,
-                                     new byte[SizeInBytes],
-                                     bufferUsage.GetBufferStorageFlags());
-                }
-                else
-                {
-                    GL.BufferData(BufferTarget,
-                                  SizeInBytes,
-                                  new byte[SizeInBytes],
-                                  (BufferUsageHint)bufferUsage);
-                }
-            }
-        }
-
-        
-        #endregion
-        
-        #region SetData methods
-
-        public unsafe void SetData<T>(T[] data, BufferUsage bufferUsage)
-            where T : unmanaged
-        {
-            if (IsImmutable)
-                throw new InvalidOperationException("Cannot call SetData() for a Buffer marked as Immutable.");
-
-            SizeInBytes = data.Length * sizeof(T);
-            Count = data.Length;
-            
-            if (GraphicsDevice.DirectStateAccessSupported)
-            {
-                GL.NamedBufferData(Handle, new IntPtr(SizeInBytes), data, (BufferUsageHint)bufferUsage);
-            }
-            else
-            {
-                Bind();
-                GL.BufferData(BufferTarget, new IntPtr(SizeInBytes), data, (BufferUsageHint)bufferUsage);
             }
         }
         
-        public unsafe void SetData<T>(IntPtr data, int count, BufferUsage bufferUsage)
-            where T : unmanaged
+        private BufferStorageFlags BufferUsageToStorageFlags(BufferUsageHint hint)
         {
-            if (IsImmutable)
-                throw new InvalidOperationException("Cannot call SetData() for a Buffer marked as Immutable.");
-
-            SizeInBytes = count * sizeof(T);
-            Count = count;
-            
-            if (GraphicsDevice.DirectStateAccessSupported)
+            switch (hint)
             {
-                GL.NamedBufferData(Handle, new IntPtr(SizeInBytes), data, (BufferUsageHint)bufferUsage);
-            }
-            else
-            {
-                Bind();
-                GL.BufferData(BufferTarget, new IntPtr(SizeInBytes), data, (BufferUsageHint)bufferUsage);
+                case BufferUsageHint.StaticCopy:
+                case BufferUsageHint.StaticRead:
+                case BufferUsageHint.StaticDraw:
+                    return BufferStorageFlags.None;
+                default:
+                    return BufferStorageFlags.DynamicStorageBit;
             }
         }
-        
-        #endregion
-        
-        #region SubData methods
-
-        public unsafe void SubData<T>(T[] data, int offset, int length)
-            where T : unmanaged
-        {
-            if ((offset + length) * sizeof(T) > SizeInBytes)
-                throw new ArgumentException("Data too large for the Buffer.");
-
-            if (GraphicsDevice.DirectStateAccessSupported)
-            {
-                GL.NamedBufferSubData(Handle, new IntPtr(offset * sizeof(T)), new IntPtr(length * sizeof(T)), data);
-            }
-            else
-            {
-                Bind();
-                GL.BufferSubData(BufferTarget, new IntPtr(offset * sizeof(T)), new IntPtr(length * sizeof(T)), data);
-            }
-        }
-
-        public unsafe void SubData<T>(IntPtr data, int offset, int length)
-            where T : unmanaged
-        {
-            if ((offset + length) * sizeof(T) > SizeInBytes)
-                throw new ArgumentException("Data too large for the Buffer.");
-
-            if (GraphicsDevice.DirectStateAccessSupported)
-            {
-                GL.NamedBufferSubData(Handle, new IntPtr(offset * sizeof(T)), new IntPtr(length * sizeof(T)), data);
-            }
-            else
-            {
-                Bind();
-                GL.BufferSubData(BufferTarget, new IntPtr(offset * sizeof(T)), new IntPtr(length * sizeof(T)), data);
-            }
-        }
-        
-        #endregion
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected void Dispose(bool disposing)
-        {
-            if (Disposed)
-                return;
-
-            GraphicsDevice.Resources.Remove(this);
-            Unbind();
-            
-            GL.DeleteBuffer(Handle);
-
-            Disposed = true;
-        }
-
-        protected abstract void Bind();
-        protected abstract void Unbind();
     }
 }

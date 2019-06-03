@@ -1,22 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net472</TargetFramework>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
 
-    <ItemGroup>
-      <PackageReference Include="OpenTK" Version="3.0.1" />
-    </ItemGroup>
+  <ItemGroup>
+    <Reference Include="ImGui.NET, Version=1.70.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\..\Libraries\ImGui.NET-docking\ImGui.NET.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Mana\Mana.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Mana\Mana.csproj" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <Reference Include="ImGui.NET, Version=1.70.0.0, Culture=neutral, PublicKeyToken=null">
-        <HintPath>..\..\Libraries\ImGui.NET-docking\ImGui.NET.dll</HintPath>
-      </Reference>
-    </ItemGroup>
+  <ItemGroup>
+    <None Remove="Assets\Fonts\fontawesome.ttf" />
+  </ItemGroup>
 
 </Project>

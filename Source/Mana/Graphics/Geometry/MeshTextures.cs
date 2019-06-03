@@ -1,4 +1,5 @@
-using Mana.Graphics.Shaders;
+using Mana.Graphics.Shader;
+using Mana.Graphics.Textures;
 
 namespace Mana.Graphics.Geometry
 {
@@ -8,7 +9,7 @@ namespace Mana.Graphics.Geometry
         public Texture2D Specular;
         public Texture2D MetallicRoughness;
 
-        public void Apply(GraphicsDevice graphicsDevice, ShaderProgram shaderProgram)
+        public void Apply(RenderContext renderContext, ShaderProgram shaderProgram)
         {
             int i = 0;
 
@@ -16,7 +17,7 @@ namespace Mana.Graphics.Geometry
             {
                 if (texture != null)
                 {
-                    graphicsDevice.BindTexture(i, Diffuse);
+                    renderContext.BindTexture(i, Diffuse);
                     shaderProgram.TrySetUniform(uniform, i++);
                 }
             }

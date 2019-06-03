@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Mana.Utilities;
+using OpenTK.Graphics;
 
 namespace Mana
 {
@@ -1106,6 +1107,11 @@ namespace Mana
         private static byte ClampToByte(float value)
         {
             return (byte)MathHelper.Clamp(value, byte.MinValue, byte.MaxValue);
+        }
+
+        public static implicit operator Color4(Color color)
+        {
+            return new Color4(color.R, color.G, color.B, color.A);
         }
     }
 }

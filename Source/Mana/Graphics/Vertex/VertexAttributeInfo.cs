@@ -5,9 +5,9 @@ namespace Mana.Graphics.Vertex
     internal struct VertexAttributeInfo
     {
         public readonly int Size;
-        public VertexAttribPointerType Type;
+        public readonly VertexAttribPointerType Type;
         public readonly int ComponentCount;
-        public bool Normalize;
+        public readonly bool Normalize;
 
         public VertexAttributeInfo(int size, VertexAttribPointerType type, int componentCount, bool normalize)
         {

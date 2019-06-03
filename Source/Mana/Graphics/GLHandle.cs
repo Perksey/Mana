@@ -16,6 +16,7 @@ namespace Mana.Graphics
         
         private readonly int _id;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public GLHandle(int id)
         {
             _id = id;
@@ -45,17 +46,20 @@ namespace Mana.Graphics
             return left._id != right._id;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(GLHandle other)
         {
             return _id == other._id;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             return obj is GLHandle other && Equals(other);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
         {
             return _id;

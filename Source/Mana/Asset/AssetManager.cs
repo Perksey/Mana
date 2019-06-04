@@ -11,7 +11,7 @@ using Mana.Utilities.Algorithm;
 namespace Mana.Asset
 {
     /// <summary>
-    /// Represents an AssetManager capable of loading and managing game assets
+    /// Represents an AssetManager capable of loading and managing game assets.
     /// </summary>
     public class AssetManager : IDisposable
     {
@@ -32,10 +32,17 @@ namespace Mana.Asset
                                                    ResourceManager.MainContext.WindowInfo);
         }
         
+        /// <summary>
+        /// The <see cref="ResourceManager"/> for the AssetManager. 
+        /// </summary>
         public ResourceManager ResourceManager { get; }
 
+        /// <summary>
+        /// The <see cref="RenderContext"/> that the AssetManager will use for asynchronous asset loading jobs. 
+        /// </summary>
         public RenderContext AsyncRenderContext { get; }
         
+        /// <inheritdoc/>
         public void Dispose()
         {
             _assetCache.ForEach(_unloadCacheFunc);
@@ -89,10 +96,14 @@ namespace Mana.Asset
             return asset;
         }
 
+        /// <summary>
+        /// Unloads an asset.
+        /// </summary>
+        /// <param name="asset">The asset to unload.</param>
         public void Unload(IAsset asset)
         {
             if (!_assetCache.Remove(asset.SourcePath))
-                throw new ArgumentException("Asset was not found in AssetMaanger. This will occur if the SourcePath" +
+                throw new ArgumentException("Asset was not found in AssetManager. This will occur if the SourcePath" +
                                             " is changed manually.");
 
             // TODO: This

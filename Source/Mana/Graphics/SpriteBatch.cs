@@ -11,6 +11,9 @@ using Buffer = System.Buffer;
 
 namespace Mana.Graphics
 {
+    /// <summary>
+    /// Used for efficient sprite rendering via batches.
+    /// </summary>
     public class SpriteBatch : GraphicsResource
     {
         private static Logger _log = Logger.Create();

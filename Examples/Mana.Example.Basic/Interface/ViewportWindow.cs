@@ -21,21 +21,6 @@ namespace Mana.Example.Basic.Interface
         
         private IntPtr _viewportHandle;
         
-        [DllImport("cimgui", EntryPoint = "igGetContentRegionAvail_nonUDT", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void igGetContentRegionAvail(out Vector2 output);
-        
-        [DllImport("cimgui", EntryPoint = "igGetContentRegionAvail", CallingConvention = CallingConvention.Cdecl)]
-        public static extern Vector2 igGetContentRegionAvail2();
-        
-        [DllImport("cimgui", EntryPoint = "igGetCursorScreenPos_nonUDT", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void igGetCursorScreenPos(out Vector2 pos);
-
-        public static Vector2 GetCursorScreenPos()
-        {
-            igGetCursorScreenPos(out var pos);
-            return pos;
-        }
-        
         public ViewportWindow(RenderContext renderContext, AssetManager assetManager)
         {
             RenderContext = renderContext;
@@ -83,7 +68,7 @@ namespace Mana.Example.Basic.Interface
 
             _spriteBatch.Begin();
 
-            Point mouse = (ManaWindow.MainWindow.Input.MousePosition.ToVector2() - GetCursorScreenPos()).ToPoint();
+            Point mouse = (ManaWindow.MainWindow.Input.MousePosition.ToVector2() - ImGuiHelper.GetCursorScreenPos()).ToPoint();
             
             _spriteBatch.Draw(_texture, new Rectangle(0, 0, 500, 500));
             _spriteBatch.Draw(_texture, new Rectangle(mouse.X, mouse.Y, 50, 50));

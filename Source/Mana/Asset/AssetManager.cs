@@ -7,6 +7,7 @@ using Mana.Graphics;
 using Mana.Graphics.Textures;
 using Mana.Utilities;
 using Mana.Utilities.Algorithm;
+using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Asset
 {

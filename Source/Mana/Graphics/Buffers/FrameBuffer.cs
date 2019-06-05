@@ -5,7 +5,7 @@ using OpenTK.Graphics.OpenGL4;
 namespace Mana.Graphics.Buffers
 {
     /// <summary>
-    /// Represents an abstraction over an OpenGL frame buffer object.
+    /// Represents an OpenGL frame buffer object.
     /// </summary>
     public class FrameBuffer : GraphicsResource
     {

@@ -88,6 +88,15 @@ namespace Mana.IMGUI
             igGetWindowSize(out var output);
             return output;
         }
+
+        public static Vector2 GetMousePos()
+        {
+            igGetMousePos(out var output);
+            return output;
+        }
+        
+        [DllImport("cimgui", EntryPoint = "igGetMousePos_nonUDT", CallingConvention = CallingConvention.Cdecl)]
+        static extern void igGetMousePos(out Vector2 output);
         
         [DllImport("cimgui", EntryPoint = "igGetCursorScreenPos_nonUDT", CallingConvention = CallingConvention.Cdecl)]
         static extern void igGetCursorScreenPos(out Vector2 output);

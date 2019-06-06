@@ -30,7 +30,6 @@ namespace Mana.Graphics.Geometry
 
             Textures.Apply(renderContext, shaderProgram);
             
-            // TODO: This.
             renderContext.Render(VertexBuffer, IndexBuffer, shaderProgram);
         }
 

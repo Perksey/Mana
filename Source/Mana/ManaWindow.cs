@@ -2,11 +2,9 @@ using System;
 using System.Drawing;
 using System.Threading;
 using Mana.Graphics;
-using Mana.Input;
 using Mana.Utilities;
 using OpenTK;
 using OpenTK.Graphics;
-using OpenTK.Input;
 
 namespace Mana
 {
@@ -39,7 +37,7 @@ namespace Mana
             
             VSync = VSyncMode.Off;
             
-            Input = new InputManager(this);
+            InputManager = new InputManager(this);
             
             Parent = parent;
             ResourceManager = ResourceManager.GetDefault(this);
@@ -53,6 +51,7 @@ namespace Mana
                 RenderContext = _mainContext = new RenderContext(ResourceManager, Context, WindowInfo);
                 ResourceManager.SetMainContext(_mainContext);
                 Thread.CurrentThread.Name = "Main Thread";
+                Input.SetInputManager(InputManager);
             }
             else
             {
@@ -62,7 +61,7 @@ namespace Mana
      
         public ManaWindow Parent { get; }
 
-        public InputManager Input { get; }
+        public InputManager InputManager { get; }
         
         public ResourceManager ResourceManager { get; }
         
@@ -86,13 +85,12 @@ namespace Mana
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
+            InputManager.Update();
 
             float deltaTime = (float)e.Time;
             _elapsedUpdateTime += deltaTime;
 
             _game?.UpdateBase(_elapsedUpdateTime, deltaTime);
-            
-            Input.Update();
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)

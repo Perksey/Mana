@@ -1,6 +1,9 @@
+using System.Numerics;
 using ImGuiNET;
 using Mana.IMGUI;
 using Mana.IMGUI.TextEditor;
+using Mana.Utilities.Extensions;
+using OpenTK.Input;
 
 namespace Mana.Example.Basic
 {
@@ -10,7 +13,7 @@ namespace Mana.Example.Basic
         
         protected override void Initialize()
         {
-            AddSystem(new ImGuiSystem());
+            AddSystem(new ImGuiSystem(true));
             
             _textEdit = new TextEditor();
         }
@@ -46,8 +49,19 @@ namespace Mana.Example.Basic
                 }
                 
                 ImGui.ShowMetricsWindow();
+
+                if (ImGui.Begin("Ay"))
+                {
+                    ImGui.Text("GamePad Start: " + Input.IsButtonDown(Buttons.Start));
+                }
+                ImGui.End();
                 
                 _textEdit.ShowWindow();
+
+                var a = Input.MousePosition.ToVector2();
+                var b = a + new Vector2(20, 20);
+                
+                ImGui.GetForegroundDrawList().AddRectFilled(a, b, uint.MaxValue);
             }
             ImGui.End();
         }

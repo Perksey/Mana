@@ -68,7 +68,7 @@ namespace Mana.Example.Basic.Interface
 
             _spriteBatch.Begin();
 
-            Point mouse = (ManaWindow.MainWindow.Input.MousePosition.ToVector2() - ImGuiHelper.GetCursorScreenPos()).ToPoint();
+            Point mouse = (ManaWindow.MainWindow.InputManager.MousePosition.ToVector2() - ImGuiHelper.GetCursorScreenPos()).ToPoint();
             
             _spriteBatch.Draw(_texture, new Rectangle(0, 0, 500, 500));
             _spriteBatch.Draw(_texture, new Rectangle(mouse.X, mouse.Y, 50, 50));

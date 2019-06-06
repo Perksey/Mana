@@ -6,7 +6,6 @@ using ImGuiNET;
 using Mana.Graphics;
 using Mana.Graphics.Textures;
 using Mana.IMGUI.Viewport;
-using Mana.Input;
 using Mana.Utilities;
 using Mana.Utilities.Extensions;
 using OpenTK.Input;
@@ -29,10 +28,18 @@ namespace Mana.IMGUI
         private ImGuiRenderer _renderer;
         private ImGuiViewportManager _viewportManager;
         
+        public static ImGuiSystem Instance { get; private set; }
+
         public ImGuiSystem(bool useViewports = false)
         {
+            if (Instance != null)
+                throw new InvalidOperationException("Only one ImGuiSystem instance may be created.");
+            
+            Instance = this;
             ImGuiHelper.System = this;
             UseViewports = useViewports;
+
+            Input.KeyTyped += c => IO.AddInputCharacter(c);
         }
         
         public override void OnAddedToGame(Game game)
@@ -171,13 +178,13 @@ namespace Mana.IMGUI
                 }
                 
                 if (focusedWindow != null)
-                    input = focusedWindow.Input;
+                    input = focusedWindow.InputManager;
                 else
-                    input = _game.Window.Input;
+                    input = _game.Window.InputManager;
             }
             else
             {
-                input = _game.Window.Input;
+                input = _game.Window.InputManager;
             }
 
             if (input == null) 
@@ -202,11 +209,7 @@ namespace Mana.IMGUI
             IO.MouseDown[0] = _viewportManager?.GlobalMouseLeft ?? input.MouseLeft;
             IO.MouseDown[1] = input.MouseRight;
             IO.MouseDown[2] = input.MouseMiddle;
-
             IO.MouseWheel = input.MouseWheelDelta > 0 ? 1 : input.MouseWheelDelta < 0 ? -1 : 0;
-            
-            while (input.CharacterBuffer.Count > 0)
-                IO.AddInputCharacter(input.CharacterBuffer.Dequeue());
         }
 
         private unsafe void RebuildFontAtlas(RenderContext renderContext)

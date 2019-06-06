@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Numerics;
 using ImGuiNET;
 
@@ -9,21 +10,35 @@ namespace Mana.IMGUI.TextEditor
         internal TextEditorBuffer Buffer;
         
         private bool _initialized = false;
+
+        private Point _cursorLocation = new Point(1, 28);
+        private float _time;
+        private float _clickTime;
+        private string _str = "";
         
         public void ShowWindow()
         {
+            _time += ImGui.GetIO().DeltaTime;
+            
             if (!_initialized)
                 Initialize();
 
             if (ImGui.Begin("Text Editor"))
             {
+                ImGui.InputText("Temp", ref _str, 128);
+                
                 Buffer.Begin();
 
-                var coord = Buffer.GetMouseCoordinate();
-                Buffer.DrawBackground(coord.X, coord.Y, Color.Blue);
+                Buffer.Render();
             
-                Buffer.DrawBuffer();
-            
+                if (ImGui.GetIO().MouseClicked[0] && Buffer.IsFocused)
+                {
+                    _cursorLocation = Buffer.GetMouseTextCursorCoordinate();
+                    _clickTime = _time;
+                }
+                
+                
+                
                 Buffer.End();                
             }
             

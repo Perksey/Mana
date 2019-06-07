@@ -10,7 +10,7 @@ namespace Mana.Graphics
     {
         /// <summary>
         /// Represents a GLHandle containing a zero value. This can be used as null because OpenGL will
-        /// never create an object with a zero handle.
+        /// never create a valid object with a zero handle.
         /// </summary>
         public static readonly GLHandle Zero = new GLHandle(0);
         

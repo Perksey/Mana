@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using Mana.Asset.Loaders;
+using Mana.Audio;
 using Mana.Graphics;
 using Mana.Graphics.Textures;
 using Mana.Utilities;
@@ -19,6 +20,7 @@ namespace Mana.Asset
         private static Dictionary<Type, IAssetLoader> _assetLoaders = new Dictionary<Type, IAssetLoader>
         {
             [typeof(Texture2D)] = new Texture2DLoader(),
+            [typeof(Sound)] = new SoundLoader(),
         };
         
         private Action<KeyValuePair<string, IAsset>> _unloadCacheFunc;

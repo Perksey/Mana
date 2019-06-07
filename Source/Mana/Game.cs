@@ -1,15 +1,19 @@
+using System;
 using System.Collections.Generic;
 using Mana.Asset;
+using Mana.Audio;
+using Mana.Audio.OpenAL;
 using Mana.Graphics;
 
 namespace Mana
 {
-    public abstract class Game
+    public abstract class Game : IDisposable
     {
         public List<GameSystem> GameSystems { get; } = new List<GameSystem>();
 
         protected Game()
         {
+            OpenALBackend.Initialize();
         }
         
         public ResourceManager ResourceManager { get; protected set; }
@@ -22,6 +26,8 @@ namespace Mana
         
         internal void UpdateBase(float time, float deltaTime)
         {
+            AudioBackend.Backend?.Update(time, deltaTime);
+            
             for (int i = 0; i < GameSystems.Count; i++)
                 GameSystems[i].EarlyUpdate(time, deltaTime);
 
@@ -62,5 +68,11 @@ namespace Mana
         protected abstract void Initialize();
         protected abstract void Update(float time, float deltaTime);
         protected abstract void Render(float time, float deltaTime);
+
+        public void Dispose()
+        {
+            AssetManager?.Dispose();
+            AudioBackend.Backend?.Dispose();
+        }
     }
 }

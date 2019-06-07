@@ -1,8 +1,15 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Numerics;
 using ImGuiNET;
+using Mana.Graphics;
+using Mana.Graphics.Shader;
+using Mana.Graphics.Textures;
 using Mana.IMGUI;
 using Mana.IMGUI.TextEditor;
-using Mana.Utilities.Extensions;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Input;
 
 namespace Mana.Example.Basic
@@ -10,10 +17,10 @@ namespace Mana.Example.Basic
     class ExampleGame : Game
     {
         private TextEditor _textEdit;
-        
+
         protected override void Initialize()
         {
-            AddSystem(new ImGuiSystem(true));
+            AddSystem(new ImGuiSystem());
             
             _textEdit = new TextEditor();
         }
@@ -47,21 +54,10 @@ namespace Mana.Example.Basic
 
                     ImGui.EndMainMenuBar();
                 }
-                
+
                 ImGui.ShowMetricsWindow();
 
-                if (ImGui.Begin("Ay"))
-                {
-                    ImGui.Text("GamePad Start: " + Input.IsButtonDown(Buttons.Start));
-                }
-                ImGui.End();
-                
                 _textEdit.ShowWindow();
-
-                var a = Input.MousePosition.ToVector2();
-                var b = a + new Vector2(20, 20);
-                
-                ImGui.GetForegroundDrawList().AddRectFilled(a, b, uint.MaxValue);
             }
             ImGui.End();
         }

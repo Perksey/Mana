@@ -2,7 +2,9 @@ using System;
 using System.Drawing;
 using System.Globalization;
 using System.Numerics;
+using System.Text;
 using ImGuiNET;
+using Mana.IMGUI.Extensions;
 using Mana.Utilities.Extensions;
 
 namespace Mana.IMGUI.TextEditor
@@ -39,6 +41,8 @@ namespace Mana.IMGUI.TextEditor
 
         public bool IsFocused => _isFocused;
 
+        private bool _useSpan = false;
+
         public void Begin()
         {
             if (_began)
@@ -49,6 +53,8 @@ namespace Mana.IMGUI.TextEditor
             var necessaryArea = new Vector2((_longestLineLength + 4) * _charWidth,
                                             (_lineCount - 0.8f) * (_charHeight + _linePaddingTop + _linePaddingBottom));
 
+            ImGui.Checkbox("Use Span", ref _useSpan);
+            
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
             ImGui.PushStyleColor(ImGuiCol.ChildBg, new Color(30, 30, 30).ToUint());
             ImGui.BeginChild("Editor", 
@@ -132,10 +138,21 @@ namespace Mana.IMGUI.TextEditor
 
             float x = (colX * _charWidth) + _paddingLeft;
             float y = _linePaddingTop + (colY * (_charHeight + _linePaddingBottom + _linePaddingTop)) + _paddingTop;
-            
-            string str = c.ToString();
 
-            _draw.AddText(_regionStart.ToVector2() + new Vector2(x, y), color.ToUint(), str);
+            if (_useSpan)
+            {
+                unsafe
+                {
+                    void* charPtr = &c;
+                    Span<char> span = new Span<char>(charPtr, 1);
+                    _draw.AddText(_regionStart.ToVector2() + new Vector2(x, y), color.ToUint(), span);
+                }
+            }
+            else
+            {
+                string str = c.ToString();
+                _draw.AddText(_regionStart.ToVector2() + new Vector2(x, y), color.ToUint(), str);
+            }
         }
 
         public void SetText(string text)

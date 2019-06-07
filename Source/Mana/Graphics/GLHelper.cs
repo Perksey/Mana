@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Mana.Graphics.Textures;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics
@@ -74,6 +75,23 @@ namespace Mana.Graphics
             
             EnsureValid(handle);
             return handle;
+        }
+
+        internal static void TextureParameter(RenderContext context,
+                                              TextureTarget target, 
+                                              Texture2D texture, 
+                                              TextureParameterName parameter, 
+                                              int value)
+        {
+            if (GLInfo.HasDirectStateAccess)
+            {
+                GL.TextureParameter(texture.Handle, parameter, value);
+            }
+            else
+            {
+                context.BindTexture(0, texture);
+                GL.TexParameter(target, parameter, value);
+            }
         }
 
         [Conditional("DEBUG")]

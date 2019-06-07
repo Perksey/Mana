@@ -15,6 +15,11 @@ namespace Mana.Graphics.Textures
 {
     public class Texture2D : Texture, IAsset
     {
+        private TextureMinFilter _minFilter;
+        private TextureMagFilter _magFilter;
+        private TextureWrapMode _wrapModeS;
+        private TextureWrapMode _wrapModeT;
+        
         private Texture2D(ResourceManager resourceManager) 
             : base(resourceManager)
         {
@@ -31,7 +36,7 @@ namespace Mana.Graphics.Textures
         public int Width { get; private set; } = -1;
 
         public int Height { get; private set; } = -1;
-        
+
         public override void Bind(int slot, RenderContext renderContext) => renderContext.BindTexture(slot, this);
         public override void Unbind(RenderContext renderContext) => renderContext.UnbindTexture(this);
 
@@ -69,34 +74,24 @@ namespace Mana.Graphics.Textures
                 GL.BindTexture(TextureTarget.Texture2D, prevTexture);
             }
 
-            // TODO: Filter mode and wrap mode.
+            texture.SetDefaultTextureParameters(renderContext);
             
             return texture;
         }
 
         public static unsafe Texture2D CreateFromStream(RenderContext renderContext, Stream stream)
         {
-            Console.WriteLine("Texture loaded synchronized");
-
-            var s = ManaTimer.StartNew();
-            
             using var image = Image.Load(stream);
             image.Mutate(x => x.Flip(FlipMode.Vertical));
 
-            s.Tally("Load and mutate");
-            
             var texture = new Texture2D(renderContext.ResourceManager)
             {
                 Width = image.Width, 
                 Height = image.Height,
             };
 
-            s.Tally("Texture2D ctor");
-            
             fixed (void* data = &MemoryMarshal.GetReference(image.GetPixelSpan()))
             {
-                s.Tally("void* getReference");
-                
                 if (GLInfo.HasDirectStateAccess)
                 {
                     GL.TextureStorage2D(texture.Handle, 
@@ -104,8 +99,6 @@ namespace Mana.Graphics.Textures
                                         SizedInternalFormat.Rgba8, 
                                         texture.Width, 
                                         texture.Height);
-                    
-                    s.Tally("textureStorage2D");
                     
                     GL.TextureSubImage2D(texture.Handle,
                                          0,
@@ -117,11 +110,7 @@ namespace Mana.Graphics.Textures
                                          PixelType.UnsignedByte,
                                          new IntPtr(data));
                     
-                    s.Tally("textureSubImage2D");
-                    
                     GL.GenerateTextureMipmap(texture.Handle);
-                    
-                    s.Tally("generateTextureMipmap");
                 }
                 else
                 {
@@ -144,15 +133,13 @@ namespace Mana.Graphics.Textures
                 }
             }
             
-            // TODO: Filter mode and wrap mode.
+            texture.SetDefaultTextureParameters(renderContext);
 
             return texture;
         }
 
         public static unsafe Texture2D CreateFromStreamUnsynchronized(RenderContext renderContext, Stream stream)
         {
-            Console.WriteLine("Texture loaded UNSYNCHRONIZED");
-            
             using var image = Image.Load<Rgba32>(stream);
             image.Mutate(x => x.Flip(FlipMode.Vertical));
             
@@ -248,14 +235,9 @@ namespace Mana.Graphics.Textures
                 GL.BindBuffer(BufferTarget.PixelUnpackBuffer, prevPixelBuffer);
             }
             
-            // TODO: Filter mode and wrap mode.
+            texture.SetDefaultTextureParameters(renderContext);
 
             return texture;
-        }
-        
-        public void OnAssetLoaded()
-        {
-            // throw new NotImplementedException();
         }
 
         public static unsafe Texture2D CreateFromRGBAPointer(RenderContext renderContext, int width, int height, byte* pixelData)
@@ -299,9 +281,97 @@ namespace Mana.Graphics.Textures
                               new IntPtr(pixelData));
             }
             
-            // TODO: Filter mode and wrap mode.
+            texture.SetDefaultTextureParameters(renderContext);
 
             return texture;
+        }
+
+        public void OnAssetLoaded()
+        {
+            // throw new NotImplementedException();
+        }
+
+        public void SetMinFilter(RenderContext renderContext, TextureMinFilter minFilter)
+        {
+            if (_minFilter != minFilter)
+            {
+                GLHelper.TextureParameter(renderContext, 
+                                          TextureTarget.Texture2D, 
+                                          this, 
+                                          TextureParameterName.TextureMinFilter,
+                                          (int)minFilter);
+
+                _minFilter = minFilter;
+            }
+        }
+
+        public TextureMinFilter GetMinFilter() => _minFilter;
+
+        public void SetMagFilter(RenderContext renderContext, TextureMagFilter magFilter)
+        {
+            if (_magFilter != magFilter)
+            {
+                GLHelper.TextureParameter(renderContext, 
+                                          TextureTarget.Texture2D, 
+                                          this, 
+                                          TextureParameterName.TextureMagFilter,
+                                          (int)magFilter);
+
+                _magFilter = magFilter;
+            }
+        }
+
+        public TextureMagFilter GetMagFilter() => _magFilter;
+
+        public void SetWrapModeS(RenderContext renderContext, TextureWrapMode wrapModeS)
+        {
+            if (_wrapModeS != wrapModeS)
+            {
+                GLHelper.TextureParameter(renderContext, 
+                                          TextureTarget.Texture2D, 
+                                          this, 
+                                          TextureParameterName.TextureWrapS,
+                                          (int)wrapModeS);
+
+                _wrapModeS = wrapModeS;
+            }
+        }
+
+        public TextureWrapMode GetWrapModeS() => _wrapModeS;
+        
+        public void SetWrapModeT(RenderContext renderContext, TextureWrapMode wrapModeT)
+        {
+            if (_wrapModeT != wrapModeT)
+            {
+                GLHelper.TextureParameter(renderContext, 
+                                          TextureTarget.Texture2D, 
+                                          this, 
+                                          TextureParameterName.TextureWrapT,
+                                          (int)wrapModeT);
+
+                _wrapModeT = wrapModeT;
+            }
+        }
+
+        public TextureWrapMode GetWrapModeT() => _wrapModeT;
+
+        private void SetDefaultTextureParameters(RenderContext renderContext)
+        {
+            SetMinFilter(renderContext, TextureMinFilter.NearestMipmapLinear);
+            SetMagFilter(renderContext, TextureMagFilter.Linear);
+            
+            SetWrapModeS(renderContext, TextureWrapMode.Repeat);
+            SetWrapModeT(renderContext, TextureWrapMode.Repeat);
+
+            if (GLInfo.HasDirectStateAccess)
+            {
+                GL.GenerateTextureMipmap(Handle);
+            }
+            else
+            {
+                renderContext.BindTexture(0, this);
+                GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            }
         }
     }
 }

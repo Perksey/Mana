@@ -73,7 +73,7 @@ namespace Mana.Graphics
             DepthTest = true;
             ScissorTest = true;
             CullBackfaces = true;
-            Blend = false;
+            Blend = true;
             
             int vao = GL.GenVertexArray();
             GL.BindVertexArray(vao);
@@ -234,7 +234,7 @@ namespace Mana.Graphics
         }
 
         /// <summary>
-        /// Clears the framebuffer to the given color. 
+        /// Clears the framebuffer to the given color (also clears depth.) 
         /// </summary>
         /// <param name="color">The color the buffer will be cleared to.</param>
         public void Clear(Color color)
@@ -242,7 +242,7 @@ namespace Mana.Graphics
             if (_clearColor != color)
                 GL.ClearColor(_clearColor = color);
             
-            GL.Clear(ClearBufferMask.ColorBufferBit);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         }
 
         public void Render(VertexBuffer vertexBuffer, IndexBuffer indexBuffer, ShaderProgram shaderProgram)

@@ -37,8 +37,6 @@ namespace Mana.IMGUI.TextEditor
                     _clickTime = _time;
                 }
                 
-                
-                
                 Buffer.End();                
             }
             

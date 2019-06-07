@@ -193,6 +193,8 @@ namespace Mana.IMGUI
             for (int i = 0; i < Keys.Length; i++)
                 IO.KeysDown[Keys[i]] = input.IsKeyDown((Key)Keys[i]);
 
+            IO.KeysDown[(int)Key.Enter] = input.IsKeyDown(Key.Enter) || input.IsKeyDown(Key.KeypadEnter);
+
 
             var offset = ManaWindow.MainWindow.Location.ToVector2() + new Vector2(8, 31);
 

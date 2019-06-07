@@ -141,8 +141,9 @@ namespace Mana.Graphics
             
             if (texture == null)
                 throw new ArgumentNullException(nameof(texture));
-            
+
             FlushIfNeeded(texture);
+            TransformSourceRectangle(ref source, texture.Height);
             
             _count++;
             EnsureBufferLargeEnough();
@@ -196,6 +197,7 @@ namespace Mana.Graphics
                 throw new ArgumentNullException(nameof(texture));
             
             FlushIfNeeded(texture);
+            TransformSourceRectangle(ref source, texture.Height);
 
             _count++;
             EnsureBufferLargeEnough();
@@ -291,12 +293,18 @@ namespace Mana.Graphics
 
             _vertexBuffer.VertexTypeInfo.Apply(Shader);
 
+            bool prevDepthTest = RenderContext.DepthTest;
+            RenderContext.DepthTest = false;
+            
+            
             GL.DrawRangeElements(PrimitiveType.Triangles,
                                  0,
                                  _count * 4,
                                  _count * 6,
                                  DrawElementsType.UnsignedShort,
                                  IntPtr.Zero);
+            
+            RenderContext.DepthTest = prevDepthTest;
 
             unchecked
             {
@@ -311,7 +319,7 @@ namespace Mana.Graphics
         {
             if (_count * 4 > _vertexBufferSize)
             {
-                _log.Debug("SpriteBatch capacity increased from " + _vertexBufferSize + " to " + (int)(_vertexBufferSize * 1.5f));
+                //_log.Debug("SpriteBatch capacity increased from " + _vertexBufferSize + " to " + (int)(_vertexBufferSize * 1.5f));
                 _vertexBufferSize = (int)(_vertexBufferSize * 1.5f);    // To increase capacity
                 _indexBufferSize = (int)(_vertexBufferSize * 1.5f);     // To have 2:3 ratio from vertex to index
 
@@ -396,6 +404,11 @@ namespace Mana.Graphics
                                                       BufferUsageHint.StreamDraw,
                                                       true);
             _indexBuffer.Label = "SpriteBatch IndexBuffer";
+        }
+
+        private void TransformSourceRectangle(ref Rectangle rectangle, int height)
+        {
+            rectangle.Y = height - (rectangle.Y + rectangle.Height);
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using ImGuiNET;
@@ -11,7 +12,7 @@ namespace Mana.IMGUI
     {
         internal static ImGuiSystem System;
         
-        public static void BeginGlobalDocking()
+        public static void BeginGlobalDocking(bool menuBar = true)
         {
             ImGuiViewportPtr viewport = ImGui.GetMainViewport();
 
@@ -20,7 +21,13 @@ namespace Mana.IMGUI
             ImGui.SetNextWindowViewport(viewport.ID);
             ImGui.SetNextWindowBgAlpha(0.0f);
 
-            ImGuiWindowFlags windowFlags = ImGuiWindowFlags.MenuBar | ImGuiWindowFlags.NoDocking;
+            ImGuiWindowFlags windowFlags = ImGuiWindowFlags.NoDocking;
+
+            if (menuBar)
+            {
+                windowFlags |= ImGuiWindowFlags.MenuBar;
+            }
+            
             windowFlags |= ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoCollapse;
             windowFlags |= ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove;
             windowFlags |= ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoNavFocus;
@@ -34,6 +41,22 @@ namespace Mana.IMGUI
             uint dockspaceID = ImGui.GetID("default-dockspace");
             ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags.PassthruCentralNode;
             ImGui.DockSpace(dockspaceID, Vector2.Zero, dockspaceFlags);
+        }
+
+        public static unsafe void DragRectangle(string label, ref Rectangle rectangle)
+        {
+            var ints = stackalloc int[4];
+            ints[0] = rectangle.X;
+            ints[1] = rectangle.Y;
+            ints[2] = rectangle.Width;
+            ints[3] = rectangle.Height;
+
+            ImGui.DragInt4(label, ref ints[0]);
+
+            rectangle.X = ints[0];
+            rectangle.Y = ints[1];
+            rectangle.Width = ints[2];
+            rectangle.Height = ints[3];
         }
         
         public static void Image(IntPtr texture, Vector2 size)

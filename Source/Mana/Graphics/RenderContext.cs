@@ -16,6 +16,7 @@ namespace Mana.Graphics
     /// </summary>
     public partial class RenderContext
     {
+        private static Logger _log = Logger.Create();
         private static ThreadLocal<RenderContext> _currentContext = new ThreadLocal<RenderContext>();
 
         private bool _depthTest;
@@ -47,10 +48,8 @@ namespace Mana.Graphics
                 GLContext = new GraphicsContext(GraphicsMode.Default,
                                                 windowInfo,
                                                 ResourceManager.ShareContext,
-                                                4,
-                                                5,
-                                                GraphicsContextFlags.ForwardCompatible
-                                                | GraphicsContextFlags.Debug);
+                                                3, 1,
+                                                GraphicsContextFlags.Debug);
             }
             else
             {

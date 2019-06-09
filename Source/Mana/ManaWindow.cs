@@ -29,8 +29,14 @@ namespace Mana
         
         // TODO: Remove duplicate graphics context creation parameters.
         public ManaWindow(ManaWindow parent)
-            : base(1600, 900, GraphicsMode.Default, "Title", GameWindowFlags.Default, DisplayDevice.Default, 4, 5,
-                   GraphicsContextFlags.ForwardCompatible | GraphicsContextFlags.Debug)
+            : base(1600, 
+                   900, 
+                   GraphicsMode.Default, 
+                   "Title", 
+                   GameWindowFlags.Default, 
+                   DisplayDevice.Default,
+                   3, 1,
+                   GraphicsContextFlags.Debug)
         {
             if (_mainWindow == null)
                 _mainWindow = this;

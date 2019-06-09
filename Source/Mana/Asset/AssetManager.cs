@@ -83,7 +83,7 @@ namespace Mana.Asset
 
             // TODO: Allow streams from nested files (zip/packages)
             var fileStream = File.OpenRead(path);
-            
+
             var asset = typedLoader.Load(this,
                                          AsyncRenderContext.IsCurrent
                                              ? AsyncRenderContext

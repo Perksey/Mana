@@ -19,9 +19,6 @@ namespace Mana.Example.Basic
     {
         private TextEditor _textEdit;
         private Sound _ritual;
-        private Sound _fanfare;
-        private Sound _loop;
-        private Sound _sound;
         private SoundInstance _instance;
 
         protected override void Initialize()
@@ -31,9 +28,6 @@ namespace Mana.Example.Basic
             _textEdit = new TextEditor();
 
             _ritual = AssetManager.Load<Sound>("./Assets/Sounds/ritual.wav");
-            _fanfare = AssetManager.Load<Sound>("./Assets/Sounds/fanfare.wav");
-            _loop = AssetManager.Load<Sound>("./Assets/Sounds/loop.wav");
-            _sound = AssetManager.Load<Sound>("./Assets/Sounds/sound.wav");
         }
         
         protected override void Update(float time, float deltaTime)
@@ -75,22 +69,7 @@ namespace Mana.Example.Basic
                         if (ImGui.Button("Play Ritual"))
                         {
                             _instance = _ritual.Play();
-                        }
-                        
-                        if (ImGui.Button("Play Fanfare"))
-                        {
-                            _instance = _fanfare.Play();
-                        }
-                        
-                        if (ImGui.Button("Play Loop"))
-                        {
-                            _instance = _loop.Play();
                             _instance.Looping = true;
-                        }
-                        
-                        if (ImGui.Button("Play Sound"))
-                        {
-                            _instance = _sound.Play();
                         }
                     }
                     else

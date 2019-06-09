@@ -18,15 +18,6 @@ namespace Mana.Audio.OpenAL
             BufferHandle = AL.GenBuffer();
             ALHelper.CheckLastError();
             
-            _log.Debug("OpenAL Buffer Created: " + BufferHandle);
-            
-            _log.Debug("Version: " + AL.Get(ALGetString.Version));
-            ALHelper.CheckLastError();
-            
-            _log.Debug("Channels: " + WaveAudio.WaveInfo.Channels + ", Depth: " + WaveAudio.WaveInfo.BitDepth);
-            _log.Debug("SampleRate: " + WaveAudio.WaveInfo.SampleRate);
-            _log.Debug("Duration: " + WaveAudio.Duration);
-            
             AL.BufferData(BufferHandle,
                           ALHelper.GetSoundFormat(WaveAudio.WaveInfo.Channels, WaveAudio.WaveInfo.BitDepth),
                           WaveAudio.WaveData,

@@ -1,15 +1,30 @@
+using System;
 using Mana.Utilities;
 using OpenTK.Audio.OpenAL;
 
 namespace Mana.Audio.OpenAL
 {
+    /// <summary>
+    /// Represents a <see cref="Sound"/> object for an OpenAL <see cref="AudioBackend"/>. 
+    /// </summary>
     public class ALSound : Sound
     {
-        private static Logger _log = Logger.Create();
+        private bool _disposed;
         
-        public int BufferHandle { get; private set; }
-        public WaveAudio WaveAudio { get; private set; }
+        /// <summary>
+        /// The OpenAL buffer handle.
+        /// </summary>
+        public int BufferHandle { get; }
         
+        /// <summary>
+        /// The wave audio for the sound.
+        /// </summary>
+        public WaveAudio WaveAudio { get; }
+        
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ALSound"/> class.
+        /// </summary>
+        /// <param name="waveAudio">The wave audio for the sound.</param>
         public ALSound(WaveAudio waveAudio)
             : base(waveAudio.Duration)
         {
@@ -28,9 +43,27 @@ namespace Mana.Audio.OpenAL
 
         public override SoundInstance Play()
         {
+            if (_disposed)
+                throw new InvalidOperationException("Cannot play a disposed sound.");
+            
             var instance = new ALSoundInstance(this);
+            
+            AudioBackend.Backend.SoundInstances.Add(instance);
+            
             instance.Play();
+            
             return instance;
+        }
+
+        public override void Dispose()
+        {
+            if (!_disposed)
+            {
+                AL.DeleteBuffer(BufferHandle);
+                ALHelper.CheckLastError();
+
+                _disposed = true;
+            }
         }
     }
 }

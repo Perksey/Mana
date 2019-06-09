@@ -15,7 +15,7 @@ namespace Mana.Asset.Loaders
             if (AudioBackend.Backend == null)
                 throw new InvalidOperationException("Cannot load a Sound without an initialized Audio backend.");
 
-            return AudioBackend.Backend.CreateAudioClipFromStream(sourceStream);
+            return AudioBackend.Backend.CreateSoundFromStream(sourceStream);
         }
     }
 }

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.IO;
 using OpenTK.Audio;
 
@@ -25,7 +24,7 @@ namespace Mana.Audio.OpenAL
             base.Update(time, deltaTime);
         }
 
-        public override Sound CreateAudioClipFromStream(Stream stream)
+        public override Sound CreateSoundFromStream(Stream stream)
         {
             return new ALSound(WaveAudio.LoadFromStream(stream));
         }

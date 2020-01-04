@@ -1,25 +1,45 @@
-using System;
-using System.Runtime.InteropServices;
-using OpenTK.Graphics.OpenGL4;
+﻿using System;
+using osuTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics
 {
+    /// <summary>
+    /// Represents an OpenGL resource with a corresponding <see cref="GLHandle"/> handle.
+    /// </summary>
     public abstract class GraphicsResource : IDisposable
     {
-        internal RenderContext BoundContext = null;
-        internal bool Disposed = false;
-        
+        /// <summary>
+        /// The <see cref="RenderContext"/> assigned to this GraphicsResource. When operations are performed on the
+        /// resource that will affect graphics state (such as binding), this context should be set to the current
+        /// context on the calling thread.
+        /// </summary>
+        internal RenderContext ParentContext;
+
+        /// <summary>
+        /// The <see cref="RenderContext"/> that the GraphicsResource is currently bound to, if any.
+        /// </summary>
+        internal RenderContext BoundContext;
+
         private string _label;
-        
-        protected GraphicsResource(ResourceManager resourceManager)
+
+        protected GraphicsResource(RenderContext parentContext)
         {
-            ResourceManager = resourceManager;
+            ParentContext = parentContext;
         }
 
+        /// <summary>
+        /// Gets a value representing the OpenGL handle for this resource.
+        /// </summary>
         public GLHandle Handle { get; protected set; }
-        
-        public ResourceManager ResourceManager { get; }
-        
+
+        /// <summary>
+        /// Gets a value indicating whether the resource has been disposed.
+        /// </summary>
+        public bool Disposed { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the OpenGL object label string (used for logging and debugging).
+        /// </summary>
         public string Label
         {
             get => _label;
@@ -27,19 +47,23 @@ namespace Mana.Graphics
             {
                 if (GLInfo.HasDebug)
                 {
-                    if (LabelType.HasValue)
-                        GL.ObjectLabel(LabelType.Value, Handle, value.Length, value);
-                        
-                    else
-                        throw new InvalidOperationException("Cannot set label when ObjectLabelIdentifier is null.");
-                }
+                    if (!LabelType.HasValue)
+                    {
+                        throw new InvalidOperationException("ObjectLabelIdentifier must be set in order to set label.");
+                    }
 
-                _label = value;
+                    GL.ObjectLabel(LabelType.Value, Handle, value.Length, value);
+                    _label = value;
+                }
             }
         }
 
+        /// <summary>
+        /// Gets the OpenGL ObjectLabelIdentifier associated with this graphics resource.
+        /// </summary>
         protected virtual ObjectLabelIdentifier? LabelType => null;
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             if (Disposed)
@@ -51,9 +75,14 @@ namespace Mana.Graphics
             Disposed = true;
         }
 
-        protected virtual void Dispose(bool disposing)
+        protected abstract void Dispose(bool disposing);
+
+        public void EnsureUndisposed()
         {
-            ResourceManager.OnResourceDisposed(this);
+            if (Disposed)
+            {
+                throw new InvalidOperationException("Cannot perform this operation on a disposed GraphicsResource");
+            }
         }
     }
 }

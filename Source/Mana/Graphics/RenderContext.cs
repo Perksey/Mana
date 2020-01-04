@@ -1,267 +1,212 @@
-using System;
-using System.Drawing;
+﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Threading;
-using Mana.Graphics.Buffers;
-using Mana.Graphics.Shader;
 using Mana.Graphics.Vertex;
-using Mana.Utilities;
-using OpenTK.Graphics;
-using OpenTK.Graphics.OpenGL4;
-using OpenTK.Platform;
+using Mana.Utilities.OpenGL;
+using osuTK.Graphics;
+using osuTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics
 {
     /// <summary>
-    /// Represents a single thread's OpenGL context and state.
+    /// Represents an OpenGL context capable of being made current on a thread, as well as encapsulating the
+    /// OpenGL context's state.
     /// </summary>
-    public partial class RenderContext
+    public partial class RenderContext : IDisposable
     {
-        private static Logger _log = Logger.Create();
-        private static ThreadLocal<RenderContext> _currentContext = new ThreadLocal<RenderContext>();
+        private static int _renderContextID = -1;
 
-        private bool _depthTest;
-        private bool _scissorTest;
-        private bool _blend;
-        private bool _cullBackfaces;
-        private Rectangle _scissorRectangle;
-        private Rectangle _viewportRectangle;
-        private Color _clearColor;
+        public readonly int ID = -1;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="RenderContext"/> class.
-        /// </summary>
-        /// <param name="resourceManager">The <see cref="ResourceManager"/> to be associated with the context.</param>
-        /// /// <param name="existingContext">The existing OpenGL context object for the <see cref="RenderContext"/> to use.</param>
-        /// <param name="windowInfo">The <see cref="IWindowInfo"/> to create the context with.</param>
-        public RenderContext(ResourceManager resourceManager, IGraphicsContext existingContext, IWindowInfo windowInfo)
+        private static ThreadLocal<RenderContext> _threadLocalCurrent = new ThreadLocal<RenderContext>(false);
+        private bool _selfCreatedWindow = false;
+
+        private RenderContext(ManaWindow window, IGraphicsContext openGLContext)
         {
+            ID = ++_renderContextID;
+
+            Window = window;
+            OpenGLContext = openGLContext;
+
+            ThreadID = Thread.CurrentThread.ManagedThreadId;
+            _threadLocalCurrent.Value = this;
+
+            /* Initialize */
+
             GLInfo.Initialize();
             VertexTypeInfo.Initialize();
-            
-            ResourceManager = resourceManager;
-            
-            var prevContext = Current;
-            
-            if (existingContext == null)
+
+#if DEBUG
+            DebugMessageHandler.Initialize();
+#endif
+
+            int vao = GL.GenVertexArray();
+            GL.BindVertexArray(vao);
+
+            TextureUnits = new TextureUnit[GLInfo.MaxTextureImageUnits];
+
+            /* */
+        }
+
+        private RenderContext(ManaWindow window)
+        {
+            ID = ++_renderContextID;
+
+            Window = window;
+            OpenGLContext = CreateOffscreenContext();
+
+            _selfCreatedWindow = true;
+
+            /* Initialize */
+
+            GLInfo.Initialize();
+            VertexTypeInfo.Initialize();
+
+#if DEBUG
+            DebugMessageHandler.Initialize();
+#endif
+
+            int vao = GL.GenVertexArray();
+            GL.BindVertexArray(vao);
+
+            TextureUnits = new TextureUnit[GLInfo.MaxTextureImageUnits];
+
+            /* */
+        }
+
+        public int ThreadID { get; set; }
+
+        public ManaWindow Window { get; private set; }
+
+        public IGraphicsContext OpenGLContext { get; private set; }
+
+        /// <summary>
+        /// Gets a value that indicates whether this instance is current on the calling thread.
+        /// </summary>
+        public bool IsCurrent
+        {
+            get
             {
-                // TODO: Remove duplicate graphics context creation parameters.
-                GLContext = new GraphicsContext(GraphicsMode.Default,
-                                                windowInfo,
-                                                ResourceManager.ShareContext,
-                                                3, 1,
-                                                GraphicsContextFlags.Debug);
+                if ((_threadLocalCurrent.Value == this && !OpenGLContext.IsCurrent) ||
+                    (_threadLocalCurrent.Value != this && OpenGLContext.IsCurrent))
+                    throw new InvalidOperationException("Invalid state.");
+
+                return OpenGLContext.IsCurrent;
+            }
+        }
+
+        /// <summary>
+        /// Creates a <see cref="RenderContext"/> that wraps a window's own GraphicsContext object.
+        /// </summary>
+        /// <param name="window">The window to wrap.</param>
+        /// <returns>The newly created <see cref="RenderContext"/> object.</returns>
+        public static RenderContext WrapWindowContext(ManaWindow window)
+        {
+            return new RenderContext(window, window.Context);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="RenderContext"/> that will be used for offscreen operations.
+        /// </summary>
+        /// <returns>The newly created <see cref="RenderContext"/> object.</returns>
+        public static RenderContext CreateOffscreen()
+        {
+            return new RenderContext(null);
+        }
+
+        public static RenderContext GetCurrent()
+        {
+            return _threadLocalCurrent.Value;
+        }
+
+        public void MakeCurrent()
+        {
+            Validate(false);
+
+            _threadLocalCurrent.Value = this;
+            OpenGLContext.MakeCurrent(Window.WindowInfo);
+            ThreadID = Thread.CurrentThread.ManagedThreadId;
+
+            Validate(true);
+        }
+
+        public void MakeNonCurrent()
+        {
+            Validate(true);
+
+            _threadLocalCurrent.Value = null;
+            OpenGLContext.MakeCurrent(null);
+            ThreadID = -1;
+
+            Validate(false);
+        }
+
+        /// <summary>
+        /// Checks to see if the calling thread is the same thread that the RenderContext is current on, and throws if
+        /// not the case.
+        /// </summary>
+        [Conditional("DEBUG")]
+        public void Validate(bool current)
+        {
+            if (current)
+            {
+                if ((_threadLocalCurrent.Value == this && !OpenGLContext.IsCurrent) ||
+                    (_threadLocalCurrent.Value != this && OpenGLContext.IsCurrent))
+                    throw new InvalidOperationException("Validation failed: Invalid state.");
+
+                if (Thread.CurrentThread.ManagedThreadId != ThreadID)
+                    throw new InvalidAsynchronousStateException("Validation failed: Invalid thread.");
+
+                if (_threadLocalCurrent.Value != this || !OpenGLContext.IsCurrent)
+                    throw new InvalidOperationException("Validation failed.");
             }
             else
             {
-                GLContext = existingContext;
-            }
+                if (Thread.CurrentThread.ManagedThreadId == ThreadID)
+                    throw new InvalidAsynchronousStateException("Validation failed.");
 
-            DebugMessageHandler.Initialize();
-            
-            // if (_currentContext.Value != null)
-            //     throw new InvalidOperationException();
-            
-            _currentContext.Value = this;
+                if (_threadLocalCurrent.Value == this)
+                    throw new InvalidOperationException("Validation failed.");
 
-            prevContext?.MakeCurrent();
-
-            WindowInfo = windowInfo;
-            
-            InitializeBindings();
-
-            DepthTest = true;
-            ScissorTest = true;
-            CullBackfaces = true;
-            Blend = true;
-            
-            int vao = GL.GenVertexArray();
-            GL.BindVertexArray(vao);
-        }
-        
-        /// <summary>
-        /// Initializes a new instance of the <see cref="RenderContext"/> class.
-        /// </summary>
-        /// <param name="resourceManager">The <see cref="ResourceManager"/> to be associated with the context.</param>
-        /// <param name="windowInfo">The <see cref="IWindowInfo"/> to create the context with.</param>
-        public RenderContext(ResourceManager resourceManager, IWindowInfo windowInfo)
-            : this(resourceManager, null, windowInfo)
-        {
-        }
-
-        /// <summary>
-        /// Gets the <see cref="RenderContext"/> bound to the current thread. 
-        /// </summary>
-        public static RenderContext Current => _currentContext.Value;
-
-        /// <summary>
-        /// Gets the OpenGL context object associated with the context.
-        /// </summary>
-        public IGraphicsContext GLContext { get; }
-        
-        /// <summary>
-        /// Gets the <see cref="IWindowInfo"/> associated with the context.
-        /// </summary>
-        public IWindowInfo WindowInfo { get; }
-
-        /// <summary>
-        /// Gets the <see cref="ResourceManager"/> associated with the context.
-        /// </summary>
-        public ResourceManager ResourceManager { get; }
-        
-        /// <summary>
-        /// Gets or sets a value that indicates whether the DepthTest capability is enabled.
-        /// </summary>
-        public bool DepthTest
-        {
-            get => _depthTest;
-            set
-            {
-                if (value == _depthTest) 
-                    return;
-                
-                GLHelper.SetCap(EnableCap.DepthTest, _depthTest = value);
-            }
-        }
-        
-        /// <summary>
-        /// Gets or sets a value that indicates whether the ScissorTest capability is enabled.
-        /// </summary>
-        public bool ScissorTest
-        {
-            get => _scissorTest;
-            set
-            {
-                if (value == _scissorTest)
-                    return;
-
-                GLHelper.SetCap(EnableCap.ScissorTest, _scissorTest = value);
-            }
-        }
-        
-        /// <summary>
-        /// Gets or sets a value indicating whether the Blend capability is enabled.
-        /// </summary>
-        public bool Blend
-        {
-            get => _blend;
-            set
-            {
-                if (value == _blend)
-                    return;
-
-                GLHelper.SetCap(EnableCap.Blend, _blend = value);
-                
-                if (value)
-                    GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-            }
-        }
-        
-        /// <summary>
-        /// Gets or sets a value indicating whether backface culling is enabled.
-        /// </summary>
-        public bool CullBackfaces
-        {
-            get => _cullBackfaces;
-            set
-            {
-                if (value == _cullBackfaces)
-                    return;
-
-                GLHelper.SetCap(EnableCap.CullFace, _cullBackfaces = value);
-
-                if (!value) 
-                    return;
-                
-                GL.FrontFace(FrontFaceDirection.Ccw);
-                GL.CullFace(CullFaceMode.Back);
-            }
-        }
-        
-        /// <summary>
-        /// Gets or sets a value representing the scissor rectangle region.
-        /// </summary>
-        public Rectangle ScissorRectangle 
-        { 
-            get => _scissorRectangle;
-            set
-            {
-                if (value == _scissorRectangle)
-                    return;
-
-                GL.Scissor(value.X, value.Y, value.Width, value.Height);
-                _scissorRectangle = value;
-            } 
-        }
-        
-        /// <summary>
-        /// Gets or sets a value representing the viewport rectangle region.
-        /// </summary>
-        public Rectangle ViewportRectangle
-        {
-            get => _viewportRectangle;
-            set
-            {
-                if (value == _viewportRectangle)
-                    return;
-
-                GL.Viewport(value.X, value.Y, value.Width, value.Height);
-                _viewportRectangle = value;
+                if (OpenGLContext.IsCurrent)
+                    throw new InvalidOperationException("Validation failed.");
             }
         }
 
-        /// <summary>
-        /// Gets a value that indicates whether this instance is current in the calling thread.
-        /// </summary>
-        public bool IsCurrent => GLContext.IsCurrent;
-        
-        /// <summary>
-        /// Makes the <see cref="RenderContext"/> current in the calling thread.
-        /// </summary>
-        public void MakeCurrent()
+        private static IGraphicsContext CreateOffscreenContext()
         {
-            GLContext.MakeCurrent(WindowInfo);
-            _currentContext.Value = this;
+            if (_threadLocalCurrent.Value == null)
+                throw new InvalidAsynchronousStateException();
+
+            var currentContext = _threadLocalCurrent.Value;
+
+            currentContext.Validate(true);
+
+            var graphicsContext = new GraphicsContext(new GraphicsMode(32, 16, 0, 8), ManaWindow.MainWindow.WindowInfo);
+
+            currentContext.OpenGLContext.MakeCurrent(ManaWindow.MainWindow.WindowInfo);
+
+            currentContext.Validate(true);
+
+            return graphicsContext;
         }
 
-        /// <summary>
-        /// Makes the <see cref="RenderContext"/> no longer current in the calling thread.
-        /// </summary>
-        public void Release()
+        private static IGraphicsContext CreateGraphicsContext()
         {
-            GLContext.MakeCurrent(null);
-            _currentContext.Value = null;
+            if (RenderContext.GetCurrent() != null)
+                throw new InvalidAsynchronousStateException("Cannot create a RenderContext on a thread with an active" +
+                                                            "RenderContext.");
+
+            // TODO: Set proper context request parameters here.
+            return new GraphicsContext(GraphicsMode.Default, ManaWindow.MainWindow.WindowInfo);
         }
 
-        /// <summary>
-        /// Clears the framebuffer to the given color (also clears depth.) 
-        /// </summary>
-        /// <param name="color">The color the buffer will be cleared to.</param>
-        public void Clear(Color color)
+        public void Dispose()
         {
-            if (_clearColor != color)
-                GL.ClearColor(_clearColor = color);
-            
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-        }
-
-        public void Render(VertexBuffer vertexBuffer, IndexBuffer indexBuffer, ShaderProgram shaderProgram)
-        {
-            if (vertexBuffer.Count == 0)
-                return;
-            
-            BindVertexBuffer(vertexBuffer);
-            BindIndexBuffer(null);
-            BindShaderProgram(shaderProgram);
-
-            vertexBuffer.VertexTypeInfo.Apply(shaderProgram);
-
-            GL.DrawArrays(PrimitiveType.Triangles, 0, vertexBuffer.Count);
-
-            unchecked
+            if (_selfCreatedWindow)
             {
-                // TODO: This.
-                //Metrics._drawCalls++;
-                //Metrics._primitiveCount += vertexBuffer.Count;
+                OpenGLContext?.Dispose();
             }
         }
     }

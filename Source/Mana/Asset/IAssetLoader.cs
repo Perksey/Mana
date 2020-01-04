@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using Mana.Graphics;
 
 namespace Mana.Asset
@@ -10,6 +10,9 @@ namespace Mana.Asset
     public interface IAssetLoader<out T> : IAssetLoader
         where T : IAsset
     {
-        T Load(AssetManager manager, RenderContext renderContext, Stream sourceStream, string sourcePath);
+        T Load(AssetManager assetManager,
+               RenderContext renderContext,
+               Stream stream,
+               string sourcePath);
     }
 }

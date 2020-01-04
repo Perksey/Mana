@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 
 namespace Mana.Utilities
@@ -12,6 +12,11 @@ namespace Mana.Utilities
         /// Represents the mathematical constant Pi.
         /// </summary>
         public const float Pi = (float)Math.PI;
+
+        /// <summary>
+        /// Represents the mathematical constant Tau (2 * Pi).
+        /// </summary>
+        public const float Tau = (float)(Math.PI * 2f);
 
         /// <summary>
         /// Represents the mathematical constant Pi over 180.
@@ -65,7 +70,7 @@ namespace Mana.Utilities
         /// <param name="value">The value to clamp.</param>
         /// <returns>The given value, clamped to be between the range [0-1].</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;
+        public static float Clamp01(float value) => Clamp(value, 0f, 1f);
 
         /// <summary>
         /// Returns the result of a linear interpolation between two given values by a given amount.
@@ -96,7 +101,7 @@ namespace Mana.Utilities
         /// <param name="amount">The value to use to interpolate between the two values.</param>
         /// <returns>The result of the inverse linear interpolation.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float InverseLerpClamped(float a, float b, float amount) => Clamp01((amount - a) / (b - a));
+        public static float InverseLerpClamped(float a, float b, float amount) => Clamp01(InverseLerp(a, b, amount));
 
         /// <summary>
         /// Returns a value interpolated from it's position within one range, mapped to another range.
@@ -108,7 +113,7 @@ namespace Mana.Utilities
         /// <param name="value">The value to remap.</param>
         /// <returns>The result of the range mapping operation.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float RangeMap(float a1, float a2, float b1, float b2, float value) => Lerp(b1, b2, (value - a1) / (a2 - a1));
+        public static float RangeMap(float a1, float a2, float b1, float b2, float value) => Lerp(b1, b2, InverseLerp(a1, a2, value));
 
         /// <summary>
         /// Returns a value indicating whether the given integer is a power of two.
@@ -211,6 +216,6 @@ namespace Mana.Utilities
 
         #endregion
 
-        
+
     }
 }

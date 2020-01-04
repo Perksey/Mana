@@ -1,30 +1,33 @@
-using System;
-using System.Diagnostics;
+﻿using System;
 using System.Runtime.CompilerServices;
 using Mana.Graphics.Textures;
-using OpenTK.Graphics.OpenGL4;
+using osuTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics
 {
     /// <summary>
-    /// A static class containing useful functions for making GL API calls.
+    /// A static class containing useful functions for making certain OpenGL API calls.
     /// </summary>
-    internal static class GLHelper
+    public static class GLHelper
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SetCap(EnableCap cap, bool value)
         {
             if (value)
+            {
                 GL.Enable(cap);
+            }
             else
+            {
                 GL.Disable(cap);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static GLHandle CreateFrameBuffer()
         {
             GLHandle handle;
-            
+
             if (GLInfo.HasDirectStateAccess)
             {
                 GL.CreateFramebuffers(1, out int framebuffer);
@@ -32,7 +35,7 @@ namespace Mana.Graphics
             }
             else
             {
-                handle = (GLHandle)GL.GenFramebuffer();                
+                handle = (GLHandle)GL.GenFramebuffer();
             }
 
             EnsureValid(handle);
@@ -43,7 +46,7 @@ namespace Mana.Graphics
         internal static GLHandle CreateBuffer()
         {
             GLHandle handle;
-            
+
             if (GLInfo.HasDirectStateAccess)
             {
                 GL.CreateBuffers(1, out int buffer);
@@ -53,16 +56,16 @@ namespace Mana.Graphics
             {
                 handle = (GLHandle)GL.GenBuffer();
             }
-            
+
             EnsureValid(handle);
             return handle;
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static GLHandle CreateTexture(TextureTarget target)
         {
             GLHandle handle;
-            
+
             if (GLInfo.HasDirectStateAccess)
             {
                 GL.CreateTextures(target, 1, out int texture);
@@ -72,15 +75,15 @@ namespace Mana.Graphics
             {
                 handle = (GLHandle)GL.GenTexture();
             }
-            
+
             EnsureValid(handle);
             return handle;
         }
 
         internal static void TextureParameter(RenderContext context,
-                                              TextureTarget target, 
-                                              Texture2D texture, 
-                                              TextureParameterName parameter, 
+                                              TextureTarget target,
+                                              Texture2D texture,
+                                              TextureParameterName parameter,
                                               int value)
         {
             if (GLInfo.HasDirectStateAccess)
@@ -94,11 +97,12 @@ namespace Mana.Graphics
             }
         }
 
-        [Conditional("DEBUG")]
-        private static void EnsureValid(GLHandle handle)
+        internal static void EnsureValid(GLHandle handle)
         {
             if (handle == GLHandle.Zero)
+            {
                 throw new InvalidOperationException("OpenGL error: Invalid handle generated.");
+            }
         }
     }
 }

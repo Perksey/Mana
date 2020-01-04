@@ -1,0 +1,10 @@
+<Project>
+
+  <PropertyGroup>
+    <HasCommonProps>true</HasCommonProps>
+    <LangVersion>8</LangVersion>
+    <Copyright>Copyright (c) 2019 Vassalware (vassalware@gmail.com)</Copyright>
+    <SolutionRoot>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)\..))</SolutionRoot>
+  </PropertyGroup>
+
+</Project>

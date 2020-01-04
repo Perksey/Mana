@@ -1,38 +1,38 @@
-using System;
-using OpenTK.Graphics.OpenGL4;
+﻿using osuTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics.Buffers
 {
+    /// <summary>
+    /// Represents an OpenGL pixel buffer object.
+    /// </summary>
     public class PixelBuffer : Buffer
     {
-        public PixelBuffer(ResourceManager resourceManager) 
-            : base(resourceManager)
+        private PixelBuffer(RenderContext parentContext)
+            : base(parentContext)
         {
         }
 
-        public static PixelBuffer Create<T>(RenderContext context,
+        public static PixelBuffer Create<T>(RenderContext renderContext,
                                             int sizeInBytes,
                                             bool immutable,
                                             bool mapWrite = true)
             where T : unmanaged
         {
-            var pbo = new PixelBuffer(context.ResourceManager);
-            
-            pbo.Allocate<T>(context,
-                            sizeInBytes,
+            var pbo = new PixelBuffer(renderContext);
+
+            pbo.Allocate<T>(sizeInBytes,
                             BufferUsageHint.DynamicCopy,
                             immutable,
-                            mapWrite 
+                            mapWrite
                                 ? BufferStorageFlags.MapWriteBit
                                 : BufferStorageFlags.None);
             return pbo;
         }
 
         internal override BufferTarget BufferTarget => BufferTarget.PixelUnpackBuffer;
-        
-        protected override void Bind(RenderContext renderContext) => renderContext.BindPixelBuffer(this);
-        protected override void Unbind(RenderContext renderContext) => renderContext.UnbindPixelBuffer(this);
-        // protected override void Push(RenderContext renderContext) => renderContext.PixelBufferBinding.Push(this);
-        // protected override void Pop(RenderContext renderContext) => renderContext.PixelBufferBinding.Pop();
+
+        public override void Bind(RenderContext renderContext) => renderContext.BindPixelBuffer(this);
+
+        public override void Unbind(RenderContext renderContext) => renderContext.UnbindPixelBuffer(this);
     }
 }

@@ -1,10 +1,10 @@
 using System;
 using ImGuiNET;
-using OpenTK.Input;
+using osuTK.Input;
 
 namespace Mana.IMGUI
 {
-    public class ImGuiKeyHelper
+    public static class ImGuiKeyHelper
     {
         public static Key ToOpenTKKey(ImGuiKey key)
         {
@@ -52,6 +52,8 @@ namespace Mana.IMGUI
                     return Key.Y;
                 case ImGuiKey.Z:
                     return Key.Z;
+                case ImGuiKey.KeyPadEnter:
+                    return Key.KeypadEnter;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(key), key, null);
             }

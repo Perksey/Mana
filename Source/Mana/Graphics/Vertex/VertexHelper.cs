@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
-using OpenTK.Graphics.OpenGL4;
+using osuTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics.Vertex
 {
@@ -39,7 +39,7 @@ namespace Mana.Graphics.Vertex
                 return info;
             }
 
-            throw new InvalidOperationException("Vertex Attribute Type not supported: " + fieldType.FullName);
+            throw new InvalidOperationException($"Vertex Attribute Type not supported: {fieldType.FullName}");
         }
     }
 }

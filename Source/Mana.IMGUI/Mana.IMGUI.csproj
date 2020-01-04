@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Configurations>Debug;Release</Configurations>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="ImGui.NET, Version=1.70.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\..\Libraries\ImGui.NET-docking\ImGui.NET.dll</HintPath>
-    </Reference>
+    <PackageReference Include="ImGui.NET" Version="1.72.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -16,7 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Assets\Fonts\fontawesome.ttf" />
+    <None Remove="Fonts\Roboto-Medium.ttf" />
+    <EmbeddedResource Include="Fonts\Roboto-Medium.ttf" />
   </ItemGroup>
 
 </Project>

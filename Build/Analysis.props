@@ -1,0 +1,14 @@
+<Project>
+  <PropertyGroup>
+    <HasCodeAnalysis>true</HasCodeAnalysis>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <CodeAnalysisRuleSet>$(SolutionRoot)\stylecop.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StyleCop.Analyzers" Version="1.0.2" />
+    <AdditionalFiles Include="$(SolutionRoot)\stylecop.json" Condition="'$(HasCodeAnalysis)' == ''"/>
+  </ItemGroup>
+
+  <Import Project="Common.props" Condition="!$(HasCommonProps)" />
+</Project>

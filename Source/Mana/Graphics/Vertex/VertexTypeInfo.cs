@@ -1,11 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Mana.Graphics.Shader;
-using Mana.Utilities;
-using OpenTK.Graphics.OpenGL4;
+using Mana.Graphics.Shaders;
 using Mana.Utilities.Extensions;
+using osuTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics.Vertex
 {
@@ -32,19 +31,24 @@ namespace Mana.Graphics.Vertex
         internal static void Initialize()
         {
             if (_initialized)
+            {
                 return;
+            }
 
             _vertexTypeInfoCache = AppDomain.CurrentDomain
                                             .GetAssemblies()
                                             .SelectMany(a => a.GetTypes())
-                                            .Where(t => t.HasAttribute<VertexTypeAttribute>(false))
+                                            .Where(t => t.IsValueType && t.HasParent<IVertexType>())
                                             .ToDictionary(t => t, t => new VertexTypeInfo(t));
             _initialized = true;
         }
 
         public static VertexTypeInfo Get<T>()
         {
-            Assert.That(_initialized);
+            if (!_initialized)
+            {
+                throw new InvalidOperationException("VertexTypeInfo.Initialize() must be called before Get().");
+            }
 
             if (_vertexTypeInfoCache.TryGetValue(typeof(T), out VertexTypeInfo vertexTypeInfo))
             {
@@ -60,27 +64,51 @@ namespace Mana.Graphics.Vertex
             for (uint i = 0; i < Attributes.Length; i++)
             {
                 EnableDisableAttributes(program, i);
-                
+
                 VertexAttributeInfo attribute = Attributes[i];
-        
+
                 GL.VertexAttribPointer(i,
                                        attribute.ComponentCount,
                                        attribute.Type,
                                        attribute.Normalize,
                                        VertexStride,
                                        new IntPtr(location));
-        
+
                 location += attribute.Size * attribute.ComponentCount;
             }
         }
-        
+
+        internal void Apply(ShaderProgram program, IntPtr offset)
+        {
+            int location = 0;
+            for (uint i = 0; i < Attributes.Length; i++)
+            {
+                EnableDisableAttributes(program, i);
+
+                VertexAttributeInfo attribute = Attributes[i];
+
+                GL.VertexAttribPointer(i,
+                                       attribute.ComponentCount,
+                                       attribute.Type,
+                                       attribute.Normalize,
+                                       VertexStride,
+                                       offset + location);
+
+                location += attribute.Size * attribute.ComponentCount;
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void EnableDisableAttributes(ShaderProgram program, uint i)
         {
             if (program.AttributesByLocation.TryGetValue(i, out _))
+            {
                 GL.EnableVertexAttribArray(i);
+            }
             else
+            {
                 GL.DisableVertexAttribArray(i);
+            }
         }
     }
 }

@@ -1,17 +1,20 @@
-using System;
-using OpenTK.Graphics.OpenGL4;
+﻿using System;
+using osuTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics.Buffers
 {
+    /// <summary>
+    /// Represents an OpenGL element buffer object.
+    /// </summary>
     public class IndexBuffer : Buffer
     {
         internal DrawElementsType DrawElementsType;
-        
-        private IndexBuffer(ResourceManager resourceManager)
-            : base(resourceManager)
+
+        private IndexBuffer(RenderContext parentContext)
+            : base(parentContext)
         {
         }
-        
+
         internal override BufferTarget BufferTarget => BufferTarget.ElementArrayBuffer;
 
         public static IndexBuffer Create<T>(RenderContext renderContext,
@@ -20,21 +23,15 @@ namespace Mana.Graphics.Buffers
                                             bool immutable)
             where T : unmanaged
         {
-            if (renderContext == null)
-                throw new ArgumentNullException(nameof(renderContext));
-            
-            if (data == null)
-                throw new ArgumentNullException(nameof(data));
-            
             if (!IsElementType<T>())
                 throw new ArgumentException("Invalid datatype.", nameof(T));
 
-            var ibo = new IndexBuffer(renderContext.ResourceManager)
+            var ibo = new IndexBuffer(renderContext)
             {
                 DrawElementsType = GetDrawElementsType<T>(),
             };
-            
-            ibo.Allocate<T>(renderContext, data, bufferUsageHint, immutable);
+
+            ibo.Allocate<T>(data, bufferUsageHint, immutable);
             return ibo;
         }
 
@@ -46,23 +43,22 @@ namespace Mana.Graphics.Buffers
         {
             if (renderContext == null)
                 throw new ArgumentNullException(nameof(renderContext));
-            
+
             if (!IsElementType<T>())
                 throw new ArgumentException("Invalid datatype.", nameof(T));
 
-            var ibo = new IndexBuffer(renderContext.ResourceManager)
+            var ibo = new IndexBuffer(renderContext)
             {
                 DrawElementsType = GetDrawElementsType<T>(),
             };
-            
-            ibo.Allocate<T>(renderContext, capacity * sizeof(T), bufferUsageHint, immutable);
+
+            ibo.Allocate<T>(capacity * sizeof(T), bufferUsageHint, immutable);
             return ibo;
         }
 
-        protected override void Bind(RenderContext renderContext) => renderContext.BindIndexBuffer(this);
-        protected override void Unbind(RenderContext renderContext) => renderContext.UnbindIndexBuffer(this);
-        // protected override void Push(RenderContext renderContext) => renderContext.IndexBufferBinding.Push(this);
-        // protected override void Pop(RenderContext renderContext) => renderContext.IndexBufferBinding.Pop();
+        public override void Bind(RenderContext renderContext) => renderContext.BindIndexBuffer(this);
+
+        public override void Unbind(RenderContext renderContext) => renderContext.UnbindIndexBuffer(this);
 
         private static bool IsElementType<T>()
             where T : unmanaged
@@ -71,7 +67,7 @@ namespace Mana.Graphics.Buffers
                    typeof(T) == typeof(byte) ||
                    typeof(T) == typeof(uint);
         }
-        
+
         private static DrawElementsType GetDrawElementsType<T>()
             where T : unmanaged
         {

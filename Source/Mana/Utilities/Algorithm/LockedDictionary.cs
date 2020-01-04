@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Mana.Utilities.Algorithm
@@ -9,14 +9,14 @@ namespace Mana.Utilities.Algorithm
     public class LockedDictionary<TKey, TValue>
     {
         public Dictionary<TKey, TValue> Dictionary { get; }
-        
+
         private object _lock = new object();
 
         public LockedDictionary()
         {
             Dictionary = new Dictionary<TKey, TValue>();
         }
-        
+
         public LockedDictionary(int capacity)
         {
             Dictionary = new Dictionary<TKey, TValue>(capacity);
@@ -30,11 +30,27 @@ namespace Mana.Utilities.Algorithm
             }
         }
 
+        public void Add(TKey key, TValue value)
+        {
+            lock (_lock)
+            {
+                Dictionary.Add(key, value);
+            }
+        }
+
         public bool Remove(TKey key)
         {
             lock (_lock)
             {
                 return Dictionary.Remove(key);
+            }
+        }
+
+        public void Clear()
+        {
+            lock (_lock)
+            {
+                Dictionary.Clear();
             }
         }
 

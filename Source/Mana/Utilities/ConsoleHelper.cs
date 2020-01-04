@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace Mana.Utilities
 {
@@ -7,11 +7,11 @@ namespace Mana.Utilities
         public static void Write(string message, ConsoleColor foregroundColor)
         {
             ConsoleColor oldForegroundColor = Console.ForegroundColor;
-            
+
             Console.ForegroundColor = foregroundColor;
-            
+
             Console.Write(message);
-            
+
             Console.ForegroundColor = oldForegroundColor;
         }
 
@@ -28,18 +28,18 @@ namespace Mana.Utilities
             Console.BackgroundColor = oldBackgroundColor;
             Console.ForegroundColor = oldForegroundColor;
         }
-        
+
         public static void WriteLine(string message, ConsoleColor foregroundColor)
         {
             ConsoleColor oldForegroundColor = Console.ForegroundColor;
-            
+
             Console.ForegroundColor = foregroundColor;
-            
+
             Console.WriteLine(message);
-            
+
             Console.ForegroundColor = oldForegroundColor;
         }
-        
+
         public static void WriteLine(string message, ConsoleColor foregroundColor, ConsoleColor backgroundColor)
         {
             ConsoleColor oldForegroundColor = Console.ForegroundColor;

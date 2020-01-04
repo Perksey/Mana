@@ -1,4 +1,4 @@
-using OpenTK.Graphics.OpenGL4;
+﻿using osuTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics.Vertex
 {

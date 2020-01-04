@@ -1,18 +1,28 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Runtime.CompilerServices;
-using OpenTK.Input;
+using osuTK.Input;
 
 namespace Mana
 {
     public static class Input
     {
-        private static InputManager _current;
+        private static IInputProvider _current;
 
         public static Point MousePosition => _current.MousePosition;
-        
+
+        public static bool MouseLeft => _current.MouseLeft;
+
+        public static bool MouseMiddle => _current.MouseMiddle;
+
+        public static bool MouseRight => _current.MouseRight;
+
+        public static int MouseWheel => _current.MouseWheel;
+
+        public static int MouseWheelDelta => _current.MouseWheelDelta;
+
         public static event Action<char> KeyTyped;
-        
+
         /// <summary>
         /// Gets a value that indicates whether the given keyboard <see cref="Key"/> is currently down.
         /// </summary>
@@ -20,7 +30,7 @@ namespace Mana
         /// <returns>A value that indicates whether the given keyboard <see cref="Key"/> is currently down.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsKeyDown(Key key) => _current.IsKeyDown(key);
-        
+
         /// <summary>
         /// Gets a value that indicates whether the given keyboard <see cref="Key"/> is currently up.
         /// </summary>
@@ -92,11 +102,11 @@ namespace Mana
         /// <returns>A value that indicates whether the given gamepad button is currently down.</returns>
         public static bool IsButtonDown(Buttons button, int index = 0) => _current.IsButtonDown(button, index);
 
-        internal static void SetInputManager(InputManager inputManager)
+        internal static void SetInputProvider(IInputProvider inputProvider)
         {
-            _current = inputManager;
+            _current = inputProvider;
         }
-        
+
         internal static void OnKeyTyped(char c)
         {
             KeyTyped?.Invoke(c);

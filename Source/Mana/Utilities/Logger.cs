@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -34,7 +34,7 @@ namespace Mana.Utilities
             [LogLevel.Error] = "ERROR",
             [LogLevel.Fatal] = "FATAL",
         };
-        
+
         private string _name;
 
         public static bool WriteTimestamps = false;
@@ -92,15 +92,15 @@ namespace Mana.Utilities
             ConsoleHelper.Write(message, _foregroundColors[logLevel], _backgroundColors[logLevel]);
             Console.WriteLine();
         }
-        
+
         public void LogMessage(string message, LogLevel logLevel, ConsoleColor foregroundColor)
         {
             if (WriteTimestamps)
             {
                 ConsoleHelper.Write(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"), ConsoleColor.Gray);
-                Console.Write(" - ");    
+                Console.Write(" - ");
             }
-            
+
             string threadName = $"{(Thread.CurrentThread.Name ?? "Thread")}:{Thread.CurrentThread.ManagedThreadId.ToString()}";
             ConsoleHelper.Write($"[{threadName}]", ConsoleColor.Gray);
             Console.Write(" - ");
@@ -111,15 +111,15 @@ namespace Mana.Utilities
             ConsoleHelper.Write(message, foregroundColor);
             Console.WriteLine();
         }
-        
+
         public void WriteLine(string message, ConsoleColor foregroundColor)
         {
             if (WriteTimestamps)
             {
                 ConsoleHelper.Write(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff"), ConsoleColor.Gray);
-                Console.Write(" - ");    
+                Console.Write(" - ");
             }
-            
+
             string threadName = $"{(Thread.CurrentThread.Name ?? "Thread")}:{Thread.CurrentThread.ManagedThreadId.ToString()}";
             ConsoleHelper.Write($"[{threadName}]", ConsoleColor.Gray);
             Console.Write(" - ");
@@ -128,7 +128,7 @@ namespace Mana.Utilities
             ConsoleHelper.Write(message, foregroundColor);
             Console.WriteLine();
         }
-        
+
         public enum LogLevel
         {
             Debug,

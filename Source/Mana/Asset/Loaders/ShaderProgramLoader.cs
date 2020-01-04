@@ -15,37 +15,28 @@ namespace Mana.Asset.Loaders
                                   Stream stream,
                                   string sourcePath)
         {
-            ShaderProgramDescription description;
             using StreamReader streamReader = new StreamReader(stream);
 
-            description = JsonConvert.DeserializeObject<ShaderProgramDescription>(streamReader.ReadToEnd());
+            var description = JsonConvert.DeserializeObject<ShaderProgramDescription>(streamReader.ReadToEnd());
 
             string containingPath = Path.GetDirectoryName(sourcePath)
                                     ?? throw new Exception($"Error getting parent for path: {sourcePath}");
 
             var shaders = new List<Shader>();
 
-            // TODO: Reduce duplicate code.
-
-            if (!string.IsNullOrEmpty(description.Vertex))
+            void LoadShader<T>(string relativeShaderPath, Func<RenderContext, string, T> factory)
+                where T : Shader
             {
-                shaders.Add(GetShader(assetManager, renderContext, containingPath, description.Vertex, (r, s) => new VertexShader(r, s)));
+                if (string.IsNullOrEmpty(relativeShaderPath))
+                    return;
+
+                shaders.Add(GetShader(assetManager, renderContext, containingPath, relativeShaderPath, factory));
             }
 
-            if (!string.IsNullOrEmpty(description.Fragment))
-            {
-                shaders.Add(GetShader(assetManager, renderContext, containingPath, description.Fragment, (r, s) => new FragmentShader(r, s)));
-            }
-
-            if (!string.IsNullOrEmpty(description.Geometry))
-            {
-                shaders.Add(GetShader(assetManager, renderContext, containingPath, description.Geometry, (r, s) => new GeometryShader(r, s)));
-            }
-
-            if (!string.IsNullOrEmpty(description.Compute))
-            {
-                shaders.Add(GetShader(assetManager, renderContext, containingPath, description.Compute, (r, s) => new ComputeShader(r, s)));
-            }
+            LoadShader(description.Vertex, (r, s) => new VertexShader(r, s));
+            LoadShader(description.Fragment, (r, s) => new FragmentShader(r, s));
+            LoadShader(description.Geometry, (r, s) => new GeometryShader(r, s));
+            LoadShader(description.Compute, (r, s) => new ComputeShader(r, s));
 
             ShaderProgram program = new ShaderProgram(renderContext);
 
@@ -98,7 +89,7 @@ namespace Mana.Asset.Loaders
         }
     }
 
-    // ReSharper disable once ClassNeverInstantiated.Global
+    [Serializable]
     internal class ShaderProgramDescription
     {
         public string Vertex { get; set; } = "";

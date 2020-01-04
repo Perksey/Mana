@@ -1,5 +1,5 @@
 # Mana
-**Mana** is a library for creating high-performance cross-platform 2D & 3D games using C# (or other .NET languages).
+🕹️ **Mana** is a library for creating high-performance cross-platform 2D & 3D games using C# (or other .NET languages).
 
 ----
 

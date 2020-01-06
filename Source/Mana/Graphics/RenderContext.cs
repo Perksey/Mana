@@ -41,10 +41,14 @@ namespace Mana.Graphics
             GLInfo.Initialize();
             VertexTypeInfo.Initialize();
 
-
-
             int vao = GL.GenVertexArray();
             GL.BindVertexArray(vao);
+
+            if (GLInfo.HasDebug)
+            {
+                string labelName = "Unused VertexArray";
+                GL.ObjectLabel(ObjectLabelIdentifier.VertexArray, vao, labelName.Length, labelName);
+            }
 
             TextureUnits = new TextureUnit[GLInfo.MaxTextureImageUnits];
 
@@ -71,6 +75,12 @@ namespace Mana.Graphics
 
             int vao = GL.GenVertexArray();
             GL.BindVertexArray(vao);
+
+            if (GLInfo.HasDebug)
+            {
+                string labelName = "Unused VertexArray";
+                GL.ObjectLabel(ObjectLabelIdentifier.VertexArray, vao, labelName.Length, labelName);
+            }
 
             TextureUnits = new TextureUnit[GLInfo.MaxTextureImageUnits];
 

@@ -4,38 +4,39 @@
     {
         public static ShaderProgram CreateSpriteShaderProgram(RenderContext renderContext, string label = "Sprite ShaderProgram")
         {
-            VertexShader vertexShader = new VertexShader(renderContext, @"#version 330 core
+            VertexShader vertexShader = new VertexShader(renderContext,
+@"#version 330 core
 
-                layout (location = 0) in vec2 aPos;
-                layout (location = 1) in vec2 aTexCoord;
-                layout (location = 2) in vec4 aColor;
+layout (location = 0) in vec2 aPos;
+layout (location = 1) in vec2 aTexCoord;
+layout (location = 2) in vec4 aColor;
 
-                out vec2 TexCoord;
-                out vec4 Color;
+out vec2 TexCoord;
+out vec4 Color;
 
-                uniform mat4 projection;
+uniform mat4 projection;
 
-                void main()
-                {
-                    gl_Position = projection * vec4(aPos, 1.0, 1.0);
-                    TexCoord = aTexCoord;
-                    Color = aColor;
-                }"
-                                                        );
-            FragmentShader fragmentShader = new FragmentShader(renderContext, @"#version 330 core
+void main()
+{
+    gl_Position = projection * vec4(aPos, 1.0, 1.0);
+    TexCoord = aTexCoord;
+    Color = aColor;
+}");
 
-                out vec4 FragColor;
+            FragmentShader fragmentShader = new FragmentShader(renderContext,
+@"#version 330 core
 
-                in vec2 TexCoord;
-                in vec4 Color;
+out vec4 FragColor;
 
-                uniform sampler2D texture0;
+in vec2 TexCoord;
+in vec4 Color;
 
-                void main()
-                {
-                    FragColor = texture(texture0, TexCoord) * Color;
-                }"
-                                                              );
+uniform sampler2D texture0;
+
+void main()
+{
+    FragColor = texture(texture0, TexCoord) * Color;
+}");
 
             ShaderProgram shaderProgram = new ShaderProgram(renderContext);
 
@@ -57,32 +58,33 @@
 
         public static ShaderProgram CreateLineShaderProgram(RenderContext renderContext, string label = "Line ShaderProgram")
         {
-            VertexShader vertexShader = new VertexShader(renderContext, @"#version 330 core
+            VertexShader vertexShader = new VertexShader(renderContext,
+@"#version 330 core
 
-                layout (location = 0) in vec2 aPos;
-                layout (location = 1) in vec4 aColor;
+layout (location = 0) in vec2 aPos;
+layout (location = 1) in vec4 aColor;
 
-                out vec4 Color;
+out vec4 Color;
 
-                uniform mat4 projection;
+uniform mat4 projection;
 
-                void main()
-                {
-                    gl_Position = projection * vec4(aPos, 1.0, 1.0);
-                    Color = aColor;
-                }"
-                                                        );
-            FragmentShader fragmentShader = new FragmentShader(renderContext, @"#version 330 core
+void main()
+{
+    gl_Position = projection * vec4(aPos, 1.0, 1.0);
+    Color = aColor;
+}");
 
-                out vec4 FragColor;
+            FragmentShader fragmentShader = new FragmentShader(renderContext,
+@"#version 330 core
 
-                in vec4 Color;
+out vec4 FragColor;
 
-                void main()
-                {
-                    FragColor = Color;
-                }"
-                                                              );
+in vec4 Color;
+
+void main()
+{
+    FragColor = Color;
+}");
 
             ShaderProgram shaderProgram = new ShaderProgram(renderContext);
 

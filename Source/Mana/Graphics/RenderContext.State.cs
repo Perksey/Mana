@@ -12,6 +12,8 @@ namespace Mana.Graphics
         private Rectangle _scissorRectangle;
         private Rectangle _viewportRectangle;
         private Color _clearColor;
+        private BlendingFactor _sFactor = BlendingFactor.One;
+        private BlendingFactor _dFactor = BlendingFactor.Zero;
 
         /// <summary>
         /// Gets or sets a value that indicates whether the DepthTest capability is enabled.
@@ -64,7 +66,7 @@ namespace Mana.Graphics
 
                 if (value)
                 {
-                    GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+                    SetBlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 }
             }
         }
@@ -145,6 +147,23 @@ namespace Mana.Graphics
 
                 GL.ClearColor(_clearColor = value);
             }
+        }
+
+        public void GetBlendFunc(out BlendingFactor sFactor, out BlendingFactor dFactor)
+        {
+            sFactor = _sFactor;
+            dFactor = _dFactor;
+        }
+
+        public void SetBlendFunc(BlendingFactor sFactor, BlendingFactor dFactor)
+        {
+            if (_sFactor == sFactor && _dFactor == dFactor)
+            {
+                // No state change would occur.
+                return;
+            }
+
+            GL.BlendFunc(_sFactor = sFactor, _dFactor = dFactor);
         }
 
         public State GetState()

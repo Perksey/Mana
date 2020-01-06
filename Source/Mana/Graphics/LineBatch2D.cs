@@ -8,7 +8,7 @@ using osuTK.Graphics.OpenGL4;
 
 namespace Mana.Graphics
 {
-    public class LineBatch : GraphicsResource
+    public class LineBatch2D : GraphicsResource
     {
         private static Logger _log = Logger.Create();
 
@@ -22,7 +22,7 @@ namespace Mana.Graphics
         private int _vertexCount = 0;
         private bool _active = false;
 
-        public LineBatch(RenderContext renderContext)
+        public LineBatch2D(RenderContext renderContext)
             : base(renderContext)
         {
             _vertexBufferSize = 64;

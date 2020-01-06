@@ -34,12 +34,14 @@ namespace Mana.Graphics
 
             /* Initialize */
 
-            GLInfo.Initialize();
-            VertexTypeInfo.Initialize();
-
 #if DEBUG
             DebugMessageHandler.Initialize();
 #endif
+
+            GLInfo.Initialize();
+            VertexTypeInfo.Initialize();
+
+
 
             int vao = GL.GenVertexArray();
             GL.BindVertexArray(vao);
@@ -60,12 +62,12 @@ namespace Mana.Graphics
 
             /* Initialize */
 
-            GLInfo.Initialize();
-            VertexTypeInfo.Initialize();
-
 #if DEBUG
             DebugMessageHandler.Initialize();
 #endif
+
+            GLInfo.Initialize();
+            VertexTypeInfo.Initialize();
 
             int vao = GL.GenVertexArray();
             GL.BindVertexArray(vao);

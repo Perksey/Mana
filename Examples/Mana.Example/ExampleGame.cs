@@ -23,13 +23,18 @@ namespace Mana.Example
 
         public override void Initialize()
         {
+#if DEBUG
             AssetManager.RootPath = "../../../Assets";
+#else
+            AssetManager.RootPath = "./Assets";
+#endif
 
             AddGameSystem(new ImGuiSystem());
 
             _spriteShader = BasicShaderFactory.CreateSpriteShaderProgram(RenderContext);
 
             _testShader = AssetManager.Load<ShaderProgram>("./Shaders/shader.json", true);
+            _testShader.Label = "test shader label";
             _mittens = AssetManager.Load<Texture2D>("./Textures/mittens.png", true);
 
             _spriteBatch = new SpriteBatch(RenderContext)
@@ -44,8 +49,8 @@ namespace Mana.Example
 
         public override void Render(float time, float deltaTime)
         {
-            _spriteShader.SetUniform("projection", ref Window.ProjectionMatrix);
             _testShader.SetUniform("projection", ref Window.ProjectionMatrix);
+            _spriteShader.SetUniform("projection", ref Window.ProjectionMatrix); //
 
             RenderContext.Clear(_backgroundColor);
 

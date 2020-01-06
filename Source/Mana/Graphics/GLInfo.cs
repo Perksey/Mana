@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using osuTK.Graphics.OpenGL4;
+using Mana.Utilities;
+using osuTK.Graphics.OpenGL;
 
 namespace Mana.Graphics
 {
@@ -10,6 +11,7 @@ namespace Mana.Graphics
     /// </summary>
     public static class GLInfo
     {
+        private static Logger _log = Logger.Create();
         private static bool _initialized = false;
 
         /// <summary>
@@ -91,14 +93,16 @@ namespace Mana.Graphics
             if (_initialized)
                 return;
 
-            Extensions = new HashSet<string>(GL.GetString(StringName.Extensions)
-                                               .Split(' ')
-                                               .Where(x => !string.IsNullOrWhiteSpace(x)));
+            // Extensions = new HashSet<string>(GL.GetString(StringName.Extensions)
+            //                                    .Split(' ')
+            //                                    .Where(x => !string.IsNullOrWhiteSpace(x)));
 
-            int Int(GetPName name) => GL.GetInteger(name);
-            string Str(StringName name) => GL.GetString(name);
+            int numExtensions = GL.GetInteger(GetPName.NumExtensions);
+
+            Extensions = new HashSet<string>(Enumerable.Range(0, numExtensions)
+                                                       .Select(n => GL.GetString(StringNameIndexed.Extensions, n)));
+
             bool Ext(string name) => Extensions.Contains(name);
-            bool Ver(int major, int minor) => (Major * 10) + Minor >= (major * 10) + minor;
 
             Major                    = Int(GetPName.MajorVersion);
             Minor                    = Int(GetPName.MinorVersion);
@@ -111,12 +115,27 @@ namespace Mana.Graphics
 
             Version = new Version(Major, Minor);
 
+
             HasDirectStateAccess     = Ext("GL_ARB_direct_state_access")     || Ver(4, 5);
             HasBufferStorage         = Ext("GL_ARB_buffer_storage")          || Ver(4, 4);
             HasDebug                 = Ext("GL_KHR_debug")                   || Ver(4, 3);
             HasSeparateShaderObjects = Ext("GL_ARB_separate_shader_objects") || Ver(4, 1);
 
             _initialized = true;
+
+            _log.Info($"OpenGL Version: {Major}.{Minor}");
+            _log.Info($"numExtensions: {numExtensions}");
+            _log.Info($"Extensions.Count: {Extensions.Count}");
+            _log.Info($"HasDirectStateAccess: {HasDirectStateAccess}");
+            _log.Info($"HasBufferStorage: {HasBufferStorage}");
+            _log.Info($"HasDebug: {HasDebug}");
+            _log.Info($"HasSeparateShaderObjects: {HasSeparateShaderObjects}");
         }
+
+        private static int Int(GetPName name) => GL.GetInteger(name);
+
+        private static string Str(StringName name) => GL.GetString(name);
+
+        private static bool Ver(int major, int minor) => (Major * 10) + Minor >= (major * 10) + minor;
     }
 }
